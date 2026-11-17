@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   serial,
 } from "drizzle-orm/pg-core";
 
@@ -208,8 +209,12 @@ export const curriculo = pgTable(
     modalidade_nome: text("modalidade_nome"),
     url: text("url"),
   },
-  // NULLS NOT DISTINCT: sem isso, re-sincronizações duplicariam o currículo sem modalidade.
-  (t) => [unique().on(t.ano, t.curso, t.modalidade).nullsNotDistinct()],
+  // Um currículo por (ano, curso, modalidade), nulo = sem modalidade. Dois índices parciais fazem o papel de
+  // NULLS NOT DISTINCT, que o drizzle-kit 0.31 não lê de volta (push repropunha a constraint e pedia para truncar).
+  (t) => [
+    uniqueIndex("curriculo_com_modalidade_uq").on(t.ano, t.curso, t.modalidade).where(sql`${t.modalidade} is not null`),
+    uniqueIndex("curriculo_sem_modalidade_uq").on(t.ano, t.curso).where(sql`${t.modalidade} is null`),
+  ],
 );
 
 export const curriculoObrigatoria = pgTable(

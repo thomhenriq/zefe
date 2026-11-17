@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/auth-client";
 import { cn } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { itemSobre, itensNav } from "./itens";
@@ -11,6 +12,8 @@ import { itemSobre, itensNav } from "./itens";
 /** `leve`: variante da apresentação (sem painel): só Sobre + Entrar. */
 export function BarraSuperior({ leve = false }: { leve?: boolean }) {
   const caminho = usePathname();
+  const router = useRouter();
+  const { data: sessao, isPending } = authClient.useSession();
   const itens = leve ? [itemSobre] : [...itensNav, itemSobre];
   return (
     <header className="sticky top-0 z-40 h-barra border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -53,9 +56,25 @@ export function BarraSuperior({ leve = false }: { leve?: boolean }) {
               <Search className="size-5" aria-hidden />
             </Link>
           )}
-          <Button render={<Link href="/entrar" />} nativeButton={false} size="lg">
-            Entrar
-          </Button>
+          {sessao ? (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={async () => {
+                await authClient.signOut();
+                router.push("/");
+                router.refresh();
+              }}
+            >
+              Sair
+            </Button>
+          ) : (
+            !isPending && (
+              <Button render={<Link href="/entrar" />} nativeButton={false} size="lg">
+                Entrar
+              </Button>
+            )
+          )}
         </div>
       </div>
     </header>

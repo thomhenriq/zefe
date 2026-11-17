@@ -39,4 +39,12 @@ describe("dados do aluno (precisa do catálogo 2026 do curso 94 no banco)", () =
     await expect(salvarPerfil(USER, { ...base, ingresso: 2019 })).rejects.toThrow();
     await expect(salvarPerfil(USER, { ...base, semestreAtual: 20 })).rejects.toThrow();
   });
+
+  test("rejeita modalidade inválida, sem gravar nada", async () => {
+    await limpar();
+    await expect(salvarPerfil(USER, { ...base, modalidade: "AC" })).rejects.toThrow(/modalidade/); // 94 não tem modalidade
+    await expect(salvarPerfil(USER, { ...base, curso: 56, modalidade: "ZZ" })).rejects.toThrow(/modalidade/);
+    await expect(salvarPerfil(USER, { ...base, curso: 56, modalidade: null })).rejects.toThrow(/modalidade/);
+    expect(await getPerfil(USER)).toBeNull();
+  });
 });

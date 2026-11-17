@@ -19,7 +19,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
   const [catalogo, setCatalogo] = useState<number>(inicial?.catalogo ?? inicial?.ingresso ?? 2026);
   const [modalidade, setModalidade] = useState<string | null>(inicial?.modalidade ?? null);
   const [semestre, setSemestre] = useState<number | null>(inicial?.semestreAtual ?? null);
-  const [info, setInfo] = useState<InfoCurriculo | null>(null);
+  const [lido, setLido] = useState<{ chave: string; info: InfoCurriculo | null } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, iniciar] = useTransition();
 
@@ -28,17 +28,25 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
     return cursos.filter((c) => !q || semAcento(c.nome).includes(q) || String(c.numero).startsWith(q));
   }, [busca, cursos]);
 
+  const chave = `${curso}/${catalogo}/${modalidade}`;
   useEffect(() => {
     if (curso === null) return;
     let ativo = true;
-    consultarCurriculo({ curso, catalogo, modalidade }).then((i) => ativo && setInfo(i));
+    consultarCurriculo({ curso, catalogo, modalidade })
+      .then((info) => ativo && setLido({ chave, info }))
+      .catch(() => ativo && setLido({ chave, info: null })); // info null = consulta falhou
     return () => { ativo = false; };
-  }, [curso, catalogo, modalidade]);
+  }, [curso, catalogo, modalidade, chave]);
 
-  const precisaModalidade = (info?.modalidades.length ?? 0) > 0;
+  // Resposta de outra combinação (curso mudou há pouco) não vale: espera a atual.
+  const carregando = curso !== null && lido?.chave !== chave;
+  const falhou = !carregando && lido?.info === null;
+  const info = carregando ? null : lido?.info ?? null;
+
+  const precisaModalidade = modalidade !== null || (info?.modalidades.length ?? 0) > 0;
   const semProposta = info !== null && !info.carregado;
   const maxSem = info?.carregado ? info.semestres : 12; // sem proposta carregada o limite é livre; o servidor revalida
-  const pronto = curso !== null && semestre !== null && (!precisaModalidade || modalidade !== null);
+  const pronto = !carregando && !falhou && curso !== null && semestre !== null && (!precisaModalidade || modalidade !== null);
 
   function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +80,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
         </div>
       </fieldset>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid items-start gap-6 sm:grid-cols-2">
         <div className="space-y-2">
           <label htmlFor="ingresso" className={titulo}>2. Ano de ingresso</label>
           <select id="ingresso" value={ingresso} className={campo}
@@ -82,7 +90,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
           <p className="text-xs text-muted-foreground">O Zefe atende quem entrou de 2020 em diante.</p>
         </div>
         <div className="space-y-2">
-          <label htmlFor="catalogo" className="text-sm font-medium">Catálogo (currículo)</label>
+          <label htmlFor="catalogo" className={titulo}>Catálogo (currículo)</label>
           <select id="catalogo" value={catalogo} className={campo}
             onChange={(e) => { setCatalogo(Number(e.target.value)); setModalidade(null); setSemestre(null); }}>
             {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -90,6 +98,10 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
           <p className="text-xs text-muted-foreground">Igual ao ingresso, salvo se você migrou de catálogo.</p>
         </div>
       </div>
+
+      {falhou && (
+        <p role="alert" className="text-sm text-destructive">Não foi possível consultar o currículo. Recarregue a página e tente de novo.</p>
+      )}
 
       {curso !== null && semProposta && (
         <p role="status" className="flex gap-2 rounded-lg border border-dashed border-naoverificado-borda bg-naoverificado-bg p-3 text-sm text-naoverificado">
@@ -104,14 +116,14 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
           <select id="modalidade" value={modalidade ?? ""} className={campo}
             onChange={(e) => { setModalidade(e.target.value || null); setSemestre(null); }}>
             <option value="">Escolha…</option>
-            {info!.modalidades.map((m) => <option key={m.sigla} value={m.sigla}>{m.sigla}{m.nome ? ` · ${m.nome}` : ""}</option>)}
+            {info?.modalidades.map((m) => <option key={m.sigla} value={m.sigla}>{m.sigla}{m.nome ? ` · ${m.nome}` : ""}</option>)}
           </select>
         </div>
       )}
 
       <div className="space-y-2">
         <label htmlFor="semestre" className={titulo}>{precisaModalidade ? "4" : "3"}. Em que semestre do curso você está?</label>
-        <select id="semestre" value={semestre ?? ""} className={campo} disabled={curso === null || (precisaModalidade && modalidade === null)}
+        <select id="semestre" value={semestre ?? ""} className={campo} disabled={curso === null || carregando || falhou || (precisaModalidade && modalidade === null)}
           onChange={(e) => setSemestre(e.target.value === "" ? null : Number(e.target.value))}>
           <option value="">Escolha…</option>
           <option value={0}>Ainda não comecei</option>

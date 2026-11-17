@@ -30,13 +30,15 @@ export async function getPerfil(userId: string): Promise<Perfil | null> {
  */
 export async function salvarPerfil(userId: string, entrada: PerfilEntrada): Promise<void> {
   const e = perfilSchema.parse(entrada);
+  const modalidades = await listarModalidades(e.curso, e.catalogo);
+  if (modalidades.length > 0 && e.modalidade === null) throw new Error("este currículo exige modalidade");
+  if (e.modalidade !== null && !modalidades.some((m) => m.sigla === e.modalidade)) {
+    throw new Error(`modalidade ${e.modalidade} não existe neste currículo`);
+  }
   const proposta = await carregarProposta(e.curso, e.catalogo, e.modalidade);
   if (proposta) {
     const n = Math.max(0, ...proposta.map((s) => s.semestre));
     if (e.semestreAtual > n) throw new Error(`semestre atual ${e.semestreAtual} fora da proposta (1 a ${n})`);
-  }
-  if (e.modalidade === null && (await listarModalidades(e.curso, e.catalogo)).length > 0) {
-    throw new Error("este currículo exige modalidade");
   }
   const dados = {
     curso: e.curso,
