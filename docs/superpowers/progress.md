@@ -108,6 +108,13 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 14: complete (commits 4310b87..2a316a0, review clean)
 - CQ1 correções commitadas em f1f3b40 (landing com GradeSemanal real e rótulos "Exemplo", mascote em path, "Telas densas" no DESIGN.md, painel aberto só a partir de xl, GradeSemanal com abas por dia abaixo de sm, 404 raiz pt-BR, curso escolhido em /comecar, icon.svg). Reconferência (rodada 2) pedida ao mesmo revisor Opus.
 - Task 10, Task 12, Task 15: despachadas em paralelo (Sonnet), arquivos disjuntos.
+- Task 10: implementada em 6b83c92 (4 testes; build ok; Playwright com demo: detalhe por teclado, marcar/desmarcar). Revisão = Needs fixes (detalhe modal cobre a árvore em lg contra DESIGN.md; `.catch(() => null)` engole qualquer erro). Fix round 1 enviado (+ `aberto` no domínio, nome do curso, cor de "cursando").
+- Task 10: fix round 1/2 (todos addressed; commit 234f4c1 — detalhe inline em lg, erro tipado `SemCurriculo`, `grupos[].aberto`).
+- Task 10: complete (commits 4530614..234f4c1, exceto d83c628 que é da T12; review clean)
+- Task 10: minor (deferred): grupo não verificado e expiração de sessão não exercitados na tela (o curso 94 não tem grupo não verificado).
+- Task 12: implementada em d83c628 (planejador completo; Playwright: grade 1S/2027 por previsão com 4 disciplinas + bloqueio 13:30–17:30, troca de turma, conflitos, .ics baixado). Grade do demo ficou vazia (sem oferta das disciplinas do 4º semestre na base até a carga de 2025 chegar). Revisão = Approved.
+- Task 12: complete (commits 6b83c92..d83c628, review clean)
+- Task 12: minor (deferred → T17 polimento): `?ano=2027.5`/`1e10` sem validação pode dar 500; `catch {}` genérico em scripts/demo.ts; botão .ics e botões ghost parecem apagados no escuro; "busca lateral" ficou como seção abaixo da lista; string "previsão baseada em" repetida 3×.
 - Task 14: minor (deferred): desfazer fora de ordem restaura estado velho; desfazer `criar_bloqueio` depois de desfazer `remover_bloqueio` falha (id novo); `ver_grade`/`meu_progresso` sem URL da DAC.
 - Task 8: fix round 1/2 (prereq não entendido → "não verificado"; commit e3d817f). Item de 390 px repassado às correções do CQ1.
 - Task 8: complete (commits 1c3ffb0..e3d817f, 1 item transferido para CQ1)
@@ -125,6 +132,7 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 
 - CQ1 (Opus, revisor novo): despachado depois de T5+T6 completas (HEAD ddfe8fa + T7/T11 em andamento). App em dev em 127.0.0.1:4100 iniciado pelo orquestrador (log no scratchpad).
 - CQ1 rodada 1 — veredito **corrigir**. Passou: testes 74/74, build, fluxo real entrar→código→cadastro (pré-marcação certa), teclado/foco, painel e gaveta, 390 px sem rolagem lateral, avisos de "não oficial", nada inventado, site funciona sem o Zefe. Correções pedidas: (1) hero/landing com peça de produto ilegível e mascote cobrindo selo no celular — grade ilustrativa maior com eixo de horas, conflito visível, trecho de árvore; (2) mascote ainda não lê como capivara — silhueta em path, legível a 24 e 160 px; (3) DESIGN.md sem regras de "telas densas" (grade, árvore, painel só aberto a partir de xl); (4) 404 padrão do Next em inglês — `src/app/not-found.tsx` pt-BR na casca; (5) /comecar ao editar esconde o curso escolhido; (6) sem favicon — `src/app/icon.svg`. Não verificou: sites de referência ao vivo, contraste medido, reduced-motion, leitor de tela, cadastro com modalidade. Usuários de teste `qc1-*@zefe.local` ficaram no banco. Correções serão despachadas a Sonnet assim que a T8 (que mexe em DESIGN.md e na casca) commitar.
+- CQ1 rodada 2 (mesmo revisor, HEAD f1f3b40) — veredito **aprovado**, nada material aberto. Testes 127/127, build ok; os 6 itens conferidos no app (capturas em `.shots/qc1-r2/`). Não reverificado: contraste medido, movimento reduzido, leitor de tela.
 
 ## Decisões a conferir
 
