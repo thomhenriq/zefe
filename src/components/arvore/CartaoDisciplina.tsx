@@ -14,7 +14,7 @@ export function CartaoDisciplina({ nome, estado, codigo, nota, className }: { no
         {rotulo}
       </p>
       <p className="font-medium text-foreground">{nome}</p>
-      {codigo && <p className="font-mono text-xs tabular opacity-80">{codigo}</p>}
+      {codigo && <p className="font-mono text-xs tabular opacity-90">{codigo}</p>}
       {nota && <p className="text-xs opacity-90">{nota}</p>}
     </div>
   );

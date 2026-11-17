@@ -231,6 +231,7 @@
   }
   /* barras de rolagem discretas, na paleta */
   * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  ::placeholder { color: var(--muted-foreground); opacity: 1; }
   .caret-primary, input, textarea { caret-color: var(--primary); }
 }
 

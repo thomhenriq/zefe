@@ -37,7 +37,7 @@ export default async function PaginaArvore() {
   return (
     <Pagina>
       <header className="space-y-2">
-        <h1>Árvore de integralização</h1>
+        <h1 className="text-4xl">Árvore de integralização</h1>
         <p className="text-sm text-muted-foreground">{nomeCurso ?? `Curso ${u.perfil.curso}`}{u.perfil.modalidade ? `, modalidade ${u.perfil.modalidade}` : ""} · catálogo {u.perfil.catalogo}</p>
         <p className="flex max-w-prose items-start gap-2 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />

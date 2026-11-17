@@ -65,7 +65,7 @@ export function GradeSemanal({ itens, className }: { itens: ItemGrade[]; classNa
                   const cls = cn("absolute overflow-hidden rounded-md border leading-tight", cols > 1 ? "px-0.5 py-0.5 text-[0.62rem] [overflow-wrap:anywhere]" : "px-1 py-0.5 text-[0.7rem]", cor(it.tom), it.href && "hover:brightness-95 dark:hover:brightness-110");
                   const estilo = { top: topo + 1, height: alto, left: `calc(${(col / cols) * 100}% + 1px)`, width: `calc(${100 / cols}% - 2px)` };
                   const rotuloAria = `${it.rotulo}, ${nome}, ${it.inicio} às ${it.fim}`;
-                  const conteudo = (<><span className={cn("block font-mono font-semibold", cols === 1 && "max-sm:break-words sm:truncate")}>{it.rotulo}</span><span className={cn("tabular block opacity-80", cols === 1 && "sm:truncate")}>{it.inicio}–{it.fim}</span></>);
+                  const conteudo = (<><span className={cn("block font-mono font-semibold", cols === 1 && "max-sm:break-words sm:truncate")}>{it.rotulo}</span><span className={cn("tabular block opacity-90", cols === 1 && "sm:truncate")}>{it.inicio}–{it.fim}</span></>);
                   return it.href
                     ? <Link key={i} href={it.href} aria-label={rotuloAria} title={rotuloAria} className={cls} style={estilo}>{conteudo}</Link>
                     : <div key={i} role="group" aria-label={rotuloAria} title={rotuloAria} className={cls} style={estilo}>{conteudo}</div>;

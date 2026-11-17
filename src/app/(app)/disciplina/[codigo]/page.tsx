@@ -31,9 +31,9 @@ function Turmas({ turmas }: { turmas: Turma[] }) {
               {t.vagas != null ? `${t.matriculados ?? "?"}/${t.vagas} vagas ocupadas` : "vagas não informadas"}
             </span>
           </div>
-          <p className={`${mono} text-xs`}>
+          <p className={`${mono} flex flex-wrap gap-x-3 text-xs`}>
             {t.horarios.length ? t.horarios.map((h, i) => (
-              <span key={i} className="mr-3 whitespace-nowrap">{h.dia} {h.inicio}–{h.fim}{h.sala && <> <Link href={`/sala/${encodeURIComponent(h.sala)}`} className="underline underline-offset-2">{h.sala}</Link></>}</span>
+              <span key={i} className="whitespace-nowrap">{h.dia} {h.inicio}–{h.fim}{h.sala && <> <Link href={`/sala/${encodeURIComponent(h.sala)}`} className="underline underline-offset-2">{h.sala}</Link></>}</span>
             )) : "sem horário informado"}
             {t.horarioIncompleto && <span className="text-muted-foreground"> (horário incompleto na fonte)</span>}
           </p>

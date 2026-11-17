@@ -30,9 +30,9 @@ export default async function PaginaProfessor({ params }: { params: Promise<{ sl
               <li key={t.codigo + t.turma} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5">
                 <Link href={`/disciplina/${t.codigo}`} className={`${mono} font-semibold underline-offset-4 hover:underline`}>{t.codigo} {t.turma}</Link>
                 <span className="min-w-0 flex-1">{t.nome}</span>
-                <span className={`${mono} text-xs text-muted-foreground`}>
+                <span className={`${mono} flex flex-wrap gap-x-3 text-xs text-muted-foreground`}>
                   {t.horarios.length ? t.horarios.map((h, i) => (
-                    <span key={i} className="mr-3 whitespace-nowrap">{h.dia} {h.inicio}–{h.fim}{h.sala && <> <Link href={`/sala/${encodeURIComponent(h.sala)}`} className="underline underline-offset-2">{h.sala}</Link></>}</span>
+                    <span key={i} className="whitespace-nowrap">{h.dia} {h.inicio}–{h.fim}{h.sala && <> <Link href={`/sala/${encodeURIComponent(h.sala)}`} className="underline underline-offset-2">{h.sala}</Link></>}</span>
                   )) : "sem horário informado"}
                 </span>
               </li>

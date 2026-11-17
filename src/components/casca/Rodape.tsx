@@ -14,11 +14,11 @@ export function Rodape() {
           relação ao sistema oficial: confira sempre antes de se matricular.
         </p>
         <nav aria-label="Rodapé" className="flex gap-4">
-          <Link href="/sobre" className="underline-offset-4 hover:text-foreground hover:underline">
+          <Link href="/sobre" className="-my-2 py-2 underline-offset-4 hover:text-foreground hover:underline">
             Sobre
           </Link>
           {!sessao && !isPending && (
-            <Link href="/entrar" className="underline-offset-4 hover:text-foreground hover:underline">
+            <Link href="/entrar" className="-my-2 py-2 underline-offset-4 hover:text-foreground hover:underline">
               Entrar
             </Link>
           )}
