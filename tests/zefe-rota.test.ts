@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { MockLanguageModelV4 } from 'ai/test';
 import { conversa, db, mensagem, perfil } from '../src/db';
 import { FORA_DO_AR, MAX_HISTORICO, MAX_PASSOS, historicoParaModelo } from '../src/zefe/responder';
@@ -16,7 +16,7 @@ let n = 0;
 const chamarFerramenta = () => fluxo([{ type: 'tool-call', toolCallId: `c${n++}`, toolName: 'buscar_disciplinas', input: '{"texto":"calculo"}' }, { type: 'finish', finishReason: { unified: 'tool-calls', raw: 'tool_use' }, usage }]);
 
 const limpar = async () => { await db.delete(conversa).where(eq(conversa.user_id, U.id)); await db.delete(perfil).where(eq(perfil.user_id, U.id)); };
-const msgs = async () => (await db.select().from(mensagem).innerJoin(conversa, eq(mensagem.conversa_id, conversa.id)).where(eq(conversa.user_id, U.id))).map((r) => r.mensagem);
+const msgs = async () => (await db.select().from(mensagem).innerJoin(conversa, eq(mensagem.conversa_id, conversa.id)).where(eq(conversa.user_id, U.id)).orderBy(asc(mensagem.id))).map((r) => r.mensagem); // sem ORDER BY o .at(-1) dos testes é arbitrário
 
 beforeAll(async () => { await limpar(); await db.insert(perfil).values({ user_id: U.id, curso: 94, catalogo: 2026, modalidade: null, ingresso: 2024, semestre_atual: 5 }); });
 afterAll(limpar);
