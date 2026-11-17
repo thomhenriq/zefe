@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
-/* Tema segue o sistema (prefers-color-scheme); sem alternância manual na v1. */
-@custom-variant dark (@media (prefers-color-scheme: dark));
+/* Padrão: tema claro. O escuro só vale com <html data-theme="dark"> (sem seguir o sistema). */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme inline {
   --font-sans: var(--font-corpo), ui-sans-serif, system-ui, sans-serif;
@@ -144,8 +144,8 @@
   --naoverificado-borda: oklch(0.75 0.02 270);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+@media all {
+  :root[data-theme="dark"] {
     --background: oklch(0.19 0.012 70);
     --foreground: oklch(0.95 0.01 85);
     --card: oklch(0.23 0.014 70);
