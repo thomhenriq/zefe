@@ -102,6 +102,13 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 8: revisão = Needs fixes. (a) `ExportarIcs.tsx` da T13 entrou no commit da T8 e importava `@/dominio/ics` ainda inexistente — Ruling: resolvido por e52434c (HEAD compila); sem reescrever histórico. (b) prereq não entendido sem selo "não verificado" → fix round 1 com o executor da T8. (c) GradeSemanal ilegível a 390 px → encaminhado ao executor das correções do CQ1 (dono das regras de telas densas).
 - Task 13: revisão = Needs fixes (item com horário incompleto exportado sem marca; item sem horário some sem aviso). Fix round 1 enviado (+ UID com índice, gradeId malformado → 404).
 - Task 14: despachada (Sonnet) em paralelo.
+- Task 14: implementada em 9ee8ea4 (11 testes; suíte 123; ai 7.0.173, @ai-sdk/amazon-bedrock 5.0.142, zod 4.6.7). Desfazer não é atômico com a marcação (reivindica a ação antes; libera se o inverso falhar). Revisão em andamento.
+- Task 14: revisão = Approved com 2 Important (teste de "Minha grade" não exercita o caminho feliz + faltam testes de outro usuário; gradeId velho cria grade nova em silêncio). Fix round 1 enviado (+ listas limitadas, `periodo` aceita string).
+- Task 14: fix round 1/2 (3 addressed, 0 open; commits 9ee8ea4..2a316a0).
+- Task 14: complete (commits 4310b87..2a316a0, review clean)
+- CQ1 correções commitadas em f1f3b40 (landing com GradeSemanal real e rótulos "Exemplo", mascote em path, "Telas densas" no DESIGN.md, painel aberto só a partir de xl, GradeSemanal com abas por dia abaixo de sm, 404 raiz pt-BR, curso escolhido em /comecar, icon.svg). Reconferência (rodada 2) pedida ao mesmo revisor Opus.
+- Task 10, Task 12, Task 15: despachadas em paralelo (Sonnet), arquivos disjuntos.
+- Task 14: minor (deferred): desfazer fora de ordem restaura estado velho; desfazer `criar_bloqueio` depois de desfazer `remover_bloqueio` falha (id novo); `ver_grade`/`meu_progresso` sem URL da DAC.
 - Task 8: fix round 1/2 (prereq não entendido → "não verificado"; commit e3d817f). Item de 390 px repassado às correções do CQ1.
 - Task 8: complete (commits 1c3ffb0..e3d817f, 1 item transferido para CQ1)
 - Task 13: fix round 1/2 (4 addressed; commit f4a2799).
