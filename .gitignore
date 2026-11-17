@@ -6,3 +6,4 @@ node_modules/
 # scaffold do Next (sem isto, o tsc deixa tsbuildinfo na raiz)
 next-env.d.ts
 *.tsbuildinfo
+.avaliacao/
