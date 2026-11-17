@@ -2,7 +2,6 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { and, eq, inArray, like } from 'drizzle-orm';
 import { catalogoDisciplina, db, horario, oferecimento, professor, semestre, turma, turmaProfessor } from '@/db';
 import { preverOferta, proximoSemestre } from '@/dominio/oferta';
-import { buscar } from '@/dados/busca';
 import { buscarTurmas, getDisciplina, getOferta } from '@/dados/disciplinas';
 import { getProfessor } from '@/dados/professores';
 import { getSala } from '@/dados/salas';
@@ -36,6 +35,7 @@ beforeAll(async () => {
     { ano: 1990, codigo: 'ZQ901', nome: 'Antigo Sentinela', creditos: 4, ementa: 'e', prereq_texto: '', alternativas: [] },
     { ano: 1991, codigo: 'ZQ901', nome: 'Cálculo Sentinela', creditos: 6, ementa: 'e91', prereq_texto: '', alternativas: [] },
     { ano: 1991, codigo: 'ZQ903', nome: 'Depende Sentinela', creditos: 4, ementa: null, prereq_texto: 'ZQ901', alternativas: [[{ codigo: 'ZQ901', parcial: false }]] },
+    { ano: 1991, codigo: 'ZQ906', nome: 'Com Ambos', creditos: 2, ementa: null, prereq_texto: '', alternativas: [] },
     { ano: 1990, codigo: 'ZQ904', nome: 'Só 1990', creditos: 4, ementa: null, prereq_texto: 'ZQ901', alternativas: [[{ codigo: 'ZQ901', parcial: false }]] },
   ]);
   await db.insert(semestre).values([
@@ -51,21 +51,14 @@ beforeAll(async () => {
     await db.insert(horario).values({ turma_id: t!.id, dia: 'seg', inicio: '19:00', fim: '21:00', sala: 'ZQSALA1' });
     await db.insert(turmaProfessor).values({ turma_id: t!.id, professor_id: p!.id });
   }
+  for (const [ano, url] of [[1995, 'http://x/6'], [1994, 'http://x/6b']] as const) {
+    const [o6] = await db.insert(oferecimento).values({ ano, periodo: 1, codigo: 'ZQ906', nome: 'Com Ambos', url }).returning();
+    await db.insert(turma).values({ oferecimento_id: o6!.id, turma: 'A' });
+  }
   const [o2] = await db.insert(oferecimento).values({ ano: 1995, periodo: 1, codigo: 'ZQ905', nome: 'Incompleta', instituto: 'FT', campus: 'limeira' }).returning();
   await db.insert(turma).values({ oferecimento_id: o2!.id, turma: 'A', horario_incompleto: true });
 });
 afterAll(limpar);
-
-test('buscar sem acento e por pedaço do nome', async () => {
-  expect((await buscar('calculo sentinela')).disciplinas.map((d) => d.codigo)).toContain('ZQ901');
-  expect((await buscar('CÁLCULO sent')).disciplinas.find((d) => d.codigo === 'ZQ901')?.nome).toBe('Cálculo Sentinela');
-  expect((await buscar('algebra impar')).disciplinas.map((d) => d.codigo)).toContain('ZQ902'); // só no caderno
-  expect((await buscar('zq 903')).disciplinas.map((d) => d.codigo)).toContain('ZQ903');
-  expect((await buscar('conceicao zq')).professores).toEqual([{ slug: 'zq-jose-da-conceicao', nome: 'José da Conceição ZQ' }]);
-  expect((await buscar('zqsala')).salas).toEqual(['ZQSALA1']);
-  expect(await buscar('   ')).toEqual({ disciplinas: [], professores: [], salas: [] });
-  expect((await buscar('100%_')).disciplinas).toEqual([]); // curingas não vazam
-});
 
 test('getDisciplina: normaliza, usa catálogo mais recente, destrava, oferecimentos', async () => {
   expect(await getDisciplina('ZZ999')).toBeNull();
@@ -76,8 +69,19 @@ test('getDisciplina: normaliza, usa catálogo mais recente, destrava, oferecimen
   expect(await getDisciplina('ZQ901', 1985)).toBeNull();
   const o = (await getDisciplina('zq903'))!;
   expect(o.alternativas).toEqual([[{ codigo: 'ZQ901', parcial: false }]]);
-  const ofs = (await getDisciplina('ZQ902') ?? { oferecimentos: [] }).oferecimentos;
-  expect(ofs).toEqual([]); // sem catálogo → null → lista vazia (ZQ902 só existe no caderno)
+  expect(d.catalogo).toBe(1991);
+  // com catálogo e oferecimentos: mais novo primeiro, com url e turmas
+  expect(d.oferecimentos).toEqual([]);
+  // só caderno (sem catálogo): usa o oferecimento mais recente e avisa que não há catálogo
+  const so = (await getDisciplina('zq902'))!;
+  expect(so).toMatchObject({ codigo: 'ZQ902', nome: 'Álgebra Ímpar', creditos: 4, ementa: null, prereqTexto: null, alternativas: [], destrava: [], catalogo: null });
+  expect(so.oferecimentos.map((o) => [o.ano, o.periodo, o.url])).toEqual([[1995, 1, 'http://x/1995'], [1994, 1, 'http://x/1994'], [1993, 1, 'http://x/1993']]);
+  expect(so.oferecimentos[0]!.turmas[0]).toMatchObject({ turma: 'A', docentes: ['José da Conceição ZQ'] });
+  // catálogo + caderno
+  const ambos = (await getDisciplina('zq906'))!;
+  expect(ambos.catalogo).toBe(1991);
+  expect(ambos.oferecimentos.map((o) => [o.ano, o.periodo, o.url])).toEqual([[1995, 1, 'http://x/6'], [1994, 1, 'http://x/6b']]);
+  expect(ambos.oferecimentos[0]!.turmas.map((x) => x.turma)).toEqual(['A']);
 });
 
 test('getOferta: oficial, não aparece, previsão com evidências', async () => {

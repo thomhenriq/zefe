@@ -6,13 +6,18 @@ let pronto: Promise<void> | null = null;
 /** Cria as extensões usadas pelas consultas (idempotente; uma vez por processo). Também roda em `bun run db:extensoes`. */
 export function garantirExtensoes(): Promise<void> {
   pronto ??= (async () => {
+    try {
     const existe = async () => (await db.execute(sql`SELECT 1 FROM pg_extension WHERE extname = 'unaccent'`)).length > 0;
     if (await existe()) return; // evita o NOTICE do CREATE ... IF NOT EXISTS a cada processo
     try {
       await db.execute(sql`CREATE EXTENSION IF NOT EXISTS unaccent`);
     } catch (e) {
       // dois processos criando ao mesmo tempo podem colidir; se a extensão existe agora, está tudo certo
-      if (!(await existe())) { pronto = null; throw e; }
+      if (!(await existe())) throw e;
+    }
+    } catch (e) {
+      pronto = null; // erro transitório não pode ficar em cache
+      throw e;
     }
   })();
   return pronto;

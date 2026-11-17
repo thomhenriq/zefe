@@ -50,19 +50,28 @@ export async function getDisciplina(codigoBruto: string, catalogo?: number) {
   const [c] = await db.select().from(catalogoDisciplina)
     .where(and(eq(catalogoDisciplina.codigo, codigo), catalogo ? eq(catalogoDisciplina.ano, catalogo) : undefined))
     .orderBy(desc(catalogoDisciplina.ano)).limit(1);
-  if (!c) return null;
+
+  const ofsTodos = (await carregarDisciplinas(eq(oferecimento.codigo, codigo)))
+    .sort((a, b) => b.fonte.ano - a.fonte.ano || b.periodo - a.periodo);
+  const oferecimentos = ofsTodos.map((d) => ({ ano: d.fonte.ano, periodo: d.periodo, url: d.fonte.url, turmas: d.turmas }));
+
+  if (!c) {
+    // sem linha no catálogo: nome e créditos vêm do oferecimento mais recente; nada de pré-requisito inventado
+    const o = ofsTodos[0];
+    if (!o) return null;
+    return {
+      codigo: o.codigo, nome: o.nome, creditos: o.creditos, ementa: null as string | null, prereqTexto: null as string | null,
+      alternativas: [] as Requisito[][], destrava: [] as string[], oferecimentos, catalogo: null as number | null,
+    };
+  }
 
   const destrava = (await db.select({ codigo: catalogoDisciplina.codigo }).from(catalogoDisciplina)
     .where(and(eq(catalogoDisciplina.ano, c.ano), sql`jsonb_path_exists(${catalogoDisciplina.alternativas}, '$[*][*] ? (@.codigo == $c)', jsonb_build_object('c', ${codigo}::text))`))
     .orderBy(asc(catalogoDisciplina.codigo))).map((r) => r.codigo);
 
-  const ofs = (await carregarDisciplinas(eq(oferecimento.codigo, codigo)))
-    .sort((a, b) => b.fonte.ano - a.fonte.ano || b.periodo - a.periodo)
-    .map((d) => ({ ano: d.fonte.ano, periodo: d.periodo, url: d.fonte.url, turmas: d.turmas }));
-
   return {
     codigo: c.codigo, nome: c.nome, creditos: c.creditos, ementa: c.ementa, prereqTexto: c.prereq_texto,
-    alternativas: (c.alternativas ?? []) as Requisito[][], destrava, oferecimentos: ofs,
+    alternativas: (c.alternativas ?? []) as Requisito[][], destrava, oferecimentos, catalogo: c.ano as number | null,
   };
 }
 
