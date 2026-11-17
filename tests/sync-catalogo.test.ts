@@ -55,7 +55,7 @@ test('curso 94: grava currículo, semestre sugerido, eletivas da proposta e cat�
   const pe = await db.select().from(curriculoPropostaEletiva).where(eq(curriculoPropostaEletiva.curriculo_id, c!.id));
   expect(pe.map((p) => [p.semestre, p.creditos]).sort()).toEqual([[4, 4], [5, 2], [6, 10]]);
   const [g] = await db.select().from(curriculoEletiva).where(eq(curriculoEletiva.curriculo_id, c!.id));
-  expect(g).toMatchObject({ creditos: 16, codigos: null, verificado: false });
+  expect(g).toMatchObject({ creditos: 16, codigos: null, verificado: true });
   const [si300] = await db.select().from(catalogoDisciplina).where(and(eq(catalogoDisciplina.ano, ANO), eq(catalogoDisciplina.codigo, 'SI300')));
   expect(si300).toMatchObject({ nome: 'Programação Orientada a Objetos I', creditos: 4, alternativas: [[{ codigo: 'SI100', parcial: false }]] });
   expect(si300!.ementa).toBeTruthy();

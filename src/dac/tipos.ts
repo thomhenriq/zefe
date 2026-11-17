@@ -45,6 +45,7 @@ export function campusDoInstituto(sigla: string): Campus {
 
 export interface Requisito { codigo: string; parcial: boolean }
 export interface EntradaCatalogo { codigo: string; nome: string; creditos: number | null; ementa: string | null; prereqTexto: string; alternativas: Requisito[][] }
+// codigos: null + verificado: true = grupo aberto (qualquer disciplina fora das obrigatórias conta); verificado: false => não confiar em creditos (0 se ilegível)
 export interface GrupoEletiva { creditos: number; texto: string; codigos: string[] | null; verificado: boolean }
 export interface CurriculoPleno {
   curso: number;

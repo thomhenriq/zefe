@@ -43,7 +43,8 @@ test('currículo pleno do 94: sem modalidade, SI916 obrigatória', async () => {
   expect(m.obrigatorias).toContain('EB101');
   expect(m.obrigatorias.length).toBe(46);
   // "Qualquer disciplina oferecida pela Unicamp" não é lista de códigos
-  expect(m.eletivas).toEqual([{ creditos: 16, codigos: null, verificado: false, texto: expect.stringContaining('Qualquer disciplina oferecida pela Unicamp') }]);
+  // grupo aberto: qualquer disciplina conta
+  expect(m.eletivas).toEqual([{ creditos: 16, codigos: null, verificado: true, texto: 'O aluno deve obter 16 créditos dentre as disciplinas listadas abaixo.' }]);
 });
 
 test('curso 34: mais de uma modalidade; núcleo comum + própria; grupos com lista concreta ou padrão', async () => {
@@ -92,4 +93,14 @@ test('página sem obrigatórias → ErroParse', () => {
 test('proposta: modalidade só com observação é omitida', () => {
   const html = '<html><body><h2>AE - A</h2><h3>1º Semestre - 4 créditos</h3><p><strong><a>HL121 (4)</a></strong></p><h2>AF - B</h2><p>Embora conste...</p></body></html>';
   expect(parseProposta(html).map((p) => p.modalidade)).toEqual(['AE']);
+});
+
+test('obrigatórias sob "Disciplinas Obrigatórias" sem modalidade não são descartadas', () => {
+  const html = '<html><body><h2>9 - X - Currículo Pleno</h2><h3>Disciplinas Obrigatórias</h3><table class="curriculo"><tr><td><a>AB100</a></td><td>30</td><td>2</td><td>X</td></tr></table></body></html>';
+  expect(parseCurriculoPleno(html, 9).modalidades[0]!.obrigatorias).toEqual(['AB100']);
+});
+
+test('proposta com Observação depois dos semestres não quebra', () => {
+  const html = '<html><body><h2>11G - X</h2><h3>1º Semestre - 4 créditos</h3><p><strong><a>EE100 (4)</a></strong></p><h3>Observação</h3><p>texto</p></body></html>';
+  expect(parseProposta(html)[0]!.semestres[0]!.codigos).toEqual(['EE100']);
 });

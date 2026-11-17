@@ -42,7 +42,10 @@ export function parseProposta(html: string): Proposta[] {
       continue;
     }
     if (!atual) continue;
-    if (/^©|^Observação/.test(l)) atual = null;
+    if (/^©|^Observação/.test(l)) {
+      atual = null;
+      continue;
+    }
     const cod = /^([A-Z]{1,2} ?\d{3}) \(\d+\)$/.exec(l);
     if (cod) atual.codigos.push(semEspaco(cod[1]!));
     const el = /^(\d+) créditos? eletivos?$/.exec(l);
@@ -61,6 +64,9 @@ function fechar(g: { texto: string; creditos: number | null; linhas: { codigo: s
   const concreto = g.linhas.length > 0 && g.linhas.every((l) => RE_CODIGO.test(l.codigo));
   const naoCodigos = g.linhas.filter((l) => !RE_CODIGO.test(l.codigo)).map((l) => l.desc || l.codigo);
   const ok = concreto && g.creditos != null;
+  // shortcut: só esta redação exata de "aberto"; outras regras de qualquer-disciplina ficam não verificadas, ampliar com fixtures de outros cursos
+  const aberto = g.creditos != null && g.linhas.length === 1 && g.linhas[0]!.codigo === '-----' && /^qualquer disciplina oferecida pela unicamp\.?$/.test(g.linhas[0]!.desc.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase());
+  if (aberto) return { creditos: g.creditos!, texto: g.texto, codigos: null, verificado: true };
   return {
     creditos: g.creditos ?? 0,
     texto: ok ? g.texto : [g.texto, ...naoCodigos].filter(Boolean).join('\n'),
@@ -114,7 +120,7 @@ export function parseCurriculoPleno(html: string, curso: number): CurriculoPleno
         });
         if (secao === 'eletivas' && grupo) grupo.linhas.push(...linhas);
         else if (secao === 'nucleo') comum.obrig.push(...linhas.map((l) => semEspaco(l.codigo)));
-        else if (secao === 'obrig' && alvo()) alvo()!.obrigatorias.push(...linhas.map((l) => semEspaco(l.codigo)));
+        else if (secao === 'obrig') (alvo()?.obrigatorias ?? comum.obrig).push(...linhas.map((l) => semEspaco(l.codigo)));
       } else walk(e);
     }
   };
