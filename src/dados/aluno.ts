@@ -11,6 +11,9 @@ import type { Requisito } from "@/dac/tipos";
 export type Perfil = typeof perfil.$inferSelect;
 export type Estado = "cursada" | "cursando";
 
+/** Perfil incompleto ou currículo ainda não carregado: a tela explica; qualquer outro erro é falha de verdade. */
+export class SemCurriculo extends Error {}
+
 export const ANO_INGRESSO_MIN = 2020;
 
 export const perfilSchema = z.object({
@@ -88,12 +91,12 @@ export async function marcarHistorico(userId: string, codigo: string, estado: Es
 /** Integralização do aluno com dados do banco; perfil ou currículo ausente → erro (o chamador já exige onboarding). */
 export async function getIntegralizacao(userId: string): Promise<Integralizacao> {
   const p = await getPerfil(userId);
-  if (!p || p.curso == null || p.catalogo == null) throw new Error("perfil incompleto");
+  if (!p || p.curso == null || p.catalogo == null) throw new SemCurriculo("perfil incompleto");
   const [cur] = await db
     .select({ id: curriculo.id })
     .from(curriculo)
     .where(and(eq(curriculo.curso, p.curso), eq(curriculo.ano, p.catalogo), p.modalidade === null ? isNull(curriculo.modalidade) : eq(curriculo.modalidade, p.modalidade)));
-  if (!cur) throw new Error("currículo não carregado");
+  if (!cur) throw new SemCurriculo("currículo não carregado");
 
   const [obrig, eletivas, propostaEletivas, hist, grades] = await Promise.all([
     db.select().from(curriculoObrigatoria).where(eq(curriculoObrigatoria.curriculo_id, cur.id)).orderBy(asc(curriculoObrigatoria.codigo)),

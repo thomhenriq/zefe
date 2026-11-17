@@ -66,7 +66,7 @@ test('grupo aberto do 94: eletiva cursada conta; ordem; fora do currículo', asy
   e.historico.set('XX999', 'cursada');
   e.creditosDe = (c) => (c === 'XX999' ? 4 : null);
   const r = calcularIntegralizacao(e);
-  expect(r.grupos[0]).toMatchObject({ verificado: true, feitos: 4, codigosContados: ['XX999'] });
+  expect(r.grupos[0]).toMatchObject({ verificado: true, aberto: true, feitos: 4, codigosContados: ['XX999'] });
   expect(r.creditos.eletivas).toMatchObject({ feitos: 4, total: 16, naoVerificado: 0 });
   e.eletivas = [];
   expect(calcularIntegralizacao(e).foraDoCurriculo).toEqual(['XX999']);
@@ -91,7 +91,7 @@ test('Review Focus 3: grupo não verificado não soma em feitos', async () => {
   e.historico.set('AA1', 'cursada');
   e.creditosDe = () => 4;
   const r = calcularIntegralizacao(e);
-  expect(r.grupos[0]).toMatchObject({ verificado: false, feitos: 0 });
+  expect(r.grupos[0]).toMatchObject({ verificado: false, aberto: false, feitos: 0 });
   expect(r.creditos.eletivas.feitos).toBe(0);
   expect(r.creditos.eletivas.naoVerificado).toBeGreaterThan(0);
   expect(r.foraDoCurriculo).toEqual([]);

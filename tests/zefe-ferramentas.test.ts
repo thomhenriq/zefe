@@ -235,7 +235,7 @@ describe('ferramentas do Zefe', () => {
         { codigo: 'B1', nome: 'b', creditos: 4, semestreSugerido: 2, estado: 'faltando', faltamPrereq: [], prereqDesconhecido: false },
         { codigo: 'C1', nome: 'c', creditos: 2, semestreSugerido: 3, estado: 'travada', faltamPrereq: ['B1'], prereqDesconhecido: false },
       ],
-      grupos: [{ texto: 'Eletivas X', creditos: 8, feitos: 0, emAndamento: 0, excedente: 0, verificado: false, codigosContados: [] }, { texto: 'Eletivas Y', creditos: 4, feitos: 4, emAndamento: 0, excedente: 0, verificado: true, codigosContados: ['Z1'] }],
+      grupos: [{ texto: 'Eletivas X', creditos: 8, feitos: 0, emAndamento: 0, excedente: 0, verificado: false, aberto: false, codigosContados: [] }, { texto: 'Eletivas Y', creditos: 4, feitos: 4, emAndamento: 0, excedente: 0, verificado: true, aberto: false, codigosContados: ['Z1'] }],
       foraDoCurriculo: [], naoClassificadas: ['Q1'],
       creditos: { obrigatorias: { feitos: 4, total: 10, emAndamento: 0 }, eletivas: { feitos: 4, total: 12, naoVerificado: 8, emAndamento: 0 } },
     });

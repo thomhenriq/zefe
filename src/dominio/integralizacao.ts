@@ -21,7 +21,8 @@ export interface Integralizacao {
     faltamPrereq: string[]; // só quando travada: requisitos que faltam na alternativa mais próxima
     prereqDesconhecido: boolean; // sem catálogo: a tela diz "pré-requisito não verificado"; nunca fica travada por isso
   }[];
-  grupos: { texto: string; creditos: number; feitos: number; emAndamento: number; excedente: number; verificado: boolean; codigosContados: string[] }[];
+  /** `aberto`: grupo verificado sem lista de códigos (qualquer disciplina oferecida pela Unicamp). */
+  grupos: { texto: string; creditos: number; feitos: number; emAndamento: number; excedente: number; verificado: boolean; aberto: boolean; codigosContados: string[] }[];
   /** Sem lista: não obrigatória e fora de qualquer grupo verificado, e não existe grupo não verificado que possa abrigá-la. */
   foraDoCurriculo: string[];
   /** Idem, mas existe grupo não verificado (conteúdo desconhecido): não dá para afirmar que está fora do currículo. */
@@ -54,7 +55,7 @@ export function calcularIntegralizacao(e: EntradaIntegralizacao): Integralizacao
 
   const obrig = new Set(e.obrigatorias.map((o) => o.codigo));
   const grupos = e.eletivas.map((g) => ({
-    texto: g.texto, creditos: g.creditos, verificado: g.verificado, feitos: 0, emAndamento: 0, excedente: 0, codigosContados: [] as string[],
+    texto: g.texto, creditos: g.creditos, verificado: g.verificado, aberto: g.verificado && g.codigos === null, feitos: 0, emAndamento: 0, excedente: 0, codigosContados: [] as string[],
   }));
   const foraDoCurriculo: string[] = [];
   const naoClassificadas: string[] = [];

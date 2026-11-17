@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { exigirUsuario } from "@/sessao";
-import { getIntegralizacao } from "@/dados/aluno";
-import { gruposAbertos } from "@/dados/arvore";
+import { getIntegralizacao, SemCurriculo } from "@/dados/aluno";
+import { nomeDoCurso } from "@/dados/arvore";
 import { Pagina } from "@/components/consulta";
 import { Button } from "@/components/ui/button";
 import { AvisoBadge } from "@/components/ui/estado";
@@ -16,7 +16,7 @@ const Codigos = ({ cs }: { cs: string[] }) => cs.map((c, i) => <span key={c}>{i 
 
 export default async function PaginaArvore() {
   const u = await exigirUsuario();
-  const integ = await getIntegralizacao(u.id).catch(() => null);
+  const integ = await getIntegralizacao(u.id).catch((e) => { if (e instanceof SemCurriculo) return null; throw e; });
   if (!integ) {
     return (
       <Pagina>
@@ -28,7 +28,7 @@ export default async function PaginaArvore() {
       </Pagina>
     );
   }
-  const abertos = await gruposAbertos(u.perfil);
+  const nomeCurso = await nomeDoCurso(u.perfil.curso);
   const { creditos: c, grupos } = integ;
   const totalFeitos = c.obrigatorias.feitos + c.eletivas.feitos;
   const totalAndamento = c.obrigatorias.emAndamento + c.eletivas.emAndamento;
@@ -38,7 +38,7 @@ export default async function PaginaArvore() {
     <Pagina>
       <header className="space-y-2">
         <h1>Árvore de integralização</h1>
-        <p className="text-sm text-muted-foreground">Curso {u.perfil.curso}{u.perfil.modalidade ? `, modalidade ${u.perfil.modalidade}` : ""} · catálogo {u.perfil.catalogo}</p>
+        <p className="text-sm text-muted-foreground">{nomeCurso ?? `Curso ${u.perfil.curso}`}{u.perfil.modalidade ? `, modalidade ${u.perfil.modalidade}` : ""} · catálogo {u.perfil.catalogo}</p>
         <p className="flex max-w-prose items-start gap-2 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <span><strong>Histórico declarado por você.</strong> Equivalências não são calculadas: se cumpriu por equivalência, marque como cursada. Clique numa disciplina para corrigir.</span>
@@ -52,13 +52,13 @@ export default async function PaginaArvore() {
         <div className="space-y-4">
           <h3 className="text-base">Grupos de eletivas</h3>
           {grupos.map((g, i) => {
-            const aberto = abertos[i];
+            const aberto = g.aberto;
             const rotulo = `Grupo ${i + 1}`;
             if (!g.verificado) {
               return (
                 <div key={i} className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium">{rotulo}</span><AvisoBadge nivel="naoverificado" /></div>
-                  <details className="text-xs text-muted-foreground">
+                  <details open className="text-xs text-muted-foreground">
                     <summary className="cursor-pointer">Texto do catálogo; os créditos deste grupo não entram na conta</summary>
                     <p className="mt-1 max-w-prose whitespace-pre-line">{g.texto}</p>
                   </details>
@@ -73,7 +73,7 @@ export default async function PaginaArvore() {
           })}
         </div>
         {integ.naoClassificadas.length > 0 && (
-          <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><AvisoBadge nivel="naoverificado" rotulo="Não classificadas" /> Cursadas que podem caber em um grupo não verificado: <Codigos cs={integ.naoClassificadas} />.</p>
+          <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><AvisoBadge nivel="naoverificado" rotulo="Não classificadas" /> Marcadas (cursadas ou cursando) que podem caber em um grupo não verificado: <Codigos cs={integ.naoClassificadas} />.</p>
         )}
         {integ.foraDoCurriculo.length > 0 && (
           <p className="text-xs text-muted-foreground">Marcadas no histórico, mas fora das obrigatórias e dos grupos verificados: <Codigos cs={integ.foraDoCurriculo} />.</p>
