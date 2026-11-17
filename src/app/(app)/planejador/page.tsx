@@ -24,6 +24,7 @@ type Params = Record<string, string | string[] | undefined>;
 const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
 const CAMPO = "h-8 rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 const H2 = "font-heading text-lg font-semibold";
+const rotulosEvidencias = (evs: { ano: number; periodo: number }[]) => evs.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ");
 const SECAO = "space-y-3 rounded-xl border bg-card p-4";
 const DIAS = [["seg", "Segunda"], ["ter", "Terça"], ["qua", "Quarta"], ["qui", "Quinta"], ["sex", "Sexta"], ["sab", "Sábado"]] as const;
 
@@ -31,7 +32,8 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   const u = await exigirUsuario();
   const sp = await searchParams;
   const prox = proximoSemestre();
-  const ano = Number(um(sp.ano)) || prox.ano;
+  const anoQ = Number(um(sp.ano));
+  const ano = Number.isInteger(anoQ) && anoQ >= 1990 && anoQ <= 2100 ? anoQ : prox.ano;
   const periodo = (Number(um(sp.periodo)) === 2 ? 2 : Number(um(sp.periodo)) === 1 ? 1 : ano === prox.ano ? prox.periodo : 1) as 1 | 2;
   const sem = { ano, periodo };
   const [semestres, grades] = await Promise.all([listarSemestres(), listarGrades(u.id, ano, periodo)]);
@@ -132,7 +134,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
                 {grade.itens.map((i) => {
                   const o = ofertas.get(i.codigo);
                   const turmas = o?.encontrada ? (o.tipo === "oficial" ? o.disciplina : o.base).turmas.filter((t) => t.turma !== i.turma) : [];
-                  const ev = o?.encontrada && o.tipo === "previsao" ? o.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ") : "";
+                  const ev = o?.encontrada && o.tipo === "previsao" ? rotulosEvidencias(o.evidencias) : "";
                   return (
                     <li key={i.codigo} className="space-y-1.5 py-3 text-sm first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -199,7 +201,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
               return (
                 <div className="space-y-2">
                   <p className="flex flex-wrap items-center gap-2 text-sm"><span className="font-mono font-semibold">{disc.codigo}</span>{disc.nome}<span className="text-muted-foreground">{disc.creditos ?? "?"} cr.</span>
-                    {ofertaD.tipo === "previsao" && <><AvisoBadge nivel="previsao" /><span className="text-muted-foreground">baseada em {ofertaD.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ")}</span></>}</p>
+                    {ofertaD.tipo === "previsao" && <><AvisoBadge nivel="previsao" /><span className="text-muted-foreground">baseada em {rotulosEvidencias(ofertaD.evidencias)}</span></>}</p>
                   <ul className="space-y-1">
                     {disc.turmas.map((t) => (
                       <li key={t.turma}><FormAcao acao={adicionarAcao} className="flex flex-wrap items-center gap-2 text-sm">

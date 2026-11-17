@@ -32,7 +32,7 @@ for (const codigo of proposta?.find((p) => p.semestre === 4)?.codigos ?? []) {
   if (!o.encontrada) continue;
   const turma = (o.tipo === "oficial" ? o.disciplina : o.base).turmas[0]?.turma;
   if (!turma) continue;
-  try { await alterarGrade(u.id, gradeId, { adicionar: [{ codigo, turma }] }); adicionadas.push(`${codigo} ${turma}`); } catch { /* sem oferta válida: pula */ }
+  try { await alterarGrade(u.id, gradeId, { adicionar: [{ codigo, turma }] }); adicionadas.push(`${codigo} ${turma}`); } catch (e) { if (!(e instanceof Error && e.message.includes("não existe"))) throw e; /* turma sem oferta válida: pula */ }
 }
 console.log(`grade "Minha grade" ${periodo}S/${ano} (${gradeId}): ${adicionadas.join(", ") || "nenhuma disciplina com oferta"}`);
 process.exit(0);

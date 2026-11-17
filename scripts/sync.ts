@@ -4,6 +4,7 @@ import { sincronizarCatalogo } from '@/dac/sync-catalogo';
 import { db } from '@/db';
 
 const [cmd, ano, a3, a4] = Bun.argv.slice(2);
+if (ano && !/^\d{4}$/.test(ano)) { console.error('ano inválido (use 4 dígitos)'); process.exit(1); }
 let erros: string[];
 if (cmd === 'caderno' && ano && (a3 === '1' || a3 === '2')) {
   ({ erros } = await sincronizarCaderno(db, criarBaixar(), Number(ano), Number(a3) as 1 | 2, { institutos: a4?.split(','), log: console.log }));

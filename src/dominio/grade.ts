@@ -63,6 +63,7 @@ export function checarGrade(itens: ItemGrade[], bloqueios: Bloqueio[], opts: Opc
     for (let i = 0; i < evs.length; i++) {
       for (let j = i + 1; j < evs.length; j++) {
         const a = evs[i]!, b = evs[j]!;
+        if (!a.bloqueio && !b.bloqueio && a.codigo === b.codigo) continue; // linhas repetidas da mesma disciplina
         if (a.bloqueio && b.bloqueio) continue; // bloqueios entre si não são problema da grade
         if (b.inicio < a.fim) {
           const quais = [a, b].map((e) => (e.bloqueio ? `o bloqueio "${e.nome}"` : e.codigo));

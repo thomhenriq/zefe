@@ -16,6 +16,12 @@ describe('checarGrade', () => {
     expect(r.achados[0]!.codigos.sort()).toEqual(['AA001', 'BB002']);
   });
 
+  test('horários sobrepostos da mesma disciplina não conflitam consigo', () => {
+    const it = item('AA001', 'ter', '19:00', '21:00');
+    it.horarios.push({ dia: 'ter', inicio: '20:00', fim: '22:00', sala: 'Y' });
+    expect(checarGrade([it], []).achados).toEqual([]);
+  });
+
   test('aulas coladas (fim = início) não conflitam', () => {
     const r = checarGrade([item('AA001', 'ter', '19:00', '21:00'), item('BB002', 'ter', '21:00', '23:00')], []);
     expect(r.achados).toEqual([]);
