@@ -119,6 +119,11 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 15: fix round 1 em 49f6e2c (previsão sem vagas/matriculados na ferramenta e no cartão; prompt v2026-11-17.3; teste de posse com 404 exato). Orquestrador: `bun test` 160/160. Re-revisão: todos addressed.
 - Task 15: complete (commits 3801842..49f6e2c, review clean)
 - Task 15: minor (deferred): cartão esmaecido após desfazer some ao recarregar; erro de modelo e throttling mostram a mesma mensagem; páginas de `(app)` ficam dinâmicas por ler a sessão no layout.
+- Task 17a: commitada em bf2d8b7 (`bun run shots` → 52 capturas, login do demo pelo OTP do banco, escuro por `data-theme`). Revisão = Approved.
+- Task 17a: complete (commits a3b4ae7..bf2d8b7, review clean)
+- Task 17a: minor (deferred): capturas em dev mostram o indicador do Next ("1 issue" em /planejador → mandado ao polimento); fallback do chromium só Linux sem comentário `// shortcut:`. Para o CQ2 o app roda em modo produção (`bun run build && bun run start`).
+- Catálogo 2020: correção em 4ac47ab (índice de 2020 fica em cursos.html; `parseCursos` lê os dois formatos). Sync real: 64/66 cursos, 116 currículos 2020, curso 94 com 8 semestres de proposta; **0 disciplinas do catálogo 2020** (em 2020 elas ficam em `coordenadorias/<NNNN>/<NNNN>.html`, outro formato — não feito). Revisão = Approved. Pendência: para aluno de catálogo 2020, pré-requisitos aparecem "não verificado" (correto), mas obrigatória sem crédito em catálogo nem em oferecimento entra com 0 crédito sem rótulo (`aluno.ts` `?? 0`).
+- Task 17c (Haiku): carga do caderno 2023/2 → 2020/1 em segundo plano.
 - Task 16: despachada (Sonnet). Rodadas completas só depois que a carga gravar 2026/1 completo; limite: 4 rodadas Nova 2 Lite + 1 Nova Pro.
 - Task 12: minor (deferred → T17 polimento): `?ano=2027.5`/`1e10` sem validação pode dar 500; `catch {}` genérico em scripts/demo.ts; botão .ics e botões ghost parecem apagados no escuro; "busca lateral" ficou como seção abaixo da lista; string "previsão baseada em" repetida 3×.
 - Task 14: minor (deferred): desfazer fora de ordem restaura estado velho; desfazer `criar_bloqueio` depois de desfazer `remover_bloqueio` falha (id novo); `ver_grade`/`meu_progresso` sem URL da DAC.
@@ -157,7 +162,7 @@ Commit 3801842 (do aluno): tema claro é o padrão; o app não segue mais o tema
 - (T3) Códigos guardados sem espaço (`F 128` → `F128`). Páginas de disciplina do catálogo sincronizadas só para os prefixos que aparecem nos currículos.
 - (Ruling 8) "Qualquer disciplina oferecida pela Unicamp" conta como grupo aberto verificado: toda disciplina cursada fora das obrigatórias soma nas eletivas.
 - (Ruling 9) Mascote: mantido o SVG do código. Há duas PNGs em `public/` (origem não registrada); a `mascote-zefe.png` tem o emblema da Unicamp no lenço — se for usar, tirar o emblema.
-- (T4) Catálogo 2020 não carrega (índice com outro layout → `ErroParse`); quem ingressou em 2020 precisa escolher outro catálogo no cadastro.
+- (T4) Catálogo 2020: cursos, currículos e propostas carregam (correção 4ac47ab), mas as páginas de disciplina de 2020 têm outro endereço/formato e não foram lidas — para catálogo 2020 a árvore mostra pré-requisitos como "não verificado" e créditos podem faltar.
 - (T3) Cursos 36 e 87 aparecem no índice do catálogo 2026 mas `curriculo.html` dá 404 — ficam de fora.
 
 ## Bloqueios
