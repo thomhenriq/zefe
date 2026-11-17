@@ -11,12 +11,14 @@
     "db:up": "docker compose up -d",
     "db:push": "bun --env-file=.env.local --bun node_modules/drizzle-kit/bin.cjs push",
     "sync": "bun scripts/sync.ts",
+    "db:extensoes": "bun --env-file=.env.local scripts/extensoes.ts",
     "demo": "bun scripts/demo.ts",
     "shots": "bun scripts/shots.ts",
     "zefe:avaliar": "bun src/zefe/avaliar.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "better-auth": "^1.7.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
@@ -27,7 +29,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "shadcn": "^4.23.0",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

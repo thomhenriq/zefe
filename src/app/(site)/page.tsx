@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getUsuario } from "@/sessao";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EstadoBadge, AvisoBadge, type EstadoDisciplina } from "@/components/ui/estado";
@@ -18,7 +20,8 @@ const blocos: [number, number, number, string][] = [
 
 const estados: EstadoDisciplina[] = ["cursada", "cursando", "planejada", "faltando", "travada"];
 
-export default function Apresentacao() {
+export default async function Apresentacao() {
+  if (await getUsuario()) redirect("/planejador");
   return (
     <>
       <section className="px-3 pt-3 lg:px-4 lg:pt-4">
