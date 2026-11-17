@@ -11,6 +11,12 @@ describe('ação fantasma', () => {
   test('negação, presente e pergunta não disparam', () => {
     for (const t of ['Não adicionei nada ainda.', 'Eu não consegui, então não troquei a turma.', 'A grade inclui SI702.', 'Quer que eu adicione SI702?', 'Posso remover se você pedir.', 'Nunca removi nada.']) expect(afirmaAlteracao(t)).toBe(false);
   });
+  test('negação em outra oração da mesma frase não esconde a afirmação', () => {
+    for (const t of ['Sem conflitos, adicionei SI702.', 'Não há conflito, então adicionei SI702.', 'Não consegui adicionar; adicionei outra.']) expect(afirmaAlteracao(t)).toBe(true);
+  });
+  test('ferramenta de leitura com acaoId inventado não conta', () => {
+    expect(acaoFantasma('Adicionei X', [{ type: 'tool-ver_grade', state: 'output-available', output: { acaoId: 1 } }])).toBe(true);
+  });
   test('negação de outra frase não vale', () => {
     expect(afirmaAlteracao('Não achei conflito. Adicionei SI702.')).toBe(true);
   });
