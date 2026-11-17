@@ -114,6 +114,12 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 10: minor (deferred): grupo não verificado e expiração de sessão não exercitados na tela (o curso 94 não tem grupo não verificado).
 - Task 12: implementada em d83c628 (planejador completo; Playwright: grade 1S/2027 por previsão com 4 disciplinas + bloqueio 13:30–17:30, troca de turma, conflitos, .ics baixado). Grade do demo ficou vazia (sem oferta das disciplinas do 4º semestre na base até a carga de 2025 chegar). Revisão = Approved.
 - Task 12: complete (commits 6b83c92..d83c628, review clean)
+- Task 15: implementada em dbbf970 (157 testes; build ok; ~8 chamadas Bedrock na verificação: "o que falta…", "adiciona SI702 A" (previsão 1S/2027), desfazer voltou o banco, usuário não liberado vê "em breve" e recebe 403). `responder(...)`/`responderCompleto(...)` reutilizáveis para a T16; `VERSAO_PROMPT` 2026-11-17.2. Revisão = Needs fixes (previsão mostrava vagas/matriculados do ano-base como se fossem do semestre-alvo — dado inventado; teste de posse da conversa não exercitava a checagem). Fix round 1 enviado (+ cartão desatualizado após desfazer, erro de ferramenta não vaza ao cliente, histórico sem 2 turnos de usuário seguidos, desfazer atrás da lista de liberados).
+- Task 17a (Haiku: scripts/shots.ts + README): despachada.
+- Task 15: fix round 1 em 49f6e2c (previsão sem vagas/matriculados na ferramenta e no cartão; prompt v2026-11-17.3; teste de posse com 404 exato). Orquestrador: `bun test` 160/160. Re-revisão: todos addressed.
+- Task 15: complete (commits 3801842..49f6e2c, review clean)
+- Task 15: minor (deferred): cartão esmaecido após desfazer some ao recarregar; erro de modelo e throttling mostram a mesma mensagem; páginas de `(app)` ficam dinâmicas por ler a sessão no layout.
+- Task 16: despachada (Sonnet). Rodadas completas só depois que a carga gravar 2026/1 completo; limite: 4 rodadas Nova 2 Lite + 1 Nova Pro.
 - Task 12: minor (deferred → T17 polimento): `?ano=2027.5`/`1e10` sem validação pode dar 500; `catch {}` genérico em scripts/demo.ts; botão .ics e botões ghost parecem apagados no escuro; "busca lateral" ficou como seção abaixo da lista; string "previsão baseada em" repetida 3×.
 - Task 14: minor (deferred): desfazer fora de ordem restaura estado velho; desfazer `criar_bloqueio` depois de desfazer `remover_bloqueio` falha (id novo); `ver_grade`/`meu_progresso` sem URL da DAC.
 - Task 8: fix round 1/2 (prereq não entendido → "não verificado"; commit e3d817f). Item de 390 px repassado às correções do CQ1.
@@ -122,6 +128,10 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 13: complete (commits 7aeb3c7..f4a2799, review clean). Pendência para T12: montar `<ExportarIcs gradeId ano periodo foraDoCalendario={foraDoCalendario(grade.itens)} />`.
 - Task 8: minor (deferred): `/disciplina/zz999` faz 307 para `ZZ999` antes do 404; página de sala faz um `getSala` por semestre candidato; sem testes de página.
 - Task 9: minor (deferred): obrigatória sem crédito em nenhuma fonte vira `creditos: 0` sem sinalizar; `propostaEletivas` não usado no cálculo.
+
+## Mudança do aluno (17/11 14:31)
+
+Commit 3801842 (do aluno): tema claro é o padrão; o app não segue mais o tema do sistema. Escuro só com `<html data-theme="dark">`. Consequência: capturas de escuro (`scripts/shots.ts`, briefs de CQ) põem `data-theme="dark"` no `<html>` em vez de emular `prefers-color-scheme`; o claro é o tema principal a julgar; botão de tema é opcional. Não reverter.
 
 ## Carga de dados (T4)
 
