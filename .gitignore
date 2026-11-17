@@ -2,3 +2,7 @@
 .env.local
 node_modules/
 .next/
+.superpowers/
+# scaffold do Next (sem isto, o tsc deixa tsbuildinfo na raiz)
+next-env.d.ts
+*.tsbuildinfo

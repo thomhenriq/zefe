@@ -1,0 +1,22 @@
+name: zefe
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5435:5432"
+    environment:
+      POSTGRES_USER: zefe
+      POSTGRES_PASSWORD: zefe
+      POSTGRES_DB: zefe
+    volumes:
+      - zefe_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zefe -d zefe"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  zefe_pg:

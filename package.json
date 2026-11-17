@@ -1,0 +1,46 @@
+{
+  "name": "zefe",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4100 -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start -p 4100 -H 127.0.0.1",
+    "lint": "eslint",
+    "test": "bun test",
+    "db:up": "docker compose up -d",
+    "db:push": "bun --env-file=.env.local --bun node_modules/drizzle-kit/bin.cjs push",
+    "sync": "bun scripts/sync.ts",
+    "demo": "bun scripts/demo.ts",
+    "shots": "bun scripts/shots.ts",
+    "zefe:avaliar": "bun src/zefe/avaliar.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4",
+    "next": "16.4.6",
+    "postgres": "^4.1.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/bun": "^1.4.4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5"
+  },
+  "packageManager": "bun@1.4.0",
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
+}
