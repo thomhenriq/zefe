@@ -65,6 +65,24 @@ Para retomar: reler design, plano e este arquivo; `git log`; continuar da primei
 - Task 5: complete (commits 6b9267a..2fc3a7e, 1 parked)
 - Task 5: minor (deferred): classe `border` duplicada em /sobre; no celular o balão do mascote cobre o selo "Planejada" do hero.
 - Task 6: despachada (Sonnet). `/entrar` e `/comecar` ficam em `src/app/(site)/` (mesmas URLs). A grade do usuário demo fica para depois da T11.
+- Task 6: implementada em db24af1 (`bun test` 54/54; login + cadastro verificados com Playwright, 23 linhas de histórico pré-marcadas; demo idempotente). Problema: `bun run db:push` trava pedindo para truncar `curriculo` (drizzle-kit não enxerga o UNIQUE NULLS NOT DISTINCT que já existe) — tabelas do better-auth aplicadas via `drizzle-kit export` + psql. `exigirUsuario` em `src/sessao.ts`. Revisão em andamento.
+- Task 6: revisão = Needs fixes (db:push quebrado; modalidade inválida salva em silêncio). Fix round 1 enviado (+ botão Sair, tratamento de erro no formulário, rótulos alinhados).
+- Task 6: Ruling: entrada `db:extensoes` no package.json do commit da T6 fica — o arquivo chega com a T7 — custo: script quebrado se a T7 falhar.
+- Task 6: minor (deferred): rate limit do better-auth só em produção (3 tentativas e 300 s de validade valem); `/` redireciona logado para `/planejador`, que só existe a partir da T12.
+- Task 6: fix round 1 em ddfe8fa (db:push com 2 índices únicos parciais, roda sem prompt; modalidade validada; botão Sair). Re-revisão em andamento.
+- Task 6: fix round 1/2 (3 addressed, 0 open; commits 90a9f65..ddfe8fa).
+- Task 6: complete (commits dbfa094..ddfe8fa, review clean)
+- Task 6: minor (deferred): `db:push` sempre reaplica `ALTER TABLE turma ... reservas SET DEFAULT '{}'` (idempotente, sem prompt — anotar no README); `signOut` sem try/catch.
+- Task 7: revisão = Needs fixes (getDisciplina nula para código só no caderno; sem teste de oferecimentos; chave duplicada no package.json; promessa rejeitada presa em extensoes.ts). Fix round 1 enviado.
+- Task 7: implementada em 90a9f65 (10 testes; build ok; só `unaccent`, criada sob demanda por `garantirExtensoes()`/`bun run db:extensoes`). Revisão em andamento.
+- Task 7: fix round 1/2 (5 addressed, 0 open; commits ddfe8fa..ff84599). `getDisciplina` agora cai no oferecimento mais recente quando falta catálogo (`catalogo: null`).
+- Task 7: complete (commits db24af1..ff84599, review clean)
+- Task 7: minor (deferred): `getDisciplina(codigo, anoInexistente)` devolve o fallback em vez de null quando há oferecimentos; "não aparece no caderno" num semestre publicado mas carregado parcialmente soa definitivo.
+- Task 11: implementada em c586d56 (17 testes; suíte 74; build ok). Revisão: Approved.
+- Task 11: complete (commits ff84599..c586d56, review clean)
+- Task 11: minor (deferred → T12): dois horários sobrepostos da MESMA disciplina viram conflito consigo mesma. (deferred → T14): `alterarGrade`/`excluirBloqueio` não devolvem o estado anterior — o desfazer precisa ler antes. (deferred): `principal` único só por código (corrida em `criarGrade`/`definirPrincipal`); N+1 consultas; faltam testes Barão→Limeira e 89 min.
+- Task 8: despachada (Sonnet). Task 9: despachada (Sonnet) em paralelo.
+- Task 7: despachada (Sonnet) em paralelo com T6 (arquivos disjuntos; T7 proibida de mexer em schema.ts/index.ts).
 - Task 5: minor (deferred): cópia da landing promete "4 perguntas e árvore preenchida" antes de T6/T10 existirem (fica verdadeiro depois); busca duplicada no topo e na barra inferior; sem botão de tema (segue o sistema).
 
 7. Ruling: T3 e T5 rodam em paralelo (arquivos disjuntos: `src/dac`/`scripts`/`tests` × `src/app`/`src/components`/docs de design), cada um faz `git add` só dos próprios arquivos — a noite é curta e a carga de dados também corre em paralelo — custo se errado: conflito em package.json/bun.lock, resolvível.
@@ -75,6 +93,8 @@ Para retomar: reler design, plano e este arquivo; `git log`; continuar da primei
 - Catálogo 2026 carregado pela T3 (64/66 cursos; 36 e 87 = 404 reais; curso 7 AF sem proposta).
 
 ## Controle de qualidade
+
+- CQ1 (Opus, revisor novo): despachado depois de T5+T6 completas (HEAD ddfe8fa + T7/T11 em andamento). App em dev em 127.0.0.1:4100 iniciado pelo orquestrador (log no scratchpad).
 
 ## Decisões a conferir
 
