@@ -1,0 +1,4 @@
+.shots/
+.env.local
+node_modules/
+.next/
