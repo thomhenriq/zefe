@@ -1,6 +1,6 @@
 # Zefe — o sucessor do GDE, com um assistente dentro
 
-Data: 2026-11-16 · Status: rascunho para aprovação · Pasta: `~/Documents/projects/zefe`
+Data: 2026-11-16 · Status: aprovado pelo aluno em 2026-11-16, com as mudanças já incorporadas · Pasta: `~/Documents/projects/zefe`
 
 Marcação usada neste documento: **(dele)** = decidido pelo aluno na conversa; **(minha)** = decisão minha, a conferir.
 
@@ -24,18 +24,19 @@ Funções do GDE que continuam **(dele)**:
 2. **Árvore de integralização** — o que já foi cursado, o que falta, o que está travado por pré-requisito.
 3. **Busca** — disciplinas, professores, salas, oferecimentos.
 4. **Páginas** de disciplina, professor e sala.
-5. **Avaliações** de professor/disciplina.
-6. **Exportar a grade para o calendário**.
+5. **Exportar a grade para o calendário**.
 
 O que é novo:
 
-7. **Zefe, o assistente**, num painel fixo à direita em todas as telas **(dele: escolheu "painel ao lado" entre três esboços)**. Ele enxerga a tela atual e age nela.
-8. **Caderno de horários de vários anos** embutido (oferecimentos passados servem de base para previsão).
-9. **Cadastro em menos de um minuto**, sem depender do GDE nem de senha da DAC.
+6. **Zefe, o assistente**, num painel fixo à direita em todas as telas **(dele: escolheu "painel ao lado" entre três esboços)**. Ele enxerga a tela atual e age nela.
+7. **Caderno de horários de vários anos** embutido (oferecimentos passados servem de base para previsão).
+8. **Cadastro em menos de um minuto**, sem depender do GDE nem de senha da DAC.
 
 ## Não-objetivos da v1
 
 - Amigos, cardápio, mapa **(dele: "nunca nem encostamos")**.
+- Avaliações de professor/disciplina **(dele: "acho melhor não ter")**.
+- Alunos com ingresso anterior a 2020 **(dele: "desconsidere antes de 2020")**.
 - Calculadora de notas, enquetes, eventos, chat **(minha: ele não citou)**.
 - Pós-graduação **(minha)**.
 - Qualquer escrita em sistema da Unicamp (matrícula, alteração). O Zefe só mexe no rascunho do próprio aluno **(minha)**.
@@ -69,7 +70,7 @@ Consequência: nada disso está disponível para um produto independente. O Zefe
 | Currículo pleno do curso (obrigatórias, eletivas, modalidades) | `.../catalogo{ano}/cursos/{curso}g/curriculo.html` | conferido só em 2026 (curso 94) |
 | Proposta de currículo por semestre | `.../catalogo{ano}/cursos/{curso}g/sugestao.html` | 2020 a 2027 respondem para o curso 94; 2018 e anteriores não |
 
-Alunos com ingresso anterior a 2020 ficam sem pré-marcação automática (marcam à mão) **(minha)**.
+O cadastro oferece anos de ingresso de 2020 em diante **(dele)**.
 
 O projeto `gedeé` já tem, com testes, os parsers do caderno e de pré-requisitos, a sincronização e a previsão de oferta por semestres de mesma paridade. Esse código é levado para o Zefe. Os parsers de currículo pleno e de proposta são novos.
 
@@ -79,7 +80,7 @@ Coleta educada: poucas requisições simultâneas, User-Agent genérico, tudo gu
 
 ### Entrada e cadastro
 
-1. Entrar com a conta Google `@dac.unicamp.br` (prova que é aluno, sem senha nossa). **(minha — depende de confirmação, ver "Em aberto")**
+1. Entrar com **e-mail + código de 6 dígitos** **(dele)**. Rodando local, o código aparece no terminal do servidor. Envio de e-mail de verdade e restrição a `@dac.unicamp.br` ficam para quando for publicar.
 2. Quatro perguntas: curso, ano de ingresso (define o catálogo, editável), modalidade se o curso tiver, e em que semestre do curso está.
 3. O Zefe pré-marca como cursadas todas as disciplinas da proposta de currículo até o semestre anterior, e como "cursando" as do semestre atual. Créditos eletivos da proposta ("4 créditos eletivos") não são pré-marcados: o aluno diz quais fez. Calouro antes do início das aulas: nada marcado, cadastro acabou. **(minha)**
 4. O aluno corrige as exceções: clicando na árvore ou falando com o Zefe ("reprovei Cálculo II", "adiantei SI400").
@@ -106,17 +107,10 @@ Estados de uma disciplina para o aluno: cursada · cursando · planejada · falt
 ### Busca e páginas
 
 - Busca única (campo no topo, atalho de teclado) por código, nome, professor ou sala.
-- **Disciplina**: ementa, créditos, pré-requisitos, o que destrava, oferecimentos por semestre, avaliações.
-- **Professor**: disciplinas e turmas por semestre, avaliações. Professor é identificado pelo nome como aparece no caderno **(minha: a DAC não publica identificador)**.
+- **Disciplina**: ementa, créditos, pré-requisitos, o que destrava, oferecimentos por semestre.
+- **Professor**: disciplinas e turmas por semestre. Professor é identificado pelo nome como aparece no caderno **(minha: a DAC não publica identificador)**.
 - **Sala**: ocupação semanal no semestre.
 - Essas páginas são públicas (sem login) **(minha)**.
-
-### Avaliações
-
-- Começam vazias; as do GDE não podem ser importadas.
-- Só usuário logado; uma avaliação por (aluno, professor, disciplina), editável.
-- **Só notas de 1 a 5 em poucos critérios fixos, sem texto livre** **(minha: comentário aberto sobre pessoa exige moderação, que a v1 não tem)**.
-- Exibe média e número de avaliações; abaixo de um mínimo, mostra "poucas avaliações".
 
 ### Calendário
 
@@ -130,12 +124,13 @@ Botão que baixa um arquivo `.ics` da grade principal, com as aulas repetindo se
 - Responde com cartões montados a partir dos resultados das ferramentas (turmas, grade, progresso), não de tabela escrita pelo modelo.
 - Ferramentas previstas: buscar disciplinas/turmas (inclusive por janela livre), ver oferta e previsão, ver progresso e pré-requisitos, ver e alterar a grade, checar a grade, alterar o histórico.
 - **Acesso na v1: lista de e-mails liberados**, começando só por ele; quem não está na lista vê o painel com um aviso de "em breve". **(dele: "só eu por enquanto")**
-- Usa chave de API da Anthropic do aluno, no servidor; modelo configurável por variável de ambiente.
+- **Modelo: Amazon Bedrock, com modelos da própria Amazon** **(dele)**. Padrão `us.amazon.nova-2-lite-v1:0` em `us-east-1`, trocável por variável de ambiente. Credenciais: o perfil AWS local dele, nunca no código.
+- **Prompt e "harness" bons** **(dele)**: um prompt de sistema versionado em arquivo próprio, um laço de ferramentas com limite de passos e tratamento de erro, e um **script de avaliação** com perguntas fixas que roda contra o Bedrock de verdade e falha se o Zefe citar dado que não veio de ferramenta, errar a ferramenta ou inventar diante de resultado vazio.
 - Conversas ficam salvas por usuário; há um botão "nova conversa" **(minha)**.
 
 ### Identidade e interface
 
-- Identidade nova, "evolução do GDE"; mascote Zefe (proposta: capivara) **(minha, a decidir na etapa de design)**.
+- Identidade nova, "evolução do GDE"; mascote Zefe é uma **capivara** **(dele)**, desenhada em vetor no código.
 - Referências de visual e padrões **(dele)**: stripe.com/br, sharpi.ai, restaurantes.toqan.com.br.
 - A interface é desenhada com a skill `/impeccable` **(dele)**, usando componentes das bibliotecas que ele listou (reactbits, cult-ui, componentry, 21st.dev, uiverse, motion-primitives, magicui e o diretório do shadcn).
 - Textos em pt-BR. Funciona no celular. Claro e escuro.
@@ -146,11 +141,12 @@ Botão que baixa um arquivo `.ics` da grade principal, com as aulas repetindo se
 - PostgreSQL, com docker-compose no desenvolvimento **(preferência registrada dele)**.
 - Bun como gerenciador de pacotes e executor de scripts **(minha, pela preferência registrada)**.
 - Sem código copiado do GDE (GPL-3).
-- Dados de um aluno nunca aparecem para outro; avaliações são exibidas só agregadas.
+- Dados de um aluno nunca aparecem para outro.
+- Só local por enquanto **(dele)**.
 
 ## Abordagens consideradas
 
-1. **Um aplicativo Next.js só, com banco próprio (escolhida).** Os dados da DAC são sincronizados para o Postgres por um script; telas e Zefe usam as mesmas funções de servidor. O Zefe roda dentro do app com a API da Anthropic e ferramentas que chamam essas funções. Vantagem: uma coisa só para rodar, o assistente e as telas nunca discordam. Custo: migrar o cache SQLite do `gedeé` para Postgres.
+1. **Um aplicativo Next.js só, com banco próprio (escolhida).** Os dados da DAC são sincronizados para o Postgres por um script; telas e Zefe usam as mesmas funções de servidor. O Zefe roda dentro do app, chamando o Bedrock, com ferramentas que chamam essas funções. Vantagem: uma coisa só para rodar, o assistente e as telas nunca discordam. Custo: migrar o cache SQLite do `gedeé` para Postgres.
 2. **Next.js na frente + o servidor MCP do `gedeé` atrás.** Reaproveita o MCP como está. Descartada: são dois serviços, o MCP foi feito para um aluno só (perfil e senha em arquivo) e as telas precisariam de um caminho de dados separado do assistente.
 3. **Sem banco de disciplinas, consultando a DAC na hora.** Descartada: lenta, frágil, e sem histórico de vários anos não há busca nem previsão.
 
@@ -165,30 +161,43 @@ Cada etapa deixa algo usável e tem seu próprio plano:
 3. **Busca e páginas** de disciplina, professor e sala.
 4. **Árvore** de integralização.
 5. **Planejador** + exportar `.ics`.
-6. **Zefe**: assistente com ferramentas e desfazer.
-7. **Avaliações**.
+6. **Zefe**: assistente com ferramentas, desfazer e script de avaliação.
 
 ## Deixado para o builder
 
 - Esquema do banco, ORM, estrutura de pastas, nomes de rotas.
-- Biblioteca para o chat com streaming e ferramentas; modelo padrão (conferir preço e ids atuais antes de escolher).
+- Biblioteca para o chat com streaming e ferramentas sobre o Bedrock.
 - Quais componentes de quais bibliotecas; animações.
-- Formato exato dos critérios de avaliação e o mínimo para exibir média.
 - Como identificar o mesmo professor escrito de formas diferentes no caderno.
 - Quantos anos de caderno sincronizar por padrão.
 - Equivalências entre disciplinas: usar as que a DAC publica; caso não tratado aparece como "não verificado", nunca como cumprido.
 - Onde fica a lista de e-mails liberados para o Zefe.
 - Testes: no mínimo parsers contra HTML salvo, motor de conflitos, cálculo de integralização para o curso 94/2026, e a regra de pré-marcação do cadastro.
 
-## Em aberto (precisa dele)
+## Modelos testados no Bedrock (2026-11-16, conta dele, us-east-1)
 
-1. A conta `@dac.unicamp.br` dele entra com "Login com Google" em sites de terceiros? Se não, o plano B é um código enviado por e-mail para o endereço `@dac.unicamp.br`.
+Duas perguntas em português que exigem ferramenta, mais uma resposta com resultado cheio e outra com resultado vazio:
+
+| Modelo | Chamou a ferramenta certa | Leu o resultado cheio | Resultado vazio |
+|---|---|---|---|
+| `us.amazon.nova-2-lite-v1:0` | sim, argumentos corretos | sim, e disse que não havia professor no dado | "não encontrei" |
+| `us.amazon.nova-pro-v1:0` | sim | **não**: disse que não achou o horário que estava no resultado | "não encontrei" |
+| `us.amazon.nova-premier-v1:0` | erro: modelo descontinuado | — | — |
+
+Por isso o padrão é o Nova 2 Lite. Os dados usados no teste eram de mentira; o teste mede comportamento, não conteúdo.
+
+## Como a construção é feita **(dele)**
+
+- **Orquestrador: Opus 5.5.** Lê este design e o plano, distribui as tarefas, confere o que volta.
+- **Executores: Sonnet 5.5** para tarefas que pedem julgamento (parsers, integralização, interface, harness do Zefe); **Haiku 5.5** para tarefas operacionais (criar projeto, instalar, rodar sincronização, mover código do `gedeé`).
+- **Controle de qualidade: Fable**, chamado só em momentos pontuais: depois da identidade visual e da casca, e na revisão final. Confere funcionamento e estética contra as referências.
 
 ## Riscos conhecidos
 
 - **Regras de eletivas variam muito entre cursos.** O cálculo sai certo para o curso 94 primeiro; outros cursos podem cair em "não verificado" até o parser cobrir o formato deles.
 - **Pré-marcação pelo semestre atual erra** para quem reprovou ou adiantou; por isso a correção de exceções faz parte do cadastro, e a árvore mostra que os dados são declarados pelo aluno.
 - **HTML da DAC muda.** Parsers falham alto na sincronização, nunca gravam vazio em silêncio.
-- **Professores só por nome**: homônimos e grafias diferentes podem misturar ou dividir páginas e avaliações.
-- **Avaliações vazias no início** tornam essa parte pouco útil até haver uso.
+- **Professores só por nome**: homônimos e grafias diferentes podem misturar ou dividir páginas.
+- **Nova 2 Lite é um modelo pequeno**: pode errar em conversas longas ou pedidos com muitos passos; o script de avaliação é o que mede isso.
 - **Custo do assistente** quando abrir para mais gente; a lista de liberados é o freio da v1.
+- **A identidade visual é decidida sem ele** (ele pediu execução até o fim durante a noite); pode haver retrabalho de manhã.
