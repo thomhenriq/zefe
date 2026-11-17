@@ -7,7 +7,8 @@ import { PanelRightClose } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Mascote } from "@/components/zefe/Mascote";
-import { Painel } from "@/components/zefe/Painel";
+import { Painel, type AcessoZefe } from "@/components/zefe/Painel";
+import { useZefe } from "@/components/zefe/useZefe";
 import { cn } from "@/lib/utils";
 import { BarraSuperior } from "./BarraSuperior";
 import { itensNav } from "./itens";
@@ -17,7 +18,8 @@ import { Rodape } from "./Rodape";
  * Casca completa: barra superior, conteúdo, rodapé, painel do Zefe fixo à
  * direita (lg+, recolhível) e navegação inferior com gaveta do Zefe no celular.
  */
-export function Casca({ children }: { children: React.ReactNode }) {
+export function Casca({ children, acesso }: { children: React.ReactNode; acesso: AcessoZefe }) {
+  const zefe = useZefe(acesso === "liberado");
   // null = ainda não escolheu: aberto só a partir de xl (80rem), recolhido entre lg e xl, decidido por CSS (sem piscar).
   // shortcut: a escolha não persiste entre visitas, quando houver conta guardar no perfil.
   const [escolha, setAberto] = useState<boolean | null>(null);
@@ -53,7 +55,7 @@ export function Casca({ children }: { children: React.ReactNode }) {
               >
                 <PanelRightClose />
               </Button>
-              <Painel />
+              <Painel acesso={acesso} zefe={zefe} />
           </div>
           <button
               type="button"
@@ -62,7 +64,7 @@ export function Casca({ children }: { children: React.ReactNode }) {
               onClick={() => setAberto(true)}
               className={cn("h-full w-full flex-col items-center gap-2 pt-4 hover:bg-muted", escolha === null ? "flex xl:hidden" : escolha ? "hidden" : "flex")}
             >
-              <Mascote tamanho={36} decorativo />
+              <Mascote estado={zefe.estado} tamanho={36} decorativo />
               <span className="text-xs font-medium [writing-mode:vertical-rl]">Zefe</span>
             </button>
         </aside>
@@ -96,7 +98,7 @@ export function Casca({ children }: { children: React.ReactNode }) {
           aria-expanded={gaveta}
           className="flex flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted-foreground"
         >
-          <Mascote tamanho={24} decorativo />
+          <Mascote estado={zefe.estado} tamanho={24} decorativo />
           Zefe
         </button>
       </nav>
@@ -105,7 +107,7 @@ export function Casca({ children }: { children: React.ReactNode }) {
         <SheetContent side="bottom" className="h-[70dvh] rounded-t-2xl bg-painel lg:hidden">
           <SheetTitle className="sr-only">Zefe, o assistente</SheetTitle>
           <SheetDescription className="sr-only">Painel do assistente</SheetDescription>
-          <Painel />
+          <Painel acesso={acesso} zefe={zefe} />
         </SheetContent>
       </Sheet>
     </div>

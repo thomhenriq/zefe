@@ -1,0 +1,154 @@
+import { and, asc, desc, eq } from 'drizzle-orm';
+import { convertToModelMessages, isStepCount, readUIMessageStream, streamText, toUIMessageStream, type LanguageModel, type TextStreamPart, type ToolSet, type UIMessage, type UIMessageChunk } from 'ai';
+import { z } from 'zod';
+import { conversa, curso, db, mensagem } from '@/db';
+import { getPerfil } from '@/dados/aluno';
+import { getGrade } from '@/dados/grades';
+import { normalizarCodigo } from '@/dominio/codigo';
+import { proximoSemestre } from '@/dominio/oferta';
+import { criarFerramentas } from './ferramentas';
+import { modelo as modeloBedrock } from './modelo';
+import { criarRemovedor } from './pensamento';
+import { montarPrompt } from './prompt';
+
+export const FORA_DO_AR = 'O Zefe está fora do ar agora. Tente de novo daqui a pouco; o resto do site continua funcionando normalmente.';
+export const MAX_PASSOS = 8; // passos de ferramenta por mensagem
+export const MAX_HISTORICO = 20; // mensagens enviadas ao modelo
+const TEMPERATURA = 0.2;
+
+export const telaSchema = z.object({ rota: z.string().max(200).default('/'), gradeId: z.string().max(40).optional(), codigo: z.string().max(12).optional() });
+export type Tela = z.infer<typeof telaSchema>;
+
+export interface EntradaResposta {
+  userId: string;
+  /** Precisa existir em `conversa` e ser do usuário (as ferramentas gravam ações ligadas a ela). */
+  conversaId: number;
+  /** Histórico completo da conversa terminando na mensagem do usuário; só as últimas 20 vão ao modelo. */
+  mensagens: UIMessage[];
+  tela: Tela;
+  /** Para testes e para o script de avaliação. Padrão: Bedrock. */
+  modelo?: LanguageModel;
+  agora?: Date;
+  /** Grava a resposta do assistente em `mensagem` ao terminar. Padrão: true. */
+  salvar?: boolean;
+}
+
+const sanear = (s: string) => s.replace(/[^\w\-\/.]/g, '').slice(0, 80);
+
+async function descreverTela(userId: string, tela: Tela): Promise<{ texto: string; gradeId: string | null }> {
+  const rota = sanear(tela.rota) || '/';
+  if (rota.startsWith('/planejador')) {
+    const g = tela.gradeId ? await getGrade(userId, tela.gradeId).catch(() => null) : null; // só aceita grade do próprio aluno
+    return { texto: g ? `Planejador, com a grade "${g.nome}" de ${g.periodo}S/${g.ano} aberta` : 'Planejador', gradeId: g?.id ?? null };
+  }
+  if (rota.startsWith('/arvore')) return { texto: 'Árvore de integralização (o que falta para se formar)', gradeId: null };
+  if (rota.startsWith('/disciplina/')) {
+    const c = normalizarCodigo(tela.codigo ?? rota.split('/')[2] ?? '').codigo;
+    return { texto: `Página da disciplina ${c}`, gradeId: null };
+  }
+  return { texto: `Outra tela (${rota})`, gradeId: null };
+}
+
+const temTexto = (p: UIMessage['parts'][number]) => p.type !== 'text' || p.text.trim() !== '';
+
+/** Últimas 20 mensagens, começando por uma do usuário, sem texto vazio e sem mensagem que ficou sem nada. */
+export function historicoParaModelo(mensagens: UIMessage[]): UIMessage[] {
+  const ultimas = mensagens
+    .slice(-MAX_HISTORICO)
+    .map((m) => ({ ...m, parts: m.parts.filter(temTexto) }))
+    .filter((m) => m.parts.length > 0);
+  const i = ultimas.findIndex((m) => m.role === 'user');
+  return i < 0 ? [] : ultimas.slice(i);
+}
+
+/** Tira <thinking> do texto que sai do modelo (exibido e salvo), mesmo partido entre pedaços. */
+export function semPensamento<T extends ToolSet>() {
+  const por = new Map<string, ReturnType<typeof criarRemovedor>>();
+  return new TransformStream<TextStreamPart<T>, TextStreamPart<T>>({
+    transform(p, ctl) {
+      if (p.type === 'text-start') por.set(p.id, criarRemovedor());
+      if (p.type === 'text-delta') {
+        const texto = (por.get(p.id) ?? por.set(p.id, criarRemovedor()).get(p.id)!).push(p.text);
+        if (texto) ctl.enqueue({ ...p, text: texto });
+        return;
+      }
+      if (p.type === 'text-end') {
+        const resto = por.get(p.id)?.fim();
+        por.delete(p.id);
+        if (resto) ctl.enqueue({ type: 'text-delta', id: p.id, text: resto });
+      }
+      ctl.enqueue(p);
+    },
+  });
+}
+
+/**
+ * O "harness": prompt versionado + ferramentas + laço de até 8 passos + temperatura baixa + <thinking> removido
+ * + erro do modelo/Bedrock vira FORA_DO_AR no stream. Usada pela rota e pelo script de avaliação.
+ */
+export async function responder(e: EntradaResposta): Promise<ReadableStream<UIMessageChunk>> {
+  const perfil = await getPerfil(e.userId);
+  if (!perfil) throw new Error('perfil não encontrado');
+  const [c] = perfil.curso ? await db.select({ nome: curso.nome }).from(curso).where(eq(curso.numero, perfil.curso)) : [];
+  const agora = e.agora ?? new Date();
+  const alvo = proximoSemestre(agora);
+  const tela = await descreverTela(e.userId, e.tela);
+  const tools = criarFerramentas({ userId: e.userId, conversaId: String(e.conversaId), gradeId: tela.gradeId, agora });
+  const instructions = montarPrompt({
+    nome: null, curso: c?.nome ?? `curso ${perfil.curso ?? '?'}`, catalogo: perfil.catalogo ?? 0, semestreAtual: perfil.semestre_atual ?? 0,
+    semestreAlvo: `${alvo.periodo}S/${alvo.ano}`, tela: tela.texto, hoje: agora.toISOString().slice(0, 10),
+  });
+
+  const r = streamText({
+    model: e.modelo ?? modeloBedrock(),
+    instructions,
+    messages: await convertToModelMessages(historicoParaModelo(e.mensagens), { tools, ignoreIncompleteToolCalls: true }),
+    tools,
+    stopWhen: isStepCount(MAX_PASSOS),
+    temperature: TEMPERATURA,
+    onError: ({ error }) => console.error('[zefe] erro do modelo:', error instanceof Error ? `${error.name}: ${error.message}` : error),
+  });
+
+  return toUIMessageStream({
+    stream: r.stream.pipeThrough(semPensamento<typeof tools>()),
+    tools,
+    originalMessages: e.mensagens,
+    onError: () => FORA_DO_AR,
+    redactToolErrors: false, // erro de ferramenta volta ao modelo como resultado, com o texto real
+    onEnd: async ({ responseMessage, outcome }) => {
+      if (e.salvar === false || outcome.status === 'failed') return;
+      const partes = responseMessage.parts.filter(temTexto);
+      if (partes.length) await db.insert(mensagem).values({ conversa_id: e.conversaId, papel: 'assistant', partes });
+    },
+  });
+}
+
+/** Consome o stream e devolve a mensagem final do assistente (ou o erro). Para o script de avaliação. */
+export async function responderCompleto(e: EntradaResposta): Promise<{ mensagem: UIMessage | null; erro: string | null }> {
+  let msg: UIMessage | null = null;
+  let erro: string | null = null;
+  const stream = await responder(e);
+  for await (const m of readUIMessageStream({ stream, onError: (x) => { erro = x instanceof Error ? x.message : String(x); } })) msg = m;
+  return { mensagem: msg, erro };
+}
+
+// ---- conversas ----
+export async function criarConversa(userId: string, titulo: string) {
+  const [c] = await db.insert(conversa).values({ user_id: userId, titulo: titulo.slice(0, 60) || 'Conversa' }).returning();
+  return c!;
+}
+export async function conversaDoUsuario(userId: string, id: number) {
+  const [c] = await db.select().from(conversa).where(and(eq(conversa.id, id), eq(conversa.user_id, userId)));
+  return c ?? null;
+}
+export async function salvarMensagem(conversaId: number, papel: 'user' | 'assistant', partes: UIMessage['parts']) {
+  await db.insert(mensagem).values({ conversa_id: conversaId, papel, partes });
+}
+export async function carregarMensagens(conversaId: number): Promise<UIMessage[]> {
+  const ms = await db.select().from(mensagem).where(eq(mensagem.conversa_id, conversaId)).orderBy(asc(mensagem.id));
+  return ms.map((m) => ({ id: `m${m.id}`, role: m.papel as 'user' | 'assistant', parts: m.partes as UIMessage['parts'] }));
+}
+export async function ultimaConversa(userId: string) {
+  const [c] = await db.select().from(conversa).where(eq(conversa.user_id, userId)).orderBy(desc(conversa.id)).limit(1);
+  return c ?? null;
+}
