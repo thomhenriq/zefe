@@ -8,6 +8,7 @@ import { normalizarCodigo } from '@/dominio/codigo';
 import { proximoSemestre } from '@/dominio/oferta';
 import { criarFerramentas } from './ferramentas';
 import { modelo as modeloBedrock } from './modelo';
+import { AVISO_ACAO_FANTASMA, acaoFantasma } from './fantasma';
 import { criarRemovedor } from './pensamento';
 import { montarPrompt } from './prompt';
 
@@ -66,17 +67,29 @@ export function historicoParaModelo(mensagens: UIMessage[]): UIMessage[] {
 /** Tira <thinking> do texto que sai do modelo (exibido e salvo), mesmo partido entre pedaços. */
 export function semPensamento<T extends ToolSet>() {
   const por = new Map<string, ReturnType<typeof criarRemovedor>>();
+  let texto = '';
+  const partes: { type: string; state: string; output: unknown }[] = [];
   return new TransformStream<TextStreamPart<T>, TextStreamPart<T>>({
     transform(p, ctl) {
+      if (p.type === 'tool-result') partes.push({ type: `tool-${p.toolName}`, state: 'output-available', output: p.output });
+      if (p.type === 'finish' && acaoFantasma(texto, partes)) {
+        // O modelo disse que alterou algo sem ferramenta de alteração com sucesso: aviso fixo, visível e salvo.
+        console.warn('[zefe] ação fantasma:', texto.slice(0, 200));
+        ctl.enqueue({ type: 'text-start', id: 'fantasma' } as TextStreamPart<T>);
+        ctl.enqueue({ type: 'text-delta', id: 'fantasma', text: AVISO_ACAO_FANTASMA } as TextStreamPart<T>);
+        ctl.enqueue({ type: 'text-end', id: 'fantasma' } as TextStreamPart<T>);
+      }
       if (p.type === 'text-start') por.set(p.id, criarRemovedor());
       if (p.type === 'text-delta') {
-        const texto = (por.get(p.id) ?? por.set(p.id, criarRemovedor()).get(p.id)!).push(p.text);
-        if (texto) ctl.enqueue({ ...p, text: texto });
+        const saida = (por.get(p.id) ?? por.set(p.id, criarRemovedor()).get(p.id)!).push(p.text);
+        texto += saida;
+        if (saida) ctl.enqueue({ ...p, text: saida });
         return;
       }
       if (p.type === 'text-end') {
         const resto = por.get(p.id)?.fim();
         por.delete(p.id);
+        texto += resto ?? '';
         if (resto) ctl.enqueue({ type: 'text-delta', id: p.id, text: resto });
       }
       ctl.enqueue(p);

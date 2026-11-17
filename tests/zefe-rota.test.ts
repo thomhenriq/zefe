@@ -78,6 +78,14 @@ describe('POST /api/zefe (tratarPost)', () => {
     expect(JSON.stringify(salvos.partes)).toContain('buscar_disciplinas'); // chamadas e resultados de ferramenta ficam salvos
   });
 
+  test('modelo diz que adicionou sem chamar ferramenta: aviso no stream e no banco', async () => {
+    const modelo = new MockLanguageModelV4({ doStream: async () => texto('Adicionei SI702 na sua grade.') });
+    const r = await tratarPost(U, corpo('adiciona SI702'), { liberados: LISTA, modelo });
+    expect(await r.text()).toContain('não fiz essa alteração');
+    const ass = (await msgs()).filter((m) => m.papel === 'assistant').at(-1)!;
+    expect(JSON.stringify(ass.partes)).toContain('não fiz essa alteração');
+  });
+
   test('conversa de outro usuário: 404 exato e nada é gravado na conversa alheia', async () => {
     const O = { id: 'teste-t15-b', email: 'outro@x.y' };
     await db.delete(perfil).where(eq(perfil.user_id, O.id));
