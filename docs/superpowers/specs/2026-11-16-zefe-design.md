@@ -190,7 +190,7 @@ Por isso o padrão é o Nova 2 Lite. Os dados usados no teste eram de mentira; o
 
 - **Orquestrador: Opus 5.5.** Lê este design e o plano, distribui as tarefas, confere o que volta.
 - **Executores: Sonnet 5.5** para tarefas que pedem julgamento (parsers, integralização, interface, harness do Zefe); **Haiku 5.5** para tarefas operacionais (criar projeto, instalar, rodar sincronização, mover código do `gedeé`).
-- **Controle de qualidade: Fable**, chamado só em momentos pontuais: depois da identidade visual e da casca, e na revisão final. Confere funcionamento e estética contra as referências.
+- **Controle de qualidade: Fable** (trocado por um revisor Opus novo em 2026-11-17, quando o limite do Fable acabou), chamado só em momentos pontuais: depois da identidade visual e da casca, e na revisão final. Confere funcionamento e estética contra as referências.
 
 ## Riscos conhecidos
 
