@@ -8,7 +8,7 @@ description: Papel quente, tinta quente, verde "rio" como primário; capivara co
 Contrato de todas as telas. Valores vivem em `src/app/globals.css`; use os tokens, nunca cores literais. Modo: **Operate** nas telas do app (grade, árvore, busca), **Persuade** só em `/`. Nada de institucional: sem vermelho/brasão Unicamp, nada que pareça oficial.
 
 ## Tema
-Segue o sistema (`prefers-color-scheme`); sem alternância manual na v1. Variantes Tailwind: `dark:` = media query. Todo token tem valor claro e escuro; teste os dois.
+Claro é o padrão e o principal; o app não segue o tema do sistema (sem `prefers-color-scheme`). O escuro só vale com `<html data-theme="dark">` (variante Tailwind `dark:` = esse atributo); sem alternância na interface na v1. Todo token tem valor claro e escuro; teste os dois. `::placeholder` usa `muted-foreground` (AA).
 
 ## Tokens
 Cores (Tailwind: `bg-background`, `text-muted-foreground`...), em OKLCH:
