@@ -87,6 +87,28 @@ Para retomar: reler design, plano e este arquivo; `git log`; continuar da primei
 
 7. Ruling: T3 e T5 rodam em paralelo (arquivos disjuntos: `src/dac`/`scripts`/`tests` × `src/app`/`src/components`/docs de design), cada um faz `git add` só dos próprios arquivos — a noite é curta e a carga de dados também corre em paralelo — custo se errado: conflito em package.json/bun.lock, resolvível.
 
+## Retomada (17/11 14:07)
+
+A sessão caiu por volta das 05:32 (limite de uso): os executores de T8, T9, T13 e o revisor do CQ1 morreram sem relatório. T8 e T9 deixaram arquivos não commitados (busca/professor/sala, `src/components/grade`, `integralizacao.ts`…); T13 não deixou nada. A carga do caderno travou em 2025/1 (1150/2514) às 05:27 — um `fetch` sem timeout ficou pendurado 8 h; processo morto às 14:07. Carregados até agora: 2024/1 (2393), 2024/2 (2403), 2026/1 só FT (209). Retomada: executores novos para T8, T9 e T13 partindo dos arquivos parciais; CQ1 de novo com revisor Opus novo; carga (T4) refeita com timeout no download.
+
+Correção da retomada: os executores originais NÃO tinham morrido, estavam pausados. O T9 original terminou e commitou 84854c3; o T9 novo não mudou nada. T8 original e T13 original foram mandados parar (T13 não tinha criado nada; T8 deixou o rascunho que o T8 novo continua). Carga antiga parada; a nova (T4, Haiku) commitou o timeout (1c3ffb0) e está rodando a fila.
+
+- Task 9: implementada em 84854c3 (8 testes; suíte 88; build ok). Demo: obrigatórias 54/184 feitos + 28 em andamento; eletivas 0/16 (grupo aberto); 12 travadas. Revisão = Needs fixes (código que pode estar em grupo não verificado ia para `foraDoCurriculo` — chute); fix round 1 enviado (+ `excedente` por grupo, testes de obrigatória × eletiva, guarda de `inArray` vazio).
+- Task 9: fix round 1/2 (4 addressed, 0 open; commits 37d313f..7aeb3c7). Novo campo `naoClassificadas` (cursadas que podem estar num grupo não verificado) e `excedente` por grupo.
+- Task 9: complete (commits cbed78e..7aeb3c7, review clean)
+- Task 8: commitada em 37d313f pelo executor novo partindo do rascunho do antigo (105 testes; build ok; 404 para código/professor/sala inexistentes; atalho `/` e Ctrl+K). Revisão em andamento.
+- Task 13: commitada em e52434c (16 testes; tsc ok); `ExportarIcs.tsx` entrou por engano no commit da T8 (37d313f). Revisão em andamento.
+- CQ1 correções: despachadas (Sonnet + impeccable).
+- Task 8: revisão = Needs fixes. (a) `ExportarIcs.tsx` da T13 entrou no commit da T8 e importava `@/dominio/ics` ainda inexistente — Ruling: resolvido por e52434c (HEAD compila); sem reescrever histórico. (b) prereq não entendido sem selo "não verificado" → fix round 1 com o executor da T8. (c) GradeSemanal ilegível a 390 px → encaminhado ao executor das correções do CQ1 (dono das regras de telas densas).
+- Task 13: revisão = Needs fixes (item com horário incompleto exportado sem marca; item sem horário some sem aviso). Fix round 1 enviado (+ UID com índice, gradeId malformado → 404).
+- Task 14: despachada (Sonnet) em paralelo.
+- Task 8: fix round 1/2 (prereq não entendido → "não verificado"; commit e3d817f). Item de 390 px repassado às correções do CQ1.
+- Task 8: complete (commits 1c3ffb0..e3d817f, 1 item transferido para CQ1)
+- Task 13: fix round 1/2 (4 addressed; commit f4a2799).
+- Task 13: complete (commits 7aeb3c7..f4a2799, review clean). Pendência para T12: montar `<ExportarIcs gradeId ano periodo foraDoCalendario={foraDoCalendario(grade.itens)} />`.
+- Task 8: minor (deferred): `/disciplina/zz999` faz 307 para `ZZ999` antes do 404; página de sala faz um `getSala` por semestre candidato; sem testes de página.
+- Task 9: minor (deferred): obrigatória sem crédito em nenhuma fonte vira `creditos: 0` sem sinalizar; `propostaEletivas` não usado no cálculo.
+
 ## Carga de dados (T4)
 
 - 2024/1: 2393 disciplinas salvas, 3 erros, todos HTTP 429 (AC221, MC920, CE113) por concorrência com o sync de catálogo da T3 — refazer `sync caderno 2024 1 IA,IC,IE` na T4b.
@@ -95,6 +117,7 @@ Para retomar: reler design, plano e este arquivo; `git log`; continuar da primei
 ## Controle de qualidade
 
 - CQ1 (Opus, revisor novo): despachado depois de T5+T6 completas (HEAD ddfe8fa + T7/T11 em andamento). App em dev em 127.0.0.1:4100 iniciado pelo orquestrador (log no scratchpad).
+- CQ1 rodada 1 — veredito **corrigir**. Passou: testes 74/74, build, fluxo real entrar→código→cadastro (pré-marcação certa), teclado/foco, painel e gaveta, 390 px sem rolagem lateral, avisos de "não oficial", nada inventado, site funciona sem o Zefe. Correções pedidas: (1) hero/landing com peça de produto ilegível e mascote cobrindo selo no celular — grade ilustrativa maior com eixo de horas, conflito visível, trecho de árvore; (2) mascote ainda não lê como capivara — silhueta em path, legível a 24 e 160 px; (3) DESIGN.md sem regras de "telas densas" (grade, árvore, painel só aberto a partir de xl); (4) 404 padrão do Next em inglês — `src/app/not-found.tsx` pt-BR na casca; (5) /comecar ao editar esconde o curso escolhido; (6) sem favicon — `src/app/icon.svg`. Não verificou: sites de referência ao vivo, contraste medido, reduced-motion, leitor de tela, cadastro com modalidade. Usuários de teste `qc1-*@zefe.local` ficaram no banco. Correções serão despachadas a Sonnet assim que a T8 (que mexe em DESIGN.md e na casca) commitar.
 
 ## Decisões a conferir
 
