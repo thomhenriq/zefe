@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { authClient } from "@/auth-client";
 
 export function Rodape() {
+  const { data: sessao, isPending } = authClient.useSession();
   return (
     <footer className="border-t bg-card/50">
       <div className="mx-auto flex max-w-[90rem] flex-col gap-3 px-4 py-8 text-sm text-muted-foreground lg:flex-row lg:items-start lg:justify-between lg:px-6">
@@ -13,9 +17,11 @@ export function Rodape() {
           <Link href="/sobre" className="underline-offset-4 hover:text-foreground hover:underline">
             Sobre
           </Link>
-          <Link href="/entrar" className="underline-offset-4 hover:text-foreground hover:underline">
-            Entrar
-          </Link>
+          {!sessao && !isPending && (
+            <Link href="/entrar" className="underline-offset-4 hover:text-foreground hover:underline">
+              Entrar
+            </Link>
+          )}
         </nav>
       </div>
     </footer>

@@ -1,33 +1,40 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUsuario } from "@/sessao";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EstadoBadge, AvisoBadge, type EstadoDisciplina } from "@/components/ui/estado";
+import { AvisoBadge, type EstadoDisciplina } from "@/components/ui/estado";
 import { Mascote } from "@/components/zefe/Mascote";
+import { GradeSemanal, type ItemGrade } from "@/components/grade/GradeSemanal";
+import { CartaoDisciplina } from "@/components/arvore/CartaoDisciplina";
 
-const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-// Ilustração abstrata da grade (sem disciplinas reais): [dia, linha, altura, estilo]
-const blocos: [number, number, number, string][] = [
-  [0, 1, 2, "bg-planejada-bg border-planejada-borda"],
-  [1, 3, 2, "bg-planejada-bg border-planejada-borda"],
-  [2, 1, 2, "bg-conflito-bg border-conflito-borda"],
-  [2, 2, 2, "bg-planejada-bg border-planejada-borda"],
-  [3, 3, 2, "bg-planejada-bg border-planejada-borda"],
-  [4, 0, 2, "bg-planejada-bg border-planejada-borda"],
-  [4, 4, 1, "bg-travada-bg border-travada-borda"],
+// Dados fictícios só para ilustrar: nenhum código, horário ou disciplina real.
+const exemplo: ItemGrade[] = [
+  { rotulo: "Exemplo A", dia: "seg", inicio: "08:00", fim: "10:00", tom: "conflito" },
+  { rotulo: "Exemplo B", dia: "seg", inicio: "09:00", fim: "11:00", tom: "conflito" },
+  { rotulo: "Exemplo C", dia: "seg", inicio: "14:00", fim: "16:00", tom: "planejada" },
+  { rotulo: "Exemplo D", dia: "qua", inicio: "10:00", fim: "12:00", tom: "planejada" },
+  { rotulo: "Exemplo E", dia: "qui", inicio: "08:00", fim: "10:00", tom: "cursando" },
+  { rotulo: "Exemplo F", dia: "sex", inicio: "13:00", fim: "15:00", tom: "planejada" },
+  { rotulo: "Exemplo G", dia: "sab", inicio: "08:00", fim: "12:00", tom: "travada" },
 ];
 
-const estados: EstadoDisciplina[] = ["cursada", "cursando", "planejada", "faltando", "travada"];
+const semestres: { n: string; itens: { nome: string; estado: EstadoDisciplina; nota?: string }[] }[] = [
+  { n: "1º semestre", itens: [{ nome: "Exemplo 1", estado: "cursada" }, { nome: "Exemplo 2", estado: "cursada" }, { nome: "Exemplo 3", estado: "cursada" }] },
+  { n: "2º semestre", itens: [{ nome: "Exemplo 4", estado: "cursada" }, { nome: "Exemplo 5", estado: "cursando" }, { nome: "Exemplo 6", estado: "cursando" }] },
+  { n: "3º semestre", itens: [{ nome: "Exemplo 7", estado: "planejada" }, { nome: "Exemplo 8", estado: "faltando" }, { nome: "Exemplo 9", estado: "travada", nota: "Pede o Exemplo 5" }] },
+  { n: "4º semestre", itens: [{ nome: "Exemplo 10", estado: "faltando" }, { nome: "Exemplo 11", estado: "travada", nota: "Pede o Exemplo 9" }] },
+];
+
 
 export default async function Apresentacao() {
   if (await getUsuario()) redirect("/planejador");
   return (
     <>
       <section className="px-3 pt-3 lg:px-4 lg:pt-4">
-        <div className="mx-auto grid max-w-[88rem] items-center gap-10 overflow-hidden rounded-[2rem] border bg-[radial-gradient(ellipse_at_85%_10%,color-mix(in_oklch,var(--capi-claro)_38%,transparent),transparent_55%),radial-gradient(ellipse_at_10%_100%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent_55%)] px-6 py-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:px-16 lg:py-24">
+        <div className="mx-auto grid max-w-[88rem] items-center gap-10 overflow-hidden rounded-[2rem] border bg-[radial-gradient(ellipse_at_85%_10%,color-mix(in_oklch,var(--capi-claro)_38%,transparent),transparent_55%),radial-gradient(ellipse_at_10%_100%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent_55%)] px-6 py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12 lg:px-12 lg:py-20">
           <div className="space-y-6">
-            <h1 className="anim-subir text-4xl font-semibold tracking-[-0.035em] sm:text-5xl lg:text-7xl lg:leading-[1.02]">
+            <h1 className="anim-subir text-4xl font-semibold tracking-[-0.035em] sm:text-5xl lg:text-6xl lg:leading-[1.04]">
               Sua grade da Unicamp, sem tentativa e erro.
             </h1>
             <p className="anim-subir anim-subir-2 max-w-[52ch] text-lg text-muted-foreground">
@@ -44,13 +51,24 @@ export default async function Apresentacao() {
             </div>
           </div>
 
-          <div className="anim-subir anim-subir-2 relative mx-auto w-full max-w-md pb-16 lg:pb-0">
-            <GradeIlustrada className="relative z-0 w-[88%] shadow-elevada" />
-            <div className="absolute right-0 bottom-0 z-10 flex max-w-[16rem] items-end gap-2 lg:-bottom-12 lg:-right-4">
-              <Mascote estado="feliz" tamanho={132} />
-              <p className="mb-6 rounded-2xl rounded-bl-sm border bg-card px-3 py-2 text-sm shadow-suave">
-                Oi, eu sou o Zefe.
+          <div className="anim-subir anim-subir-2 min-w-0 space-y-4">
+            <figure className="relative">
+              <div className="[mask-image:linear-gradient(to_bottom,#000_82%,transparent)] max-h-[30rem] overflow-hidden rounded-2xl shadow-elevada">
+                <GradeSemanal itens={exemplo} className="rounded-2xl" />
+              </div>
+              <div className="pointer-events-none absolute top-[calc(1.875rem+2*44px+2px)] left-[calc(2.75rem+(100%-2.75rem)/6+0.5rem)] hidden items-center gap-1 sm:flex">
+                <ArrowLeft className="size-4 text-conflito" aria-hidden />
+                <AvisoBadge nivel="conflito" className="bg-card shadow-suave" rotulo="Conflito: Exemplo A e B se sobrepõem" />
+              </div>
+              <figcaption className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:hidden">
+                <AvisoBadge nivel="conflito" /> Exemplo A e B se sobrepõem na segunda, das 9h às 10h.
+              </figcaption>
+            </figure>
+            <div className="flex items-end justify-end gap-2">
+              <p className="mb-8 rounded-2xl rounded-br-sm border bg-card px-3 py-2 text-sm shadow-suave">
+                Oi, eu sou o Zefe. Os exemplos acima são fictícios.
               </p>
+              <Mascote estado="feliz" tamanho={112} decorativo />
             </div>
           </div>
         </div>
@@ -82,18 +100,19 @@ export default async function Apresentacao() {
             titulo="Integralização que se explica"
             texto="A árvore do seu curso mostra cada disciplina como cursada, cursando, planejada, faltando ou travada, sempre com cor, ícone e texto. Onde o catálogo tem uma regra que o Zefe não entende, ele mostra o texto original e marca como não verificado."
             visual={
-              <div className="space-y-3 rounded-2xl border bg-card p-5 shadow-suave">
-                <div className="flex flex-wrap gap-2">
-                  {estados.map((e) => (
-                    <EstadoBadge key={e} estado={e} />
+              <figure className="min-w-0 space-y-3">
+                <div className="flex gap-3 overflow-x-auto rounded-2xl border bg-card p-4 [mask-image:linear-gradient(to_right,#000_88%,transparent)]">
+                  {semestres.map((sem) => (
+                    <div key={sem.n} className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">{sem.n}</p>
+                      <div className="space-y-2">
+                        {sem.itens.map((it) => <CartaoDisciplina key={it.nome} {...it} />)}
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-2 border-t pt-3">
-                  <AvisoBadge nivel="aviso" />
-                  <AvisoBadge nivel="previsao" />
-                  <AvisoBadge nivel="naoverificado" />
-                </div>
-              </div>
+                <figcaption className="text-sm text-muted-foreground">Exemplo ilustrativo, sem disciplinas reais. Role para ver os demais semestres.</figcaption>
+              </figure>
             }
           />
           <Linha
@@ -138,38 +157,11 @@ export default async function Apresentacao() {
 function Linha({ titulo, texto, visual, inverter }: { titulo: string; texto: string; visual: React.ReactNode; inverter?: boolean }) {
   return (
     <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
-      <div className={`space-y-3 ${inverter ? "lg:order-2" : ""}`}>
+      <div className={`min-w-0 space-y-3 ${inverter ? "lg:order-2" : ""}`}>
         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{titulo}</h2>
         <p className="max-w-[56ch] text-muted-foreground">{texto}</p>
       </div>
-      <div className={inverter ? "lg:order-1" : ""}>{visual}</div>
-    </div>
-  );
-}
-
-function GradeIlustrada({ className = "" }: { className?: string }) {
-  return (
-    <div className={`grid grid-cols-6 gap-1.5 rounded-2xl border bg-card p-4 shadow-suave ${className}`} role="img" aria-label="Ilustração de uma grade semanal com um conflito de horário destacado">
-      {dias.map((d, i) => (
-        <div key={d} className="space-y-1.5">
-          <p className="text-center text-xs font-medium text-muted-foreground">{d}</p>
-          <div className="relative h-40">
-            {blocos
-              .filter(([dia]) => dia === i)
-              .map(([, linha, alt, estilo], k) => (
-                <div
-                  key={k}
-                  className={`absolute inset-x-0 rounded-md border ${estilo}`}
-                  style={{ top: `${linha * 20}%`, height: `${alt * 20 - 3}%` }}
-                />
-              ))}
-          </div>
-        </div>
-      ))}
-      <div className="col-span-6 flex flex-wrap gap-2 pt-1">
-        <AvisoBadge nivel="conflito" />
-        <EstadoBadge estado="planejada" />
-      </div>
+      <div className={`min-w-0 ${inverter ? "lg:order-1" : ""}`}>{visual}</div>
     </div>
   );
 }

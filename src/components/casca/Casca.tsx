@@ -18,8 +18,9 @@ import { Rodape } from "./Rodape";
  * direita (lg+, recolhível) e navegação inferior com gaveta do Zefe no celular.
  */
 export function Casca({ children }: { children: React.ReactNode }) {
-  // shortcut: o recolher não persiste entre visitas, quando houver conta guardar no perfil.
-  const [aberto, setAberto] = useState(true);
+  // null = ainda não escolheu: aberto só a partir de xl (80rem), recolhido entre lg e xl, decidido por CSS (sem piscar).
+  // shortcut: a escolha não persiste entre visitas, quando houver conta guardar no perfil.
+  const [escolha, setAberto] = useState<boolean | null>(null);
   const [gaveta, setGaveta] = useState(false);
   const caminho = usePathname();
 
@@ -38,11 +39,10 @@ export function Casca({ children }: { children: React.ReactNode }) {
           aria-label="Zefe, o assistente"
           className={cn(
             "sticky top-barra hidden h-[calc(100dvh-var(--altura-barra))] shrink-0 border-l bg-painel lg:block",
-            aberto ? "w-painel" : "w-14",
+            escolha === null ? "w-14 xl:w-painel" : escolha ? "w-painel" : "w-14",
           )}
         >
-          {aberto ? (
-            <div className="relative h-full">
+          <div className={cn("relative h-full", escolha === null ? "hidden xl:block" : !escolha && "hidden")}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -54,19 +54,17 @@ export function Casca({ children }: { children: React.ReactNode }) {
                 <PanelRightClose />
               </Button>
               <Painel />
-            </div>
-          ) : (
-            <button
+          </div>
+          <button
               type="button"
               aria-expanded={false}
               aria-label="Abrir painel do Zefe"
               onClick={() => setAberto(true)}
-              className="flex h-full w-full flex-col items-center gap-2 pt-4 hover:bg-muted"
+              className={cn("h-full w-full flex-col items-center gap-2 pt-4 hover:bg-muted", escolha === null ? "flex xl:hidden" : escolha ? "hidden" : "flex")}
             >
               <Mascote tamanho={36} decorativo />
               <span className="text-xs font-medium [writing-mode:vertical-rl]">Zefe</span>
             </button>
-          )}
         </aside>
       </div>
 

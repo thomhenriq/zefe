@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Info } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { campo } from "../entrar/FormEntrar";
 import { concluirCadastro, consultarCurriculo, type InfoCurriculo } from "./acoes";
@@ -28,6 +28,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
     return cursos.filter((c) => !q || semAcento(c.nome).includes(q) || String(c.numero).startsWith(q));
   }, [busca, cursos]);
 
+  const escolhido = cursos.find((c) => c.numero === curso);
   const chave = `${curso}/${catalogo}/${modalidade}`;
   useEffect(() => {
     if (curso === null) return;
@@ -66,6 +67,12 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
         <label htmlFor="busca-curso" className="sr-only">Buscar curso por nome ou número</label>
         <input id="busca-curso" type="search" value={busca} onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por nome ou número" className={campo} />
+        {escolhido && (
+          <p className="flex items-center gap-2 rounded-lg border border-primary/40 bg-accent px-3 py-2 text-sm" aria-live="polite">
+            <Check className="size-4 shrink-0 text-primary" aria-hidden />
+            <span>Curso escolhido: <span className="font-mono text-xs tabular">{escolhido.numero}</span> <strong className="font-semibold">{escolhido.nome}</strong></span>
+          </p>
+        )}
         <div role="radiogroup" aria-label="Cursos" className="max-h-64 divide-y overflow-y-auto rounded-lg border bg-card">
           {filtrados.length === 0 && <p className="p-3 text-sm text-muted-foreground">Nenhum curso encontrado.</p>}
           {filtrados.map((c) => (
