@@ -5,13 +5,13 @@ import { alterarGrade, criarBloqueio, excluirBloqueio } from '@/dados/grades';
 
 /**
  * Formatos de `acao.desfazer` (jsonb), um por `acao.tipo`:
- *  alterar_grade:    { gradeId, remover: string[] (códigos que não estavam), adicionar: {codigo,turma}[] (itens/turmas que estavam e foram removidos ou trocados), gradeCriada?: true }
+ *  alterar_grade:    { gradeId, remover: string[] (códigos que não estavam), adicionar: {codigo,turma}[] (itens/turmas que estavam e foram removidos ou trocados) }  (se a ferramenta criou a grade, o desfazer só tira os itens: a grade vazia fica)
  *  marcar_historico: { codigo, anterior: 'cursada'|'cursando'|null }
  *  criar_bloqueio:   { bloqueioId }
  *  remover_bloqueio: { bloqueio: { nome, dia, inicio, fim } }   (recriado com id novo)
  */
 export type Desfazer =
-  | { tipo: 'alterar_grade'; gradeId: string; remover: string[]; adicionar: { codigo: string; turma: string }[]; gradeCriada?: true }
+  | { tipo: 'alterar_grade'; gradeId: string; remover: string[]; adicionar: { codigo: string; turma: string }[] }
   | { tipo: 'marcar_historico'; codigo: string; anterior: Estado | null }
   | { tipo: 'criar_bloqueio'; bloqueioId: string }
   | { tipo: 'remover_bloqueio'; bloqueio: { nome: string; dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string } };

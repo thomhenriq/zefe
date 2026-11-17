@@ -12,7 +12,7 @@ import type { Integralizacao } from '@/dominio/integralizacao';
 import { proximoSemestre } from '@/dominio/oferta';
 import { lerBloqueio, type Desfazer } from './desfazer';
 
-export interface Contexto { userId: string; conversaId: string; gradeId: string | null }
+export interface Contexto { userId: string; conversaId: string; gradeId: string | null; agora?: Date } // agora: só para testes (define o "próximo semestre")
 type Per = 1 | 2;
 
 const MAX = 30; // itens por lista devolvida ao modelo
@@ -20,8 +20,8 @@ const rotulo = (ano: number, periodo: number) => `${periodo}S/${ano}`;
 const fonteDe = (f: Pick<Fonte, 'url' | 'ano' | 'periodo'>) => ({ url: f.url, semestre: rotulo(f.ano, f.periodo) });
 const corta = <T>(xs: T[]) => ({ itens: xs.slice(0, MAX), ...(xs.length > MAX ? { omitidos: xs.length - MAX } : {}) });
 const codigoSchema = z.string().describe('Código da disciplina, pode vir solto: "si702", "SI 702", "SI702A".');
-const anoSchema = z.number().int().optional().describe('Ano do semestre, ex.: 2027. Se faltar, usa o semestre da grade aberta (ou o próximo semestre).');
-const periodoSchema = z.union([z.literal(1), z.literal(2)]).optional().describe('1 ou 2. Se faltar, usa o semestre da grade aberta (ou o próximo semestre).');
+const anoSchema = z.coerce.number().int().optional().describe('Ano do semestre, ex.: 2027. Se faltar, usa o semestre da grade aberta (ou o próximo semestre).');
+const periodoSchema = z.coerce.number().int().min(1).max(2).optional().describe('1 ou 2. Se faltar, usa o semestre da grade aberta (ou o próximo semestre).');
 const horaSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).describe('Horário no formato HH:MM, ex.: "08:00".');
 const diaSchema = z.enum(['seg', 'ter', 'qua', 'qui', 'sex', 'sab']);
 
@@ -30,19 +30,22 @@ const seguro = <I, O>(fn: (i: I) => Promise<O>) => async (i: I): Promise<O | { e
   try { return await fn(i); } catch (e) { return { erro: e instanceof Error && e.message ? e.message : 'erro inesperado' }; }
 };
 
-export function resumirProgresso(i: Integralizacao) {
+// { nome: itens (≤30), nomeOmitidos?: n }
+const lista = <T>(nome: string, xs: T[]) => { const c = corta(xs); return { [nome]: c.itens, ...(c.omitidos ? { [`${nome}Omitidos`]: c.omitidos } : {}) }; };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- chaves de lista são calculadas
+export function resumirProgresso(i: Integralizacao): Record<string, any> {
   const por = (estado: string) => i.disciplinas.filter((d) => d.estado === estado);
-  const faltantes = corta(por('faltando').map((d) => ({ codigo: d.codigo, nome: d.nome, creditos: d.creditos, semestreSugerido: d.semestreSugerido })));
   return {
     creditos: i.creditos,
-    faltantes: faltantes.itens, ...(faltantes.omitidos ? { faltantesOmitidos: faltantes.omitidos } : {}),
-    travadas: por('travada').map((d) => ({ codigo: d.codigo, nome: d.nome, creditos: d.creditos, faltamPrereq: d.faltamPrereq })),
-    planejadas: por('planejada').map((d) => d.codigo),
+    ...lista('faltantes', por('faltando').map((d) => ({ codigo: d.codigo, nome: d.nome, creditos: d.creditos, semestreSugerido: d.semestreSugerido }))),
+    ...lista('travadas', por('travada').map((d) => ({ codigo: d.codigo, nome: d.nome, creditos: d.creditos, faltamPrereq: d.faltamPrereq }))),
+    ...lista('planejadas', por('planejada').map((d) => d.codigo)),
     grupos: i.grupos.map((g) => ({
       texto: g.texto, creditos: g.creditos, feitos: g.feitos, emAndamento: g.emAndamento, excedente: g.excedente, verificado: g.verificado,
       ...(g.verificado ? {} : { situacao: 'não verificado' as const }), // regra de catálogo não entendida: créditos não contam como cumpridos
     })),
-    naoClassificadas: i.naoClassificadas, foraDoCurriculo: i.foraDoCurriculo,
+    ...lista('naoClassificadas', i.naoClassificadas), ...lista('foraDoCurriculo', i.foraDoCurriculo),
   };
 }
 
@@ -52,7 +55,7 @@ function descreverGrade(g: GradeResolvida) {
     grade: { id: g.id, nome: g.nome, semestre: rotulo(g.ano, g.periodo), principal: g.principal },
     itens: g.itens.map((i) => ({ codigo: i.codigo, nome: i.nome, turma: i.turma, creditos: i.creditos, campus: i.campus, tipo: i.tipo, horarios: i.horarios, semHorario: i.horarios.length === 0 || !!i.horarioIncompleto })),
     bloqueios: g.bloqueios,
-    checagem: g.checagem,
+    checagem: { ok: g.checagem.ok, verificado: g.checagem.verificado, creditos: g.checagem.creditos, ...lista('achados', [...g.checagem.achados].sort((a, b) => Number(b.nivel === 'conflito') - Number(a.nivel === 'conflito'))) }, // conflitos primeiro
   };
 }
 
@@ -62,13 +65,13 @@ export function criarFerramentas(ctx: Contexto) {
 
   async function semestreDe(ano?: number, periodo?: Per): Promise<{ ano: number; periodo: Per }> {
     const g = ano && periodo ? null : ctx.gradeId ? await getGrade(userId, ctx.gradeId) : null;
-    const base = g ?? proximoSemestre();
+    const base = g ?? proximoSemestre(ctx.agora);
     return { ano: ano ?? base.ano, periodo: periodo ?? base.periodo };
   }
 
   async function gradeAberta(): Promise<GradeResolvida | null> {
     if (ctx.gradeId) return getGrade(userId, ctx.gradeId);
-    const { ano, periodo } = proximoSemestre();
+    const { ano, periodo } = proximoSemestre(ctx.agora);
     const p = (await listarGrades(userId, ano, periodo)).find((g) => g.principal);
     return p ? getGrade(userId, p.id) : null;
   }
@@ -93,8 +96,8 @@ export function criarFerramentas(ctx: Contexto) {
     oferta_disciplina: tool({
       description: 'Mostra as turmas, horários, salas, docentes e vagas de UMA disciplina em um semestre. Use para "tem turma de X?", "que horas é X?". Devolve tipo "oficial" (caderno publicado) ou "previsao" (semestre ainda não publicado, baseado em anos anteriores: diga sempre que é previsão). Inclui fonte (link da DAC e semestre). O código pode ser digitado de qualquer jeito.',
       inputSchema: z.object({ codigo: codigoSchema, ano: anoSchema, periodo: periodoSchema }),
-      execute: seguro(async ({ codigo, ano, periodo }: { codigo: string; ano?: number | undefined; periodo?: Per | undefined }) => {
-        const s = await semestreDe(ano, periodo);
+      execute: seguro(async ({ codigo, ano, periodo }: { codigo: string; ano?: number | undefined; periodo?: number | undefined }) => {
+        const s = await semestreDe(ano, periodo as Per | undefined);
         const o = await getOferta(codigo, s.ano, s.periodo);
         const sem = rotulo(s.ano, s.periodo);
         if (!o.encontrada) return { erro: o.motivo, encontrada: false, tipo: o.tipo, semestre: sem };
@@ -114,8 +117,8 @@ export function criarFerramentas(ctx: Contexto) {
         janelas: z.array(z.object({ dia: diaSchema, inicio: horaSchema, fim: horaSchema, campus: z.enum(['limeira', 'barao', 'piracicaba']).optional() })).describe('Janelas em que o aluno pode ter aula.'),
         ano: anoSchema, periodo: periodoSchema,
       }),
-      execute: seguro(async ({ janelas, ano, periodo }: { janelas: { dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string; campus?: 'limeira' | 'barao' | 'piracicaba' | undefined }[]; ano?: number | undefined; periodo?: Per | undefined }) => {
-        const s = await semestreDe(ano, periodo);
+      execute: seguro(async ({ janelas, ano, periodo }: { janelas: { dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string; campus?: 'limeira' | 'barao' | 'piracicaba' | undefined }[]; ano?: number | undefined; periodo?: number | undefined }) => {
+        const s = await semestreDe(ano, periodo as Per | undefined);
         const r = await buscarTurmas(s.ano, s.periodo, janelas.map((j) => ({ dia: j.dia, inicio: j.inicio, fim: j.fim, ...(j.campus ? { campus: j.campus } : {}) })));
         const c = corta(r.resultados.map((x) => ({ codigo: x.codigo, nome: x.nome, creditos: x.creditos, campus: x.campus, turma: x.turma.turma, horarios: x.turma.horarios, vagas: x.turma.vagas, fonte: fonteDe(x.fonte) })));
         return { tipo: r.tipo, semestre: rotulo(s.ano, s.periodo), total: r.resultados.length, turmas: c.itens, ...(c.omitidos ? { turmasOmitidas: c.omitidos } : {}), ...(r.aviso ? { aviso: r.aviso } : {}) };
@@ -153,7 +156,7 @@ export function criarFerramentas(ctx: Contexto) {
       execute: seguro(async () => {
         const g = await gradeAberta();
         if (!g) {
-          const p = proximoSemestre();
+          const p = proximoSemestre(ctx.agora);
           return { erro: `você ainda não tem grade para ${rotulo(p.ano, p.periodo)}` };
         }
         return descreverGrade(g);
@@ -170,8 +173,9 @@ export function criarFerramentas(ctx: Contexto) {
         if (!adicionar?.length && !remover?.length) throw new Error('nada a alterar: informe adicionar ou remover');
         let g = await gradeAberta();
         let gradeCriada = false;
+        if (!g && ctx.gradeId) throw new Error('não achei essa grade');
         if (!g) {
-          const { ano, periodo } = proximoSemestre();
+          const { ano, periodo } = proximoSemestre(ctx.agora);
           g = (await getGrade(userId, await criarGrade(userId, ano, periodo, 'Minha grade')))!;
           gradeCriada = true;
         }
@@ -188,9 +192,9 @@ export function criarFerramentas(ctx: Contexto) {
           ...(adicionar ?? []).map((a) => `${antes.has(nc(a.codigo)) ? 'troquei para' : 'adicionei'} ${nc(a.codigo)} turma ${a.turma.trim().toUpperCase()}`),
           ...(remover ?? []).map((c) => `removi ${nc(c)}`),
         ];
-        const descricao = `Grade "${g.nome}": ${partes.join('; ')}`;
+        const descricao = `${gradeCriada ? `Criei a grade "${g.nome}". ` : ''}Grade "${g.nome}": ${partes.join('; ')}`;
         const gid = g.id;
-        const r = await comAcao('alterar_grade', descricao, { tipo: 'alterar_grade', gradeId: gid, remover: novos, adicionar: [...anterior].map(([codigo, turma]) => ({ codigo, turma })), ...(gradeCriada ? { gradeCriada: true as const } : {}) },
+        const r = await comAcao('alterar_grade', descricao, { tipo: 'alterar_grade', gradeId: gid, remover: novos, adicionar: [...anterior].map(([codigo, turma]) => ({ codigo, turma })) },
           () => alterarGrade(userId, gid, { ...(adicionar ? { adicionar } : {}), ...(remover ? { remover } : {}) }));
         return { acaoId: r.acaoId, descricao, ...descreverGrade(r.resultado) };
       }),
@@ -225,7 +229,7 @@ export function criarFerramentas(ctx: Contexto) {
 
     remover_bloqueio: tool({
       description: 'Remove um horário bloqueado pelo id (o id aparece em ver_grade, em "bloqueios", ou na resposta de criar_bloqueio). Devolve acaoId e descricao; o aluno pode desfazer.',
-      inputSchema: z.object({ id: z.string().describe('Id do bloqueio.') }),
+      inputSchema: z.object({ id: z.coerce.string().describe('Id do bloqueio.') }),
       execute: seguro(async ({ id }: { id: string }) => {
         const b = await lerBloqueio(userId, id);
         if (!b) throw new Error('bloqueio não encontrado');

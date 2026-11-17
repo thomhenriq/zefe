@@ -1,16 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq, inArray } from 'drizzle-orm';
 import { acao, bloqueio, catalogoDisciplina, conversa, db, grade, historico, horario, oferecimento, semestre, turma } from '../src/db';
-import { criarGrade, getGrade } from '../src/dados/grades';
+import { criarBloqueio, criarGrade, getGrade } from '../src/dados/grades';
 import { desfazerAcao } from '../src/zefe/desfazer';
 import { criarFerramentas, resumirProgresso } from '../src/zefe/ferramentas';
 
 const U = 'teste-t14-a';
 const V = 'teste-t14-b';
+const W = 'teste-t14-c';
 const ANOS = [1995, 1996];
 let conv = '';
 const limpar = async () => {
-  for (const u of [U, V]) {
+  for (const u of [U, V, W]) {
     await db.delete(acao).where(eq(acao.user_id, u));
     await db.delete(conversa).where(eq(conversa.user_id, u));
     await db.delete(grade).where(eq(grade.user_id, u));
@@ -21,8 +22,8 @@ const limpar = async () => {
   await db.delete(semestre).where(inArray(semestre.ano, ANOS));
   await db.delete(catalogoDisciplina).where(inArray(catalogoDisciplina.ano, ANOS));
 };
-async function oferta(ano: number, codigo: string, turmas: { t: string; h: [string, string, string][] }[]) {
-  const [o] = await db.insert(oferecimento).values({ ano, periodo: 1, codigo, nome: `Disc ${codigo}`, creditos: 4, instituto: 'FT', campus: 'limeira', url: `https://dac.example/${ano}/${codigo}` }).returning();
+async function oferta(ano: number, codigo: string, turmas: { t: string; h: [string, string, string][] }[], periodo = 1) {
+  const [o] = await db.insert(oferecimento).values({ ano, periodo, codigo, nome: `Disc ${codigo}`, creditos: 4, instituto: 'FT', campus: 'limeira', url: `https://dac.example/${ano}/${codigo}` }).returning();
   for (const x of turmas) {
     const [t] = await db.insert(turma).values({ oferecimento_id: o!.id, turma: x.t, reservas: [] }).returning();
     for (const [dia, inicio, fim] of x.h) await db.insert(horario).values({ turma_id: t!.id, dia, inicio, fim, sala: 'S1' });
@@ -38,7 +39,8 @@ describe('ferramentas do Zefe', () => {
   let f: ReturnType<typeof criarFerramentas>;
   beforeAll(async () => {
     await limpar();
-    await db.insert(semestre).values({ ano: 1995, periodo: 1, publicado: true });
+    await db.insert(semestre).values([{ ano: 1995, periodo: 1, publicado: true }, { ano: 1995, periodo: 2, publicado: true }]);
+    await oferta(1995, 'ZZ203', [{ t: 'A', h: [['sex', '08:00', '10:00']] }], 2);
     await oferta(1995, 'ZZ201', [{ t: 'A', h: [['seg', '08:00', '10:00']] }, { t: 'B', h: [['ter', '08:00', '10:00']] }]);
     await oferta(1995, 'ZZ202', [{ t: 'A', h: [['qua', '14:00', '16:00']] }]);
     await db.insert(catalogoDisciplina).values([
@@ -171,12 +173,59 @@ describe('ferramentas do Zefe', () => {
     expect(g.checagem.ok).toBe(true);
   });
 
-  test('ver_grade sem grade → { erro }; alterar_grade sem gradeId cria "Minha grade" e o desfazer só tira os itens', async () => {
-    const sem = criarFerramentas({ userId: V, conversaId: conv, gradeId: null });
-    const prox = (await chamar(sem, 'ver_grade', {})).erro;
-    expect(prox).toContain('você ainda não tem grade para');
-    // o semestre padrão (próximo) não tem oferta sentinela: a criação da grade acontece mas a turma não existe → erro e nada criado de item
-    expect((await chamar(sem, 'alterar_grade', { adicionar: [{ codigo: 'ZZ201', turma: 'A' }] })).erro).toBeString();
+  test('sem gradeId: ver_grade dá erro; alterar_grade cria "Minha grade" principal com o item e o desfazer só tira o item', async () => {
+    const w = criarFerramentas({ userId: W, conversaId: conv, gradeId: null, agora: new Date(1995, 2, 10) }); // próximo semestre = 2S/1995
+    expect((await chamar(w, 'ver_grade', {})).erro).toBe('você ainda não tem grade para 2S/1995');
+    const r = await chamar(w, 'alterar_grade', { adicionar: [{ codigo: 'zz203', turma: 'A' }] });
+    expect(r.erro).toBeUndefined();
+    expect(r.descricao).toContain('Criei a grade "Minha grade"');
+    expect(r.grade).toMatchObject({ nome: 'Minha grade', semestre: '2S/1995', principal: true });
+    expect(r.itens.map((i: R) => i.codigo)).toEqual(['ZZ203']);
+    const gs = await db.select().from(grade).where(eq(grade.user_id, W));
+    expect(gs).toHaveLength(1);
+    expect((await chamar(w, 'ver_grade', {})).grade.id).toBe(String(gs[0]!.id));
+    expect((await desfazerAcao(W, r.acaoId)).ok).toBe(true);
+    expect((await getGrade(W, String(gs[0]!.id)))!.itens).toEqual([]);
+    const r2 = await chamar(w, 'alterar_grade', { adicionar: [{ codigo: 'ZZ203', turma: 'A' }] }); // reaproveita a grade, não cria outra
+    expect(r2.descricao).not.toContain('Criei');
+    expect(await db.select().from(grade).where(eq(grade.user_id, W))).toHaveLength(1);
+  });
+
+  test('gradeId velha ou de outro usuário: alterar_grade → { erro } e nada muda nem é criado', async () => {
+    const gv = await criarGrade(V, 1995, 1, 'Do V');
+    for (const gid of [gv, '999999999']) {
+      const t = criarFerramentas({ userId: U, conversaId: conv, gradeId: gid });
+      const r = await chamar(t, 'alterar_grade', { adicionar: [{ codigo: 'ZZ201', turma: 'A' }] });
+      expect(r.erro).toBe('não achei essa grade');
+      expect(r.acaoId).toBeUndefined();
+      expect((await chamar(t, 'ver_grade', {})).erro).toBeString();
+    }
+    expect((await getGrade(V, gv))!.itens).toEqual([]);
+    expect(await db.select().from(grade).where(eq(grade.user_id, U))).toHaveLength(1);
+  });
+
+  test('remover_bloqueio de bloqueio de outro usuário → { erro } e o bloqueio continua', async () => {
+    const b = await criarBloqueio(V, { nome: 'Do V', dia: 'qui', inicio: '08:00', fim: '09:00' });
+    const r = await chamar(f, 'remover_bloqueio', { id: b.id });
+    expect(r.erro).toContain('bloqueio não encontrado');
+    expect(await db.select().from(bloqueio).where(eq(bloqueio.user_id, V))).toHaveLength(1);
+  });
+
+  test('entrada: ano/periodo em texto são aceitos pelo schema; periodo 3 não', () => {
+    const sch = (f.oferta_disciplina as any).inputSchema;
+    const ok = sch.safeParse({ codigo: 'SI702', ano: '2027', periodo: '1' });
+    expect(ok.success).toBe(true);
+    expect(ok.data).toEqual({ codigo: 'SI702', ano: 2027, periodo: 1 });
+    expect(sch.safeParse({ codigo: 'SI702', periodo: 3 }).success).toBe(false);
+    expect((f.remover_bloqueio as any).inputSchema.safeParse({ id: 5 }).data).toEqual({ id: '5' });
+  });
+
+  test('listas longas são cortadas com a contagem de omitidos', () => {
+    const muitas = Array.from({ length: 35 }, (_, k) => ({ codigo: `T${k}`, nome: 'n', creditos: 2, semestreSugerido: 1, estado: 'travada' as const, faltamPrereq: ['X'], prereqDesconhecido: false }));
+    const r = resumirProgresso({ disciplinas: muitas, grupos: [], foraDoCurriculo: Array.from({ length: 32 }, (_, k) => `F${k}`), naoClassificadas: [], creditos: { obrigatorias: { feitos: 0, total: 0, emAndamento: 0 }, eletivas: { feitos: 0, total: 0, naoVerificado: 0, emAndamento: 0 } } }) as R;
+    expect(r.travadas).toHaveLength(30);
+    expect(r.travadasOmitidos).toBe(5);
+    expect(r.foraDoCurriculoOmitidos).toBe(2);
   });
 
   test('resumirProgresso: créditos, faltantes, travadas e grupos "não verificado"', () => {
