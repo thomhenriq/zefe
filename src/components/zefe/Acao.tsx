@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 type Situacao = { tipo: "pronta" } | { tipo: "enviando" } | { tipo: "desfeita" } | { tipo: "erro"; motivo: string };
 
 /** Item de ação no chat: o que o Zefe mudou, com botão desfazer. A tela atrás é atualizada depois de desfazer. */
-export function Acao({ acaoId, descricao }: { acaoId: number; descricao: string }) {
+export function Acao({ acaoId, descricao, aoDesfazer }: { acaoId: number; descricao: string; aoDesfazer?: () => void }) {
   const router = useRouter();
   const [s, setS] = useState<Situacao>({ tipo: "pronta" });
 
@@ -17,7 +17,7 @@ export function Acao({ acaoId, descricao }: { acaoId: number; descricao: string 
     try {
       const r = await fetch("/api/zefe/desfazer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ acaoId }) });
       const j = (await r.json().catch(() => ({}))) as { ok?: boolean; motivo?: string };
-      if (j.ok || j.motivo === "essa ação já foi desfeita") setS({ tipo: "desfeita" });
+      if (j.ok || j.motivo === "essa ação já foi desfeita") { setS({ tipo: "desfeita" }); aoDesfazer?.(); }
       else setS({ tipo: "erro", motivo: j.motivo ?? "não consegui desfazer" });
       router.refresh();
     } catch {

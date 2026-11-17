@@ -102,7 +102,7 @@ export function criarFerramentas(ctx: Contexto) {
         const sem = rotulo(s.ano, s.periodo);
         if (!o.encontrada) return { erro: o.motivo, encontrada: false, tipo: o.tipo, semestre: sem };
         const d = o.tipo === 'oficial' ? o.disciplina : o.base;
-        const t = corta(d.turmas.map((x) => ({ turma: x.turma, horarios: x.horarios, docentes: x.docentes, vagas: x.vagas, matriculados: x.matriculados, reservas: x.reservas, ...(x.horarioIncompleto ? { horarioIncompleto: true } : {}) })));
+        const t = corta(d.turmas.map((x) => ({ turma: x.turma, horarios: x.horarios, docentes: x.docentes, ...(o.tipo === 'previsao' ? {} : { vagas: x.vagas, matriculados: x.matriculados, reservas: x.reservas }), ...(x.horarioIncompleto ? { horarioIncompleto: true } : {}) })));
         return {
           encontrada: true, tipo: o.tipo, codigo: d.codigo, nome: d.nome, creditos: d.creditos, campus: d.campus, semestre: sem,
           ...(o.tipo === 'previsao' ? { confianca: o.confianca, aviso: `previsão para ${sem}, baseada em ${o.evidencias.map((e) => rotulo(e.ano, e.periodo)).join(', ')}; ainda não é oficial`, evidencias: o.evidencias.map((e) => ({ semestre: rotulo(e.ano, e.periodo), url: e.url })) } : {}),
@@ -120,7 +120,7 @@ export function criarFerramentas(ctx: Contexto) {
       execute: seguro(async ({ janelas, ano, periodo }: { janelas: { dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string; campus?: 'limeira' | 'barao' | 'piracicaba' | undefined }[]; ano?: number | undefined; periodo?: number | undefined }) => {
         const s = await semestreDe(ano, periodo as Per | undefined);
         const r = await buscarTurmas(s.ano, s.periodo, janelas.map((j) => ({ dia: j.dia, inicio: j.inicio, fim: j.fim, ...(j.campus ? { campus: j.campus } : {}) })));
-        const c = corta(r.resultados.map((x) => ({ codigo: x.codigo, nome: x.nome, creditos: x.creditos, campus: x.campus, turma: x.turma.turma, horarios: x.turma.horarios, vagas: x.turma.vagas, fonte: fonteDe(x.fonte) })));
+        const c = corta(r.resultados.map((x) => ({ codigo: x.codigo, nome: x.nome, creditos: x.creditos, campus: x.campus, turma: x.turma.turma, horarios: x.turma.horarios, ...(r.tipo === 'previsao' ? {} : { vagas: x.turma.vagas }), fonte: fonteDe(x.fonte) })));
         return { tipo: r.tipo, semestre: rotulo(s.ano, s.periodo), total: r.resultados.length, turmas: c.itens, ...(c.omitidos ? { turmasOmitidas: c.omitidos } : {}), ...(r.aviso ? { aviso: r.aviso } : {}) };
       }),
     }),

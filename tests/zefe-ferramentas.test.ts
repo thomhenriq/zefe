@@ -157,6 +157,19 @@ describe('ferramentas do Zefe', () => {
     expect(r.turmas[0].fonte).toEqual({ url: 'https://dac.example/1995/ZZ201', semestre: '1S/1995' });
   });
 
+  test('previsão nunca leva vagas/matriculados/reservas do ano-base ao modelo; oficial leva', async () => {
+    const o = await chamar(f, 'oferta_disciplina', { codigo: 'ZZ201', ano: 1996, periodo: 1 });
+    expect(o.tipo).toBe('previsao');
+    expect(o.turmas.length).toBeGreaterThan(0);
+    for (const t of o.turmas) for (const k of ['vagas', 'matriculados', 'reservas']) expect(k in t).toBe(false);
+    const b = await chamar(f, 'buscar_turmas', { janelas: [{ dia: 'seg', inicio: '07:00', fim: '12:00' }], ano: 1996, periodo: 1 });
+    expect(b.tipo).toBe('previsao');
+    expect(b.turmas.length).toBeGreaterThan(0);
+    for (const t of b.turmas) expect('vagas' in t).toBe(false);
+    const of = await chamar(f, 'oferta_disciplina', { codigo: 'ZZ201' });
+    expect(of.turmas[0]).toHaveProperty('vagas');
+  });
+
   test('oferta_disciplina, prerequisitos (com histórico) e ver_grade', async () => {
     const o = await chamar(f, 'oferta_disciplina', { codigo: ' zz 201 ' });
     expect(o).toMatchObject({ tipo: 'oficial', codigo: 'ZZ201', fonte: { semestre: '1S/1995' } });

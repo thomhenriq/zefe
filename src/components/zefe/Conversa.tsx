@@ -43,6 +43,16 @@ function Texto({ t }: { t: string }) {
   );
 }
 
+function Resultado({ acao, v, saida }: { acao: ReturnType<typeof acaoDe>; v: ReturnType<typeof validarCartao>; saida: unknown }) {
+  const [desfeita, setDesfeita] = useState(false);
+  return (
+    <div className="flex flex-col gap-2">
+      {acao && <Acao acaoId={acao.acaoId} descricao={acao.descricao} aoDesfazer={() => setDesfeita(true)} />}
+      {v.ok ? v.cartao && <CartaoZefe cartao={v.cartao} desatualizado={desfeita && v.cartao.tipo === "grade"} /> : <CartaoFalha saida={saida} />}
+    </div>
+  );
+}
+
 function Partes({ m }: { m: UIMessage }) {
   if (m.role === "user") {
     return <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-accent px-3 py-2 text-sm whitespace-pre-wrap">{m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}</p>;
@@ -56,12 +66,7 @@ function Partes({ m }: { m: UIMessage }) {
         if (p.state === "output-available") {
           const v = validarCartao(nome, p.output);
           const acao = acaoDe(p.output);
-          return (
-            <div key={i} className="flex flex-col gap-2">
-              {acao && <Acao acaoId={acao.acaoId} descricao={acao.descricao} />}
-              {v.ok ? v.cartao && <CartaoZefe cartao={v.cartao} /> : <CartaoFalha saida={p.output} />}
-            </div>
-          );
+          return <Resultado key={i} acao={acao} v={v} saida={p.output} />;
         }
         if (p.state === "output-error") return <p key={i} className="text-xs text-muted-foreground">Uma consulta não deu certo; o Zefe vai tentar de outro jeito.</p>;
         return (

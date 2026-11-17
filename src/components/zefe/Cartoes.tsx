@@ -49,7 +49,7 @@ function Oferta({ d }: { d: Dados<"oferta"> }) {
             <li key={t.turma} className="flex flex-col gap-0.5 py-1.5 first:pt-0 last:pb-0">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-semibold">Turma {t.turma}</span>
-                <span className="tabular-nums text-muted-foreground">{t.vagas === null ? "vagas ?" : `${t.matriculados ?? "?"}/${t.vagas} vagas`}</span>
+                {!previsao && t.vagas !== undefined && <span className="tabular-nums text-muted-foreground">{t.vagas === null ? "vagas ?" : `${t.matriculados ?? "?"}/${t.vagas} vagas`}</span>}
               </div>
               <Horarios h={t.horarios} />
               {t.horarioIncompleto && <AvisoBadge nivel="naoverificado" rotulo="Horário incompleto" className="self-start" />}
@@ -213,7 +213,15 @@ function Prereq({ d }: { d: Dados<"prereq"> }) {
   );
 }
 
-export function CartaoZefe({ cartao }: { cartao: Cartao }) {
+export function CartaoZefe({ cartao, desatualizado }: { cartao: Cartao; desatualizado?: boolean }) {
+  if (desatualizado) {
+    return (
+      <div className="opacity-60" data-desatualizado>
+        <CartaoZefe cartao={cartao} />
+        <p className="mt-1 text-xs text-muted-foreground">Estado antes de desfazer.</p>
+      </div>
+    );
+  }
   switch (cartao.tipo) {
     case "oferta": return <Oferta d={cartao.dados} />;
     case "turmas": return <Turmas d={cartao.dados} />;

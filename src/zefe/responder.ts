@@ -57,8 +57,10 @@ export function historicoParaModelo(mensagens: UIMessage[]): UIMessage[] {
     .slice(-MAX_HISTORICO)
     .map((m) => ({ ...m, parts: m.parts.filter(temTexto) }))
     .filter((m) => m.parts.length > 0);
-  const i = ultimas.findIndex((m) => m.role === 'user');
-  return i < 0 ? [] : ultimas.slice(i);
+  // Pergunta sem resposta (a resposta falhou) seguida de outra pergunta: fica só a mais recente.
+  const seguidas = ultimas.filter((m, k) => !(m.role === 'user' && ultimas[k + 1]?.role === 'user'));
+  const i = seguidas.findIndex((m) => m.role === 'user');
+  return i < 0 ? [] : seguidas.slice(i);
 }
 
 /** Tira <thinking> do texto que sai do modelo (exibido e salvo), mesmo partido entre pedaços. */
@@ -113,8 +115,9 @@ export async function responder(e: EntradaResposta): Promise<ReadableStream<UIMe
     stream: r.stream.pipeThrough(semPensamento<typeof tools>()),
     tools,
     originalMessages: e.mensagens,
-    onError: () => FORA_DO_AR,
-    redactToolErrors: false, // erro de ferramenta volta ao modelo como resultado, com o texto real
+    // Erro de ferramenta volta ao modelo como resultado (dentro do laço, com o texto real); ao cliente e ao banco vai só texto genérico.
+    onError: (erro) => (erro instanceof Error && /tool/i.test(erro.name) ? 'Uma consulta não deu certo.' : FORA_DO_AR),
+    redactToolErrors: true,
     onEnd: async ({ responseMessage, outcome }) => {
       if (e.salvar === false || outcome.status === 'failed') return;
       const partes = responseMessage.parts.filter(temTexto);

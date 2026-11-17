@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { MockLanguageModelV4 } from 'ai/test';
 import { conversa, db, mensagem, perfil } from '../src/db';
-import { FORA_DO_AR, MAX_HISTORICO, MAX_PASSOS } from '../src/zefe/responder';
+import { FORA_DO_AR, MAX_HISTORICO, MAX_PASSOS, historicoParaModelo } from '../src/zefe/responder';
 import { tratarPost } from '../src/zefe/rota';
 
 const U = { id: 'teste-t15-a', email: 'liberado-t15@zefe.local' };
@@ -78,8 +78,22 @@ describe('POST /api/zefe (tratarPost)', () => {
     expect(JSON.stringify(salvos.partes)).toContain('buscar_disciplinas'); // chamadas e resultados de ferramenta ficam salvos
   });
 
-  test('conversa de outro usuário: 404', async () => {
-    const r = await tratarPost({ id: 'outro-usuario-t15', email: 'outro@x.y' }, corpo('oi', (await db.select().from(conversa).where(eq(conversa.user_id, U.id)))[0]!.id), { liberados: LISTA });
-    expect([404, 409]).toContain(r.status); // 409: sem perfil; de qualquer forma não vê a conversa
+  test('conversa de outro usuário: 404 exato e nada é gravado na conversa alheia', async () => {
+    const O = { id: 'teste-t15-b', email: 'outro@x.y' };
+    await db.delete(perfil).where(eq(perfil.user_id, O.id));
+    await db.insert(perfil).values({ user_id: O.id, curso: 94, catalogo: 2026, modalidade: null, ingresso: 2024, semestre_atual: 5 });
+    try {
+      const [c] = await db.select().from(conversa).where(eq(conversa.user_id, U.id));
+      const antes = (await msgs()).length;
+      const r = await tratarPost(O, corpo('oi', c!.id), { liberados: LISTA });
+      expect(r.status).toBe(404);
+      expect((await msgs()).length).toBe(antes);
+    } finally { await db.delete(perfil).where(eq(perfil.user_id, O.id)); }
+  });
+
+  test('histórico: pergunta sem resposta seguida de outra não gera dois turnos de usuário seguidos', () => {
+    const m = (id: string, role: 'user' | 'assistant', text: string) => ({ id, role, parts: [{ type: 'text' as const, text }] });
+    const h = historicoParaModelo([m('1', 'user', 'a'), m('2', 'user', 'b'), m('3', 'assistant', 'r'), m('4', 'user', 'c')]);
+    expect(h.map((x) => x.id)).toEqual(['2', '3', '4']);
   });
 });

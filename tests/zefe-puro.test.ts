@@ -48,6 +48,10 @@ describe('cartões validados por zod', () => {
     const c = cartaoDe('oferta_disciplina', { encontrada: true, tipo: 'oficial', codigo: 'SI702', nome: 'X', creditos: 4, campus: 'limeira', semestre: '1S/2027', fonte: { url: 'u', semestre: '1S/2026' }, turmas: [{ turma: 'A', horarios: [{ dia: 'seg', inicio: '08:00', fim: '10:00', sala: 'S1' }], docentes: ['Fulano'], vagas: 10, matriculados: 3, reservas: [] }] });
     expect(c?.tipo).toBe('oferta');
   });
+  test('oferta em previsão sem vagas/matriculados é válida', () => {
+    const r = validarCartao('oferta_disciplina', { encontrada: true, tipo: 'previsao', codigo: 'SI702', nome: 'X', creditos: 4, campus: 'limeira', semestre: '1S/2027', fonte: { url: 'u', semestre: '1S/2026' }, turmas: [{ turma: 'A', horarios: [], docentes: [] }] });
+    expect(r.ok).toBe(true);
+  });
   test('oferta não encontrada vira erro, não cartão', () => {
     expect(cartaoDe('oferta_disciplina', { erro: 'x', encontrada: false })).toBeNull();
   });

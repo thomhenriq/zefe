@@ -7,13 +7,13 @@ const nulavel = z.number().nullable();
 const oferta = z.object({
   encontrada: z.literal(true), tipo: z.enum(['oficial', 'previsao']), codigo: z.string(), nome: z.string(), creditos: nulavel, campus: z.string(), semestre: z.string(),
   aviso: z.string().optional(), fonte: z.object({ url: z.string(), semestre: z.string() }),
-  turmas: z.array(z.object({ turma: z.string(), horarios: z.array(horario), docentes: z.array(z.string()), vagas: nulavel, matriculados: nulavel, horarioIncompleto: z.boolean().optional() })),
+  turmas: z.array(z.object({ turma: z.string(), horarios: z.array(horario), docentes: z.array(z.string()), vagas: nulavel.optional(), matriculados: nulavel.optional(), horarioIncompleto: z.boolean().optional() })),
   turmasOmitidas: z.number().optional(),
 });
 
 const turmas = z.object({
   tipo: z.enum(['oficial', 'previsao']), semestre: z.string(), total: z.number(), aviso: z.string().optional(), turmasOmitidas: z.number().optional(),
-  turmas: z.array(z.object({ codigo: z.string(), nome: z.string(), creditos: nulavel, campus: z.string(), turma: z.string(), horarios: z.array(horario), vagas: nulavel })),
+  turmas: z.array(z.object({ codigo: z.string(), nome: z.string(), creditos: nulavel, campus: z.string(), turma: z.string(), horarios: z.array(horario), vagas: nulavel.optional() })),
 });
 
 const grade = z.object({
