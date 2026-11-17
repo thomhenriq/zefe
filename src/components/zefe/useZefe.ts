@@ -30,6 +30,7 @@ export function useZefe(ativo: boolean) {
   });
   const [carregada, setCarregada] = useState(!ativo);
   const [feliz, setFeliz] = useState(false);
+  const [desfeitas, setDesfeitas] = useState<number[]>([]);
 
   useEffect(() => { est.definir({ caminho }); }, [est, caminho]);
 
@@ -65,9 +66,10 @@ export function useZefe(ativo: boolean) {
     let vivo = true;
     fetch("/api/zefe/conversa")
       .then((r) => (r.ok ? r.json() : null))
-      .then((j: { conversaId: number | null; mensagens: UIMessage[] } | null) => {
+      .then((j: { conversaId: number | null; mensagens: UIMessage[]; desfeitas?: number[] } | null) => {
         if (!vivo || !j) return;
         est.definir({ conversaId: j.conversaId });
+        setDesfeitas(j.desfeitas ?? []);
         setMessages((atual) => (atual.length ? atual : j.mensagens));
       })
       .catch(() => {})
@@ -85,12 +87,13 @@ export function useZefe(ativo: boolean) {
     void stop();
     est.definir({ conversaId: null });
     setMessages([]);
+    setDesfeitas([]);
     setFeliz(false);
   }, [stop, setMessages, est]);
 
   const ocupado = status === "submitted" || status === "streaming";
   const estado: EstadoMascote = ocupado ? "pensando" : feliz ? "feliz" : "parado";
-  return { ...chat, messages, ocupado, estado, carregada, novaConversa, caminho };
+  return { ...chat, messages, ocupado, estado, carregada, novaConversa, caminho, desfeitas };
 }
 
 export type ZefeChat = ReturnType<typeof useZefe>;

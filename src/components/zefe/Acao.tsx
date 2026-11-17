@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 type Situacao = { tipo: "pronta" } | { tipo: "enviando" } | { tipo: "desfeita" } | { tipo: "erro"; motivo: string };
 
 /** Item de ação no chat: o que o Zefe mudou, com botão desfazer. A tela atrás é atualizada depois de desfazer. */
-export function Acao({ acaoId, descricao, aoDesfazer }: { acaoId: number; descricao: string; aoDesfazer?: () => void }) {
+export function Acao({ acaoId, descricao, aoDesfazer, desfeitaInicial = false }: { acaoId: number; descricao: string; aoDesfazer?: () => void; desfeitaInicial?: boolean }) {
   const router = useRouter();
-  const [s, setS] = useState<Situacao>({ tipo: "pronta" });
+  const [s, setS] = useState<Situacao>({ tipo: desfeitaInicial ? "desfeita" : "pronta" });
 
   async function desfazer() {
     setS({ tipo: "enviando" });

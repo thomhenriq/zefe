@@ -1,7 +1,7 @@
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { convertToModelMessages, isStepCount, readUIMessageStream, streamText, toUIMessageStream, type LanguageModel, type TextStreamPart, type ToolSet, type UIMessage, type UIMessageChunk } from 'ai';
 import { z } from 'zod';
-import { conversa, curso, db, mensagem } from '@/db';
+import { acao, conversa, curso, db, mensagem } from '@/db';
 import { getPerfil } from '@/dados/aluno';
 import { getGrade } from '@/dados/grades';
 import { normalizarCodigo } from '@/dominio/codigo';
@@ -163,6 +163,17 @@ export async function salvarMensagem(conversaId: number, papel: 'user' | 'assist
 export async function carregarMensagens(conversaId: number): Promise<UIMessage[]> {
   const ms = await db.select().from(mensagem).where(eq(mensagem.conversa_id, conversaId)).orderBy(asc(mensagem.id));
   return ms.map((m) => ({ id: `m${m.id}`, role: m.papel as 'user' | 'assistant', parts: m.partes as UIMessage['parts'] }));
+}
+/** Ids das ações (com acaoId nos resultados de ferramenta salvos) que o usuário já desfez: o painel recarregado mostra como desfeitas. */
+export async function acoesDesfeitas(userId: string, mensagens: UIMessage[]): Promise<number[]> {
+  const ids = new Set<number>();
+  for (const m of mensagens) for (const p of m.parts) {
+    const id = (p as { output?: { acaoId?: unknown } }).output?.acaoId;
+    if (typeof id === 'number') ids.add(id);
+  }
+  if (!ids.size) return [];
+  const r = await db.select({ id: acao.id }).from(acao).where(and(eq(acao.user_id, userId), eq(acao.desfeita, true), inArray(acao.id, [...ids])));
+  return r.map((x) => x.id);
 }
 export async function ultimaConversa(userId: string) {
   const [c] = await db.select().from(conversa).where(eq(conversa.user_id, userId)).orderBy(desc(conversa.id)).limit(1);

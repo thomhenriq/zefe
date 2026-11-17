@@ -43,17 +43,17 @@ function Texto({ t }: { t: string }) {
   );
 }
 
-function Resultado({ acao, v, saida }: { acao: ReturnType<typeof acaoDe>; v: ReturnType<typeof validarCartao>; saida: unknown }) {
-  const [desfeita, setDesfeita] = useState(false);
+function Resultado({ acao, v, saida, desfeitaInicial }: { acao: ReturnType<typeof acaoDe>; v: ReturnType<typeof validarCartao>; saida: unknown; desfeitaInicial: boolean }) {
+  const [desfeita, setDesfeita] = useState(desfeitaInicial);
   return (
     <div className="flex flex-col gap-2">
-      {acao && <Acao acaoId={acao.acaoId} descricao={acao.descricao} aoDesfazer={() => setDesfeita(true)} />}
+      {acao && <Acao acaoId={acao.acaoId} descricao={acao.descricao} desfeitaInicial={desfeitaInicial} aoDesfazer={() => setDesfeita(true)} />}
       {v.ok ? v.cartao && <CartaoZefe cartao={v.cartao} desatualizado={desfeita && v.cartao.tipo === "grade"} /> : <CartaoFalha saida={saida} />}
     </div>
   );
 }
 
-function Partes({ m }: { m: UIMessage }) {
+function Partes({ m, desfeitas }: { m: UIMessage; desfeitas: number[] }) {
   if (m.role === "user") {
     return <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-accent px-3 py-2 text-sm whitespace-pre-wrap">{m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}</p>;
   }
@@ -66,7 +66,7 @@ function Partes({ m }: { m: UIMessage }) {
         if (p.state === "output-available") {
           const v = validarCartao(nome, p.output);
           const acao = acaoDe(p.output);
-          return <Resultado key={i} acao={acao} v={v} saida={p.output} />;
+          return <Resultado key={i} acao={acao} v={v} saida={p.output} desfeitaInicial={!!acao && desfeitas.includes(acao.acaoId)} />;
         }
         if (p.state === "output-error") return <p key={i} className="text-xs text-muted-foreground">Uma consulta não deu certo; o Zefe vai tentar de outro jeito.</p>;
         return (
@@ -81,7 +81,7 @@ function Partes({ m }: { m: UIMessage }) {
 }
 
 export function Conversa({ zefe }: { zefe: ZefeChat }) {
-  const { messages, sendMessage, ocupado, estado, error, novaConversa, carregada, caminho } = zefe;
+  const { messages, sendMessage, ocupado, estado, error, novaConversa, carregada, caminho, desfeitas } = zefe;
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement>(null);
   const idTexto = useId(); // o painel existe na lateral e na gaveta: id próprio por instância
@@ -123,7 +123,7 @@ export function Conversa({ zefe }: { zefe: ZefeChat }) {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {messages.map((m) => <Partes key={m.id} m={m} />)}
+            {messages.map((m) => <Partes key={m.id} m={m} desfeitas={desfeitas} />)}
             {ocupado && messages.at(-1)?.role === "user" && <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status"><Loader2 className="size-3.5 motion-safe:animate-spin" aria-hidden />Pensando…</p>}
             {error && <p role="alert" className="rounded-lg border border-aviso-borda bg-aviso-bg px-3 py-2 text-sm text-aviso">{FORA_DO_AR}</p>}
           </div>

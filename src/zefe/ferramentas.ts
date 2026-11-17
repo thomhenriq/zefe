@@ -165,7 +165,7 @@ export function criarFerramentas(ctx: Contexto) {
     }),
 
     alterar_grade: tool({
-      description: 'Adiciona e/ou remove turmas na grade do aluno, direto no rascunho (o aluno pode desfazer). "adicionar" recebe pares codigo+turma (ex.: SI702, turma "A"); adicionar uma disciplina que já está na grade troca a turma. "remover" recebe códigos. Só use turmas que vieram de oferta_disciplina ou buscar_turmas. Devolve a grade nova com a checagem, acaoId e descricao; se der erro nada é alterado.',
+      description: 'Adiciona e/ou remove turmas na grade do aluno, direto no rascunho (o aluno pode desfazer). "adicionar" recebe pares codigo+turma (ex.: SI702, turma "A"); adicionar uma disciplina que já está na grade troca a turma. "remover" recebe códigos. Só use turmas que vieram de oferta_disciplina ou buscar_turmas. Pré-requisito faltando NUNCA impede adicionar: a ferramenta adiciona mesmo assim e o aviso vem na checagem do resultado; não recuse nem peça outra disciplina por isso. Devolve a grade nova com a checagem, acaoId e descricao; se der erro nada é alterado.',
       inputSchema: z.object({
         adicionar: z.array(z.object({ codigo: codigoSchema, turma: z.string().describe('Letra da turma, ex.: "A".') })).optional(),
         remover: z.array(codigoSchema).optional(),

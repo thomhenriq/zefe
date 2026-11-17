@@ -20,16 +20,19 @@ const LinkCod = ({ c, parcial }: { c: string; parcial?: boolean }) => (
   </span>
 );
 
-function Turmas({ turmas }: { turmas: Turma[] }) {
+// Na previsão vagas/matriculados são do semestre-base: nunca mostrar como se fossem do futuro.
+function Turmas({ turmas, previsao }: { turmas: Turma[]; previsao?: boolean }) {
   return (
     <ul className="divide-y">
       {turmas.map((t) => (
         <li key={t.turma} className="space-y-1 px-4 py-3 text-sm">
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <span className={`${mono} font-semibold`}>Turma {t.turma}</span>
-            <span className="text-muted-foreground">
-              {t.vagas != null ? `${t.matriculados ?? "?"}/${t.vagas} vagas ocupadas` : "vagas não informadas"}
-            </span>
+            {!previsao && (
+              <span className="text-muted-foreground">
+                {t.vagas != null ? `${t.matriculados ?? "?"}/${t.vagas} vagas ocupadas` : "vagas não informadas"}
+              </span>
+            )}
           </div>
           <p className={`${mono} flex flex-wrap gap-x-3 text-xs`}>
             {t.horarios.length ? t.horarios.map((h, i) => (
@@ -118,7 +121,7 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
                 <span className="text-sm">confiança {oferta.confianca === "provavel" ? "provável" : "incerta"}; baseada em {oferta.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ")}</span>
               )}
             </div>
-            {oferta.encontrada && oferta.tipo === "previsao" ? <Turmas turmas={oferta.base.turmas} />
+            {oferta.encontrada && oferta.tipo === "previsao" ? <Turmas turmas={oferta.base.turmas} previsao />
               : oferta.encontrada ? <Turmas turmas={oferta.disciplina.turmas} />
               : <p className="px-4 py-3 text-sm">Sem histórico: {oferta.motivo}.</p>}
             {oferta.encontrada && oferta.tipo === "previsao" && <p className="border-t border-dashed border-previsao-borda px-4 py-2 text-xs text-muted-foreground">Previsão, não é o caderno oficial. Horários e salas podem mudar.</p>}

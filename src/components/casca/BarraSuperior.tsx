@@ -10,7 +10,7 @@ import { Busca } from "./Busca";
 import { Logo } from "./Logo";
 import { itemSobre, itensNav } from "./itens";
 
-/** `leve`: variante da apresentação (sem painel): só Sobre + Entrar. */
+/** `leve`: variante da apresentação (sem painel): campo de busca, Sobre + Entrar. */
 export function BarraSuperior({ leve = false }: { leve?: boolean }) {
   const caminho = usePathname();
   const router = useRouter();
@@ -39,16 +39,14 @@ export function BarraSuperior({ leve = false }: { leve?: boolean }) {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          {!leve && <Busca className="hidden w-80 md:block" />}
-          {!leve && (
-            <Link
-              href="/busca"
-              aria-label="Buscar"
-              className="inline-flex size-9 items-center justify-center rounded-lg hover:bg-muted md:hidden"
-            >
-              <Search className="size-5" aria-hidden />
-            </Link>
-          )}
+          <Busca className="hidden w-80 md:block" />
+          <Link
+            href="/busca"
+            aria-label="Buscar"
+            className="inline-flex size-9 items-center justify-center rounded-lg hover:bg-muted md:hidden"
+          >
+            <Search className="size-5" aria-hidden />
+          </Link>
           {sessao ? (
             <Button
               variant="outline"

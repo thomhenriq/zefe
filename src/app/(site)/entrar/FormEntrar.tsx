@@ -22,7 +22,7 @@ export function FormEntrar() {
     setErro(null);
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
     setOcupado(false);
-    if (error) return setErro("Não foi possível enviar o código. Confira o e-mail e tente de novo.");
+    if (error) return setErro(error.status === 429 ? "Muitos pedidos de código. Espere um minuto e tente de novo." : "Não foi possível enviar o código. Confira o e-mail e tente de novo.");
     setEtapa("codigo");
   }
 

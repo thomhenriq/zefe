@@ -48,6 +48,9 @@ export default async function Apresentacao() {
               <Button render={<Link href="/sobre" />} nativeButton={false} variant="outline" className="h-12 rounded-full px-5 text-base">
                 Como funciona
               </Button>
+              <Button render={<Link href="/busca" />} nativeButton={false} variant="ghost" className="h-12 rounded-full px-5 text-base">
+                Buscar disciplinas
+              </Button>
             </div>
           </div>
 
