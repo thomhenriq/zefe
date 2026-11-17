@@ -31,6 +31,7 @@
   --color-capi: var(--capi);
   --color-capi-claro: var(--capi-claro);
   --color-capi-escuro: var(--capi-escuro);
+  --color-capi-tinta: var(--capi-tinta);
 
   /* Estados de disciplina e níveis de aviso: texto/ícone, fundo, borda */
   --color-cursada: var(--cursada);
@@ -102,6 +103,9 @@
   --capi: oklch(0.68 0.085 62);
   --capi-claro: oklch(0.8 0.07 70);
   --capi-escuro: oklch(0.46 0.07 50);
+  --capi-tinta: oklch(0.24 0.03 50);
+  --capi-brilho: oklch(1 0 0);
+  --capi-bochecha: oklch(0.72 0.12 30);
 
   --radius: 0.75rem;
   --largura-painel: 22.5rem;

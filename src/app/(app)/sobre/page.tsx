@@ -14,7 +14,7 @@ export default function Sobre() {
         </p>
       </header>
 
-      <aside className="flex gap-3 rounded-xl border border-aviso-borda bg-aviso-bg p-4 text-aviso" role="note">
+      <aside className="flex gap-3 rounded-xl border border bg-accent p-4 text-accent-foreground" role="note">
         <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
         <p className="text-sm">
           <strong className="font-semibold">O Zefe não é oficial.</strong> Não é um produto da Unicamp nem da DAC, e

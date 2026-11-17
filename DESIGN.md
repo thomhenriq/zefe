@@ -57,5 +57,14 @@ Foco visível global (`:focus-visible` 2px `ring`, offset 2px). Seleção de tex
 ## Movimento
 Esparso. Um momento por tela: entrada `anim-subir` (12px, 0.6s, ease-out exponencial) no topo da landing. Mascote: piscar lento (parado/feliz) e reticências pulsando (pensando). Telas densas: sem animação além de transições de cor (150ms). Tudo dentro de `@media (prefers-reduced-motion: no-preference)`; com redução, nada se move.
 
+## Referências (vistas em 1440 e 390 px)
+- **stripe.com/br**: título enorme com tracking apertado e hierarquia seca; fios finos estruturando a página; mostra interface de produto logo no primeiro quadro; CTA saturado e botões retangulares. Levado: `tracking-[-0.035em]` nos títulos da landing, grade ilustrada no hero, hairlines (`border-y`).
+- **sharpi.ai**: atmosfera suave (gradiente difuso) atrás do hero, fragmentos de produto flutuando, navegação em pílula. Levado: fundo do hero com dois gradientes radiais suaves (tom de capivara e verde), mascote sobreposto ao cartão de produto.
+- **restaurantes.toqan.com.br**: painel de hero grande, inset e muito arredondado, botões em pílula, títulos fortes. Levado: hero como painel `rounded-[2rem]` inset e botões `rounded-full` na landing.
+- Nas telas densas do app nada disso se aplica: cartões planos, raio menor, sem gradiente.
+
+## Mascote
+Capivara de perfil (corpo de barril, focinho longo e rombudo com ponta escura, orelha pequena e alta, olho pequeno e alto, patas curtas). Só tokens `--capi`, `--capi-claro`, `--capi-escuro`, `--capi-tinta`, `--capi-brilho`, `--capi-bochecha`. Estados: parado, pensando (olha para cima, sobrancelha, reticências), feliz (olho fechado sorrindo, bochecha).
+
 ## Evitar
 Gradiente em texto, glass decorativo, borda lateral colorida, cartões iguais de ícone+título+texto como estrutura, estado só por cor, qualquer elemento que pareça oficial da Unicamp.

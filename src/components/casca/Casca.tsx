@@ -27,8 +27,8 @@ export function Casca({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <BarraSuperior />
       <div className="flex flex-1">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <main id="conteudo" tabIndex={-1} className="flex-1 pb-20 outline-none lg:pb-0">
+        <div className="flex min-w-0 flex-1 flex-col pb-16 lg:pb-0">
+          <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
             {children}
           </main>
           <Rodape />
@@ -94,6 +94,8 @@ export function Casca({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={() => setGaveta(true)}
+          aria-haspopup="dialog"
+          aria-expanded={gaveta}
           className="flex flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted-foreground"
         >
           <Mascote tamanho={24} decorativo />
