@@ -94,7 +94,8 @@ test('Review Focus 3: grupo não verificado não soma em feitos', async () => {
   expect(r.grupos[0]).toMatchObject({ verificado: false, feitos: 0 });
   expect(r.creditos.eletivas.feitos).toBe(0);
   expect(r.creditos.eletivas.naoVerificado).toBeGreaterThan(0);
-  expect(r.foraDoCurriculo).toEqual(['AA1']);
+  expect(r.foraDoCurriculo).toEqual([]);
+  expect(r.naoClassificadas).toEqual(['AA1']); // grupo desconhecido: não afirmar "fora do currículo"
 });
 
 test('pré-requisito: parcial por cursando, alternativas OU, desconhecido não trava', async () => {
@@ -106,4 +107,24 @@ test('pré-requisito: parcial por cursando, alternativas OU, desconhecido não t
   expect(est(r, 'SI203').estado).toBe('faltando');
   expect(est(r, 'SI201')).toMatchObject({ estado: 'faltando', prereqDesconhecido: true });
   expect(est(r, 'SI100').prereqDesconhecido).toBe(false);
+});
+
+test('excedente de grupo fechado: feitos limitado, excedente visível', async () => {
+  const e = await base94();
+  e.eletivas = [{ creditos: 4, texto: 'A', codigos: ['AA1', 'BB1'], verificado: true }];
+  e.historico = new Map([['AA1', 'cursada'], ['BB1', 'cursada']]);
+  e.creditosDe = () => 4;
+  const r = calcularIntegralizacao(e);
+  expect(r.grupos[0]).toMatchObject({ feitos: 4, excedente: 4, codigosContados: ['AA1', 'BB1'] });
+  expect(r.creditos.eletivas.feitos).toBe(4);
+});
+
+test('obrigatória também em lista de eletiva conta só como obrigatória', async () => {
+  const e = await base94();
+  e.eletivas = [{ creditos: 4, texto: 'A', codigos: ['EB101'], verificado: true }];
+  e.historico = new Map([['EB101', 'cursada']]);
+  const r = calcularIntegralizacao(e);
+  expect(r.grupos[0]).toMatchObject({ feitos: 0, codigosContados: [] });
+  expect(est(r, 'EB101').estado).toBe('cursada');
+  expect(r.foraDoCurriculo).toEqual([]);
 });

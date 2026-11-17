@@ -109,7 +109,7 @@ export async function getIntegralizacao(userId: string): Promise<Integralizacao>
 
   const codigos = [...new Set([...obrig.map((o) => o.codigo), ...hist.keys()])];
   const cat = new Map(
-    (await db.select().from(catalogoDisciplina).where(and(eq(catalogoDisciplina.ano, p.catalogo), inArray(catalogoDisciplina.codigo, codigos)))).map((c) => [c.codigo, c]),
+    (codigos.length === 0 ? [] : await db.select().from(catalogoDisciplina).where(and(eq(catalogoDisciplina.ano, p.catalogo), inArray(catalogoDisciplina.codigo, codigos)))).map((c) => [c.codigo, c]),
   );
   // fallback de nome/créditos: oferecimento mais recente do código
   const faltam = codigos.filter((c) => !cat.get(c));
