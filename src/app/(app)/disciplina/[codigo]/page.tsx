@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { getDisciplina, getOferta } from "@/dados/disciplinas";
 import { normalizarCodigo } from "@/dominio/codigo";
 import { proximoSemestre } from "@/dominio/oferta";
+import { situacaoPrereq } from "@/dominio/prereq-texto";
 import { rotuloSemestre } from "@/dominio/semestre";
 import { slugProfessor } from "@/dac/sync-caderno";
 import type { Turma } from "@/dac/tipos";
@@ -52,6 +53,7 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
   if (codigo !== bruto) redirect(`/disciplina/${codigo}`);
   const d = await getDisciplina(codigo);
   if (!d) notFound();
+  const situacao = situacaoPrereq(d.prereqTexto, d.alternativas.length);
   const prox = proximoSemestre();
   const jaTem = d.oferecimentos.some((o) => o.ano === prox.ano && o.periodo === prox.periodo);
   const oferta = jaTem ? null : await getOferta(codigo, prox.ano, prox.periodo);
@@ -68,8 +70,13 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
         <h2 id="h-pre" className="text-xl">Pré-requisitos</h2>
         {d.catalogo == null ? (
           <p className="flex items-center gap-2 text-sm"><AvisoBadge nivel="naoverificado" rotulo="Sem dados do catálogo" /> Não sei os pré-requisitos desta disciplina.</p>
-        ) : d.alternativas.length === 0 ? (
-          <p className="text-sm">{d.prereqTexto?.trim() ? d.prereqTexto : "Nenhum pré-requisito no catálogo " + d.catalogo + "."}</p>
+        ) : situacao === "nenhum" ? (
+          <p className="text-sm">Nenhum pré-requisito no catálogo {d.catalogo}.</p>
+        ) : situacao === "naoverificado" ? (
+          <div className="space-y-1 text-sm">
+            <p className="flex items-center gap-2"><AvisoBadge nivel="naoverificado" /> Não entendi esta regra do catálogo {d.catalogo}.</p>
+            <p>Texto original: {d.prereqTexto}</p>
+          </div>
         ) : (
           <div className="space-y-1 text-sm">
             <p>
