@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/auth-client";
 import { cn } from "@/lib/utils";
+import { Busca } from "./Busca";
 import { Logo } from "./Logo";
 import { itemSobre, itensNav } from "./itens";
 
@@ -38,15 +39,7 @@ export function BarraSuperior({ leve = false }: { leve?: boolean }) {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          {!leve && (
-            <Link
-              href="/busca"
-              className="hidden h-9 w-64 items-center gap-2 rounded-lg border bg-card px-3 text-sm text-muted-foreground shadow-suave transition-colors hover:border-ring md:flex"
-            >
-              <Search className="size-4" aria-hidden />
-              Buscar disciplina, professor, sala
-            </Link>
-          )}
+          {!leve && <Busca className="hidden w-80 md:block" />}
           {!leve && (
             <Link
               href="/busca"

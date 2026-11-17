@@ -68,3 +68,6 @@ Capivara de perfil (corpo de barril, focinho longo e rombudo com ponta escura, o
 
 ## Evitar
 Gradiente em texto, glass decorativo, borda lateral colorida, cartões iguais de ícone+título+texto como estrutura, estado só por cor, qualquer elemento que pareça oficial da Unicamp.
+
+## Grade semanal (`GradeSemanal`)
+Seg–sáb, 07h–23h, 44px por hora. Itens sobrepostos ficam lado a lado (colunas por grupo de sobreposição). Em 390 px a grade rola na horizontal (largura mínima 36rem); cada bloco tem `aria-label` com dia e horário, e `tom` usa os tokens de estado/aviso (`corDe`).
