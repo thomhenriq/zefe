@@ -37,12 +37,29 @@ test('sincroniza duas vezes sem duplicar; páginas que não parseiam vão para e
 });
 
 test('índice vazio grava publicado=false e nenhum oferecimento', async () => {
-  const { baixar: cheio } = await baixarFalso();
-  const vazio = Bun.file(`${import.meta.dir}/fixtures/caderno/ft27.html`).text();
-  const baixar = async (url: string) => (/\/S\/G\/[A-Z]+$/.test(url) ? (await vazio).replaceAll('/2027/1/', `/${ANO}/2/`).replaceAll('/S/G/FT', url.slice(url.indexOf('/S/G/'))) : cheio(url).then((h) => h.replaceAll('/2026/1/', `/${ANO}/2/`)));
+  const baixar = async () => '<html><body></body></html>'; // índice sem institutos, como 1S/2027 real
   const r = await sincronizarCaderno(db, baixar, ANO, 2);
   expect(r).toEqual({ ok: 0, erros: [] });
   const [s] = await db.select().from(semestre).where(eq(semestre.ano, ANO));
   expect(s!.publicado).toBe(false);
   expect((await db.select().from(oferecimento).where(eq(oferecimento.ano, ANO))).length).toBe(0);
+});
+
+test('instituto desconhecido vai para erros e não toca no semestre', async () => {
+  const { baixar } = await baixarFalso();
+  await db.insert(semestre).values({ ano: ANO, periodo: 1, publicado: true });
+  const r = await sincronizarCaderno(db, baixar, ANO, 1, { institutos: ['XX'] });
+  expect(r.ok).toBe(0);
+  expect(r.erros[0]).toContain('XX');
+  const [s] = await db.select().from(semestre).where(eq(semestre.ano, ANO));
+  expect(s!.publicado).toBe(true);
+});
+
+test('tudo falhando não marca publicado', async () => {
+  const { baixar } = await baixarFalso();
+  const quebrado = (url: string) => (/\/[A-Z]{2}\d{3}$/.test(url) ? Promise.reject(new Error('HTTP 503')) : baixar(url));
+  const r = await sincronizarCaderno(db, quebrado, ANO, 1, { institutos: ['FT'] });
+  expect(r.ok).toBe(0);
+  expect(r.erros.length).toBe(209);
+  expect(await db.select().from(semestre).where(eq(semestre.ano, ANO))).toEqual([]);
 });

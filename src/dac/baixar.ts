@@ -13,7 +13,7 @@ export function criarBaixar(fetchFn: typeof fetch = fetch, opts: { dormir?: (ms:
   let ativos = 0;
   const fila: (() => void)[] = [];
   return async (url) => {
-    if (ativos >= LIMITE) await new Promise<void>((r) => fila.push(r));
+    while (ativos >= LIMITE) await new Promise<void>((r) => fila.push(r));
     ativos++;
     try {
       for (let i = 1; ; i++) {

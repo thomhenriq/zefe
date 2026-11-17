@@ -19,6 +19,8 @@ export async function sincronizarCaderno(
 ): Promise<{ ok: number; erros: string[] }> {
   const log = opts.log ?? (() => {});
   const todos = parseIndiceInstitutos(await baixar(urlIndice(ano, periodo)), ano, periodo);
+  const desconhecidos = todos.length ? (opts.institutos ?? []).filter((i) => !todos.includes(i)) : [];
+  if (desconhecidos.length) return { ok: 0, erros: [`instituto(s) fora do índice de ${periodo}S/${ano}: ${desconhecidos.join(', ')}`] };
   const institutos = opts.institutos ? todos.filter((i) => opts.institutos!.includes(i)) : todos;
   const indice = (
     await Promise.all(
@@ -30,7 +32,7 @@ export async function sincronizarCaderno(
   log(`${indice.length} disciplinas no índice de ${periodo}S/${ano}`);
 
   const agora = new Date();
-  if (!indice.length) {
+  if (!todos.length) {
     // índice vazio = semestre não publicado; não apaga o que já havia
     await db.insert(semestre).values({ ano, periodo, publicado: false, coletado_em: agora })
       .onConflictDoUpdate({ target: [semestre.ano, semestre.periodo], set: { publicado: false, coletado_em: agora } });
@@ -53,6 +55,9 @@ export async function sincronizarCaderno(
   // quem falhou mantém os dados antigos; o resto do escopo é substituído
   const falhos = indice.filter((d) => erros.some((e) => e.startsWith(`${d.codigo}:`))).map((d) => d.codigo);
 
+  // nada coletado (tudo falhou): não marca publicado nem apaga nada
+  if (!coletadas.length) return { ok: 0, erros };
+
   await db.transaction(async (tx) => {
     await tx.insert(semestre).values({ ano, periodo, publicado: true, coletado_em: agora })
       .onConflictDoUpdate({ target: [semestre.ano, semestre.periodo], set: { publicado: true, coletado_em: agora } });
@@ -61,6 +66,7 @@ export async function sincronizarCaderno(
     if (falhos.length) escopo.push(notInArray(oferecimento.codigo, falhos));
     await tx.delete(oferecimento).where(and(...escopo)); // cascade leva turma, horario, turma_professor
 
+    // shortcut: assume que `returning` devolve as linhas na ordem do insert (vale no Postgres na prática), trocar por chave natural se quebrar
     const novas = coletadas.filter((d) => !falhos.includes(d.codigo));
     const slugs = new Map<string, string>();
     for (const d of novas) for (const t of d.turmas) for (const n of t.docentes) slugs.set(slugProfessor(n), n);

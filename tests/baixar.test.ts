@@ -23,3 +23,16 @@ test('404 falha na hora, sem repetir', async () => {
   await Bun.sleep(0);
   expect(n).toBe(1);
 });
+
+test('nunca passa de 2 requisições simultâneas', async () => {
+  let ativos = 0, max = 0;
+  const f = (async () => {
+    max = Math.max(max, ++ativos);
+    await Bun.sleep(5);
+    ativos--;
+    return resp(200, 'ok');
+  }) as unknown as typeof fetch;
+  const baixar = criarBaixar(f, { dormir: async () => {} });
+  await Promise.all(Array.from({ length: 12 }, (_, i) => baixar(`https://x/${i}`)));
+  expect(max).toBeLessThanOrEqual(2);
+});
