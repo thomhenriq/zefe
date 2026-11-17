@@ -14,6 +14,7 @@ beforeAll(async () => {
   await limpar();
   await db.insert(catalogoDisciplina).values([
     { ano: 1992, codigo: 'ZY901', nome: 'Cálculo Sentinela', creditos: 6, ementa: null, prereq_texto: '', alternativas: [] },
+    { ano: 1992, codigo: 'ZY904', nome: 'Termodinâmica Sentinela II', creditos: 4, ementa: null, prereq_texto: '', alternativas: [] },
     { ano: 1992, codigo: 'ZY903', nome: 'Outra Sentinela', creditos: 4, ementa: null, prereq_texto: '', alternativas: [] },
   ]);
   await db.insert(semestre).values({ ano: 1992, periodo: 1, publicado: true, coletado_em: new Date() });
@@ -44,4 +45,11 @@ test('código com letra de turma acha a disciplina; hífen não quebra', async (
 test('prefixo de código encontra os três, em ordem de nome', async () => {
   const r = (await buscar('zy9')).disciplinas.map((d) => d.codigo);
   expect(r.slice(0, 3)).toEqual(['ZY902', 'ZY901', 'ZY903']);
+});
+
+test('número e romano se equivalem (1 e I, 2 e II) sem casar letra solta', async () => {
+  expect((await buscar('termodinamica sentinela 2')).disciplinas.map((d) => d.codigo)).toContain('ZY904');
+  expect((await buscar('termodinamica sentinela ii')).disciplinas.map((d) => d.codigo)).toContain('ZY904');
+  expect((await buscar('termodinamica sentinela 1')).disciplinas.map((d) => d.codigo)).not.toContain('ZY904');
+  expect((await buscar('termodinamica sentinela i')).disciplinas.map((d) => d.codigo)).not.toContain('ZY904');
 });

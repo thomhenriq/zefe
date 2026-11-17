@@ -4,6 +4,7 @@ import { writeFileSync } from 'node:fs';
 import type { UIMessage } from 'ai';
 import { bloqueio, conversa, db, grade, gradeItem, historico } from '@/db';
 import { criarConversa, responderCompleto } from './responder';
+import { orfaos } from './aterramento';
 import { VERSAO_PROMPT } from './prompt';
 import { CENARIOS, MUTANTES, type Cenario, type Estado } from './cenarios';
 
@@ -44,31 +45,18 @@ async function semear(c: Cenario, f: Foto) {
 }
 
 // ---- critérios ----
-const TOKEN = /\b[A-Z]{1,3}\d{2,3}\b/g; // código de disciplina (1–2 letras + 3 dígitos) ou sala (2–3 letras + 2–3 dígitos)
-const HORA = /\b\d{1,2}:\d{2}\b/g;
-const pad = (h: string) => h.padStart(5, '0');
 const VAZIO = /n[ãa]o encontrei|n[ãa]o achei|n[ãa]o consegui encontrar|n[ãa]o existe|n[ãa]o h[áa] (nenhuma|turma|aula|disciplina)|nenhuma (turma|aula|disciplina)|n[ãa]o tem (nenhuma|turma|aula)/i;
 
 interface Parte { type: string; state?: string; output?: unknown; errorText?: string; text?: string; input?: unknown }
 const partesDe = (m: UIMessage | null) => (m?.parts ?? []) as Parte[];
 const ferramentasDe = (ps: Parte[]) => ps.filter((p) => p.type.startsWith('tool-')).map((p) => p.type.slice(5));
 
-function aterramento(textos: string[], perguntas: string[], ps: Parte[]) {
-  const fonte = (JSON.stringify(ps.filter((p) => p.type.startsWith('tool-')).map((p) => p.output ?? p.errorText ?? null)) + ' ' + perguntas.join(' ')).toUpperCase();
-  const fonteH = fonte.replace(/\b(\d):(\d{2})\b/g, '0$1:$2');
-  const texto = textos.join('\n');
-  const orfaos = [
-    ...(texto.toUpperCase().match(TOKEN) ?? []).filter((t) => !fonte.includes(t)),
-    ...(texto.match(HORA) ?? []).map(pad).filter((h) => !fonteH.includes(h)),
-  ];
-  return [...new Set(orfaos)];
-}
 
 const textoDe = (m: UIMessage | null) => partesDe(m).filter((p) => p.type === 'text').map((p) => p.text ?? '').join('\n').trim();
 
 interface Resultado {
   id: string; a: boolean | null; b: boolean; c: boolean | null; d: boolean | null; e: boolean | null; f: boolean | null;
-  orfaos: string[]; ferramentas: string[]; passos: number; ms: number; texto: string; erro: string | null;
+  orfaos: string[]; fonte: string; textos: string[]; ferramentas: string[]; passos: number; ms: number; texto: string; erro: string | null;
 }
 
 async function rodar(c: Cenario, foto: Foto): Promise<Resultado> {
@@ -96,17 +84,18 @@ async function rodar(c: Cenario, foto: Foto): Promise<Resultado> {
 
   const usadas = new Set(ferramentasDe(todas));
   const ult = textos[textos.length - 1] ?? '';
-  const orfaos = aterramento(textos, c.turnos, todas);
+  const fonte = [JSON.stringify(todas.filter((p) => p.type.startsWith('tool-')).map((p) => p.output ?? p.errorText ?? null)), ...c.turnos];
+  const sem = orfaos(textos, fonte);
   const aplicavelC = c.vazio;
   return {
     id: c.id,
     a: c.esperadas ? c.esperadas.every((g) => g.some((t) => usadas.has(t))) : null,
-    b: !erro && textos.length === c.turnos.length && orfaos.length === 0,
-    c: aplicavelC ? VAZIO.test(ult) && !(ult.match(HORA) ?? []).map(pad).some((h) => !c.turnos.join(' ').includes(h.replace(/^0/, '')) && !c.turnos.join(' ').includes(h)) : null,
+    b: !erro && textos.length === c.turnos.length && sem.length === 0,
+    c: aplicavelC ? VAZIO.test(ult) && orfaos([ult], [c.turnos.join(' ')]).every((x) => !/^\d\d:\d\d$/.test(x)) : null,
     d: c.banco ? c.banco(antes, depois) : null,
     e: c.fora ? !ferramentasDe(todas).some((t) => MUTANTES.includes(t)) : null,
     f: c.previsao ? /previs[ãa]o/i.test(ult) : null,
-    orfaos, ferramentas: ferramentasDe(todas), passos: todas.filter((p) => p.type === 'step-start').length, ms, texto: ult.slice(0, 600), erro,
+    orfaos: sem, fonte: fonte.join('\n'), textos, ferramentas: ferramentasDe(todas), passos: todas.filter((p) => p.type === 'step-start').length, ms, texto: ult.slice(0, 600), erro,
   };
 }
 

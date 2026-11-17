@@ -85,7 +85,7 @@ export function criarFerramentas(ctx: Contexto) {
 
   return {
     buscar_disciplinas: tool({
-      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos, e noHistorico = "cursada" ou "cursando" quando o aluno já tem essa disciplina no histórico), professores e salas. O texto pode ter qualquer caixa e não precisa de acento. Use poucas palavras: números como "1" não casam com "I" no nome, então busque só "calculo".',
+      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos, e noHistorico = "cursada" ou "cursando" quando o aluno já tem essa disciplina no histórico), professores e salas. O texto pode ter qualquer caixa e não precisa de acento. Se não achar, tente de novo só com a palavra principal.',
       inputSchema: z.object({ texto: z.string().describe('Nome, pedaço do nome ou código, ex.: "calculo", "si702".') }),
       execute: seguro(async ({ texto }: { texto: string }) => {
         const r = await buscar(texto, 10);

@@ -6,8 +6,14 @@ import { garantirExtensoes } from './extensoes';
 const esc = (t: string) => t.replace(/[\\%_]/g, '\\$&');
 const semAcento = (c: unknown) => sql`unaccent(${c})`;
 /** Todos os pedaços da consulta têm de aparecer (sem acento, sem caixa). */
+// Número e romano se equivalem como palavra inteira: "cálculo 1" acha "Cálculo I" e vice-versa.
+const NUMERAIS = [['1', 'I'], ['2', 'II'], ['3', 'III'], ['4', 'IV']] as const;
+const variantes = (t: string) => NUMERAIS.find((p) => p.some((v) => v.toLowerCase() === t.toLowerCase()));
 const contem = (col: unknown, tokens: string[]): SQL =>
-  and(...tokens.map((t) => sql`${semAcento(col)} ILIKE unaccent(${'%' + esc(t) + '%'})`))!;
+  and(...tokens.map((t) => {
+    const v = variantes(t);
+    return v ? sql`${semAcento(col)} ~* ${`\\y(${v.join('|')})\\y`}` : sql`${semAcento(col)} ILIKE unaccent(${'%' + esc(t) + '%'})`;
+  }))!;
 
 export async function buscar(q: string, limite = 20) {
   const tokens = q.trim().split(/\s+/).filter(Boolean);
