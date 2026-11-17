@@ -12,6 +12,7 @@
     "db:push": "bun --env-file=.env.local --bun node_modules/drizzle-kit/bin.cjs push",
     "sync": "bun scripts/sync.ts",
     "db:extensoes": "bun --env-file=.env.local scripts/extensoes.ts",
+    "db:extensoes": "bun --env-file=.env.local scripts/extensoes.ts",
     "demo": "bun scripts/demo.ts",
     "shots": "bun scripts/shots.ts",
     "zefe:avaliar": "bun src/zefe/avaliar.ts"
