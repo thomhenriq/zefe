@@ -17,7 +17,9 @@
     "zefe:avaliar": "bun src/zefe/avaliar.ts"
   },
   "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^5.0.142",
     "@base-ui/react": "^1.9.0",
+    "ai": "^7.0.173",
     "better-auth": "^1.7.25",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
