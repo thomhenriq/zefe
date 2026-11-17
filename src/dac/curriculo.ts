@@ -3,7 +3,8 @@ import { textLines } from './html';
 import { ErroParse, type CurriculoPleno, type GrupoEletiva, type Proposta, type PropostaSemestre } from './tipos';
 
 const BASE = 'https://www.dac.unicamp.br/sistemas/catalogos/grad';
-export const urlIndiceCatalogo = (ano: number) => `${BASE}/catalogo${ano}/index.html`;
+// 2020 lista os cursos em cursos.html (index.html só tem o menu); 2021+ em index.html
+export const urlIndiceCatalogo = (ano: number) => `${BASE}/catalogo${ano}/${ano === 2020 ? 'cursos' : 'index'}.html`;
 export const urlCurriculo = (ano: number, curso: number) => `${BASE}/catalogo${ano}/cursos/${curso}g/curriculo.html`;
 export const urlSugestao = (ano: number, curso: number) => `${BASE}/catalogo${ano}/cursos/${curso}g/sugestao.html`;
 
@@ -19,6 +20,16 @@ export function parseCursos(html: string): { numero: number; nome: string; turno
     const t = /^(.+) - (Integral|Noturno)$/.exec(m[2]!);
     return [{ numero: Number(m[1]), nome: t ? t[1]! : m[2]!, turno: t ? t[2]! : null }];
   });
+  if (!out.length) {
+    // layout 2020: <span>94 </span><a href='cursos/cur94.html'>Sistemas de Informação - Integral</a>
+    for (const span of parse(html).querySelectorAll('span')) {
+      const a = span.nextElementSibling;
+      const n = /^\d+$/.test(txt(span)) ? Number(txt(span)) : null;
+      if (n == null || a?.tagName !== 'A' || !/cur\d+\.html$/.test(a.getAttribute('href') ?? '')) continue;
+      const t = /^(.+) - (Integral|Noturno)$/.exec(txt(a));
+      out.push({ numero: n, nome: t ? t[1]! : txt(a), turno: t ? t[2]! : null });
+    }
+  }
   if (!out.length) throw new ErroParse('índice do catálogo sem cursos (layout mudou?)');
   return out;
 }

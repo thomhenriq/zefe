@@ -12,6 +12,13 @@ test('parseCursos: índice 2026', async () => {
   expect(cs.find((c) => c.numero === 42)?.turno).toBe('Noturno');
 });
 
+test('parseCursos: índice 2020 (outro layout)', async () => {
+  const cs = parseCursos(await fx('index-2020'));
+  expect(cs.length).toBeGreaterThan(50);
+  expect(cs.find((c) => c.numero === 94)).toEqual({ numero: 94, nome: 'Sistemas de Informação', turno: 'Integral' });
+  expect(() => parseCursos('<html><body>nada</body></html>')).toThrow(ErroParse);
+});
+
 test('proposta do curso 94: 8 semestres', async () => {
   const [p, ...resto] = parseProposta(await fx('sugestao-94'));
   expect(resto).toEqual([]);
@@ -103,4 +110,12 @@ test('obrigatórias sob "Disciplinas Obrigatórias" sem modalidade não são des
 test('proposta com Observação depois dos semestres não quebra', () => {
   const html = '<html><body><h2>11G - X</h2><h3>1º Semestre - 4 créditos</h3><p><strong><a>EE100 (4)</a></strong></p><h3>Observação</h3><p>texto</p></body></html>';
   expect(parseProposta(html)[0]!.semestres[0]!.codigos).toEqual(['EE100']);
+});
+
+test('curso 94 em 2020: currículo e proposta parseiam', async () => {
+  const c = parseCurriculoPleno(await fx('curriculo-94-2020'), 94);
+  expect(c.nomeCurso).toBe('Sistemas de Informação');
+  expect(c.modalidades[0]!.obrigatorias).toContain('SI100');
+  const [p] = parseProposta(await fx('sugestao-94-2020'));
+  expect(p!.semestres.length).toBe(8);
 });
