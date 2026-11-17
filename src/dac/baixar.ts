@@ -8,8 +8,12 @@ export const urlDisciplina = (ano: number, periodo: number, sigla: string, codig
 const LIMITE = 2; // a DAC responde 429 com 4 concorrentes
 const TENTATIVAS = 5;
 
-export function criarBaixar(fetchFn: typeof fetch = fetch, opts: { dormir?: (ms: number) => Promise<void> } = {}): Baixar {
+export function criarBaixar(
+  fetchFn: typeof fetch = fetch,
+  opts: { dormir?: (ms: number) => Promise<void>; timeoutMs?: number } = {},
+): Baixar {
   const dormir = opts.dormir ?? Bun.sleep;
+  const timeoutMs = opts.timeoutMs ?? 30_000; // sem limite, um fetch travado segura a carga inteira
   let ativos = 0;
   const fila: (() => void)[] = [];
   return async (url) => {
@@ -17,11 +21,18 @@ export function criarBaixar(fetchFn: typeof fetch = fetch, opts: { dormir?: (ms:
     ativos++;
     try {
       for (let i = 1; ; i++) {
-        const res = await fetchFn(url, { headers: { 'User-Agent': 'zefe/0.1' } });
-        if (res.status === 200) return await res.text();
-        if ((res.status !== 429 && res.status < 500) || i >= TENTATIVAS) throw new Error(`HTTP ${res.status} em ${url}`);
-        const ra = Number(res.headers.get('Retry-After'));
-        await dormir(ra > 0 ? ra * 1000 : 1000 * 2 ** i);
+        try {
+          const res = await fetchFn(url, { headers: { 'User-Agent': 'zefe/0.1' }, signal: AbortSignal.timeout(timeoutMs) });
+          if (res.status === 200) return await res.text();
+          if ((res.status !== 429 && res.status < 500) || i >= TENTATIVAS) throw new Error(`HTTP ${res.status} em ${url}`);
+          const ra = Number(res.headers.get('Retry-After'));
+          await dormir(ra > 0 ? ra * 1000 : 1000 * 2 ** i);
+        } catch (e) {
+          if (e instanceof Error && e.message.startsWith('HTTP ')) throw e;
+          // timeout ou erro de rede: tratado como 5xx
+          if (i >= TENTATIVAS) throw new Error(`timeout ou erro de rede em ${url}: ${(e as Error).message}`);
+          await dormir(1000 * 2 ** i);
+        }
       }
     } finally {
       ativos--;

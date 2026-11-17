@@ -36,3 +36,14 @@ test('nunca passa de 2 requisições simultâneas', async () => {
   await Promise.all(Array.from({ length: 12 }, (_, i) => baixar(`https://x/${i}`)));
   expect(max).toBeLessThanOrEqual(2);
 });
+
+test('fetch travado é cortado pelo timeout, repetido e falha com a URL', async () => {
+  let n = 0;
+  const travado = ((_url: string, init: RequestInit) => {
+    n++;
+    return new Promise((_, rej) => init.signal!.addEventListener('abort', () => rej(init.signal!.reason)));
+  }) as unknown as typeof fetch;
+  const baixar = criarBaixar(travado, { dormir: async () => {}, timeoutMs: 10 });
+  await expect(baixar('https://x/d')).rejects.toThrow('https://x/d');
+  expect(n).toBe(5);
+});
