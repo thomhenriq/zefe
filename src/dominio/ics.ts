@@ -41,15 +41,15 @@ export function gerarIcs(itens: ItemGrade[], inicio: Date, fim: Date, agora: Dat
   const fimYmd = ymd(fim);
 
   for (const it of itens) {
-    const sumario = `${it.codigo} ${it.nome}${it.tipo === 'previsao' ? ' (previsão)' : ''}`;
-    for (const h of it.horarios) {
+    const sumario = `${it.codigo} ${it.nome}${it.tipo === 'previsao' ? ' (previsão)' : ''}${it.horarioIncompleto ? ' (horário incompleto)' : ''}`;
+    for (const [i, h] of it.horarios.entries()) {
       // Primeira ocorrência do dia da semana em ou depois de `inicio`.
       const primeiro = new Date(inicio.getTime() + ((NUM_DIA[h.dia] - inicio.getUTCDay() + 7) % 7) * DIA_MS);
       if (ymd(primeiro) > fimYmd) continue;
       const dia = ymd(primeiro).replace(/-/g, '');
       const ev = [
         'BEGIN:VEVENT',
-        `UID:${ajuste(`${it.codigo}-${it.turma}-${h.dia}-${h.inicio}@zefe.local`)}`,
+        `UID:${ajuste(`${it.codigo}-${it.turma}-${h.dia}-${h.inicio}-${i}@zefe.local`)}`,
         `DTSTAMP:${dtstamp}`,
         `DTSTART;TZID=${TZ}:${dia}T${h.inicio.replace(':', '')}00`,
         `DTEND;TZID=${TZ}:${dia}T${h.fim.replace(':', '')}00`,
@@ -63,6 +63,11 @@ export function gerarIcs(itens: ItemGrade[], inicio: Date, fim: Date, agora: Dat
   }
   linhas.push('END:VCALENDAR');
   return linhas.map(dobrar).join('\r\n') + '\r\n';
+}
+
+/** Códigos que não entram no arquivo por não terem horário (para avisar o aluno). */
+export function foraDoCalendario(itens: ItemGrade[]): string[] {
+  return [...new Set(itens.filter((it) => it.horarios.length === 0).map((it) => it.codigo))];
 }
 
 /** Primeira segunda de março (1º) ou agosto (2º) até o sábado da 16ª semana. */

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { datasPadrao, erroPeriodo, gerarIcs } from '../src/dominio/ics';
+import { datasPadrao, erroPeriodo, foraDoCalendario, gerarIcs } from '../src/dominio/ics';
 import type { ItemGrade } from '../src/dominio/grade';
 import type { Campus, Dia } from '../src/dac/tipos';
 
@@ -101,8 +101,28 @@ describe('gerarIcs', () => {
   test('UID estável por item+horário e DTSTAMP em UTC', () => {
     const agora = new Date('2026-03-01T12:00:00Z');
     const ev = eventos(gerarIcs([item('AA001', [{ dia: 'seg', inicio: '08:00', fim: '10:00', sala: 'X' }])], INICIO, FIM, agora))[0]!;
-    expect(campo(ev, 'UID')).toBe('UID:AA001-A-seg-08:00@zefe.local');
+    expect(campo(ev, 'UID')).toBe('UID:AA001-A-seg-08:00-0@zefe.local');
     expect(campo(ev, 'DTSTAMP')).toBe('DTSTAMP:20260301T120000Z');
+  });
+
+  test('dois horários do mesmo item no mesmo dia e hora têm UID distinto', () => {
+    const h = { dia: 'seg' as Dia, inicio: '08:00', fim: '10:00', sala: 'X' };
+    const uids = eventos(gerarIcs([item('AA001', [h, { ...h, sala: 'Y' }])], INICIO, FIM)).map((ev) => campo(ev, 'UID'));
+    expect(uids).toHaveLength(2);
+    expect(new Set(uids).size).toBe(2);
+  });
+
+  test('horarioIncompleto acrescenta " (horário incompleto)" ao SUMMARY, junto com a previsão', () => {
+    const h = [{ dia: 'seg' as Dia, inicio: '08:00', fim: '10:00', sala: 'X' }];
+    const s = gerarIcs([
+      item('AA001', h, { horarioIncompleto: true }),
+      item('BB002', h, { horarioIncompleto: true, tipo: 'previsao' }),
+      item('CC003', h),
+    ], INICIO, FIM);
+    const sums = eventos(s).map((ev) => campo(ev, 'SUMMARY'));
+    expect(sums).toContain('SUMMARY:AA001 Nome AA001 (horário incompleto)');
+    expect(sums).toContain('SUMMARY:BB002 Nome BB002 (previsão) (horário incompleto)');
+    expect(sums).toContain('SUMMARY:CC003 Nome CC003');
   });
 });
 
@@ -112,6 +132,20 @@ describe('datasPadrao', () => {
   });
   test('2º semestre: primeira segunda de agosto até o sábado da 16ª semana', () => {
     expect(datasPadrao(2026, 2)).toEqual({ inicio: '2026-08-03', fim: '2026-11-21' });
+  });
+});
+
+describe('foraDoCalendario', () => {
+  test('lista códigos sem horário, sem repetir', () => {
+    expect(foraDoCalendario([
+      item('AA001', []),
+      item('BB002', [{ dia: 'seg', inicio: '08:00', fim: '10:00', sala: 'X' }]),
+      item('AA001', [], { turma: 'B' }),
+      item('CC003', []),
+    ])).toEqual(['AA001', 'CC003']);
+  });
+  test('vazio quando todos têm horário', () => {
+    expect(foraDoCalendario([item('BB002', [{ dia: 'seg', inicio: '08:00', fim: '10:00', sala: 'X' }])])).toEqual([]);
   });
 });
 

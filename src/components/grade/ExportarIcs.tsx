@@ -7,7 +7,7 @@ import { datasPadrao, erroPeriodo } from '@/dominio/ics';
 const CAMPO = 'h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 
 /** Baixa a grade como .ics. O aluno informa início e fim das aulas, porque o Zefe não conhece o calendário oficial. */
-export function ExportarIcs({ gradeId, ano, periodo }: { gradeId: string; ano: number; periodo: 1 | 2 }) {
+export function ExportarIcs({ gradeId, ano, periodo, foraDoCalendario = [] }: { gradeId: string; ano: number; periodo: 1 | 2; foraDoCalendario?: string[] }) {
   const padrao = datasPadrao(ano, periodo);
   const [inicio, setInicio] = useState(padrao.inicio);
   const [fim, setFim] = useState(padrao.fim);
@@ -31,6 +31,9 @@ export function ExportarIcs({ gradeId, ano, periodo }: { gradeId: string; ano: n
           <input id={`${id}-fim`} type="date" className={CAMPO} value={fim} onChange={(e) => setFim(e.target.value)} />
         </div>
       </div>
+      {foraDoCalendario.length > 0 ? (
+        <p className="text-sm text-muted-foreground">Sem horário, não entram no arquivo: {foraDoCalendario.join(', ')}.</p>
+      ) : null}
       {motivo ? <p role="alert" className="text-sm text-destructive">{motivo}.</p> : null}
       {motivo ? (
         <Button disabled>Baixar .ics</Button>

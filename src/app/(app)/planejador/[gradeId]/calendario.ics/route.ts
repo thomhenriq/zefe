@@ -22,6 +22,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (motivo) return erro(motivo, 400);
 
   const { gradeId } = await params;
+  // id é serial (int4): fora dessa faixa o Postgres falharia com 500 em vez de 404.
+  if (!/^[1-9]\d{0,9}$/.test(gradeId) || Number(gradeId) > 2147483647) return erro('grade não encontrada', 404);
   const grade = await getGrade(usuario.id, gradeId);
   if (!grade) return erro('grade não encontrada', 404);
 
