@@ -25,14 +25,19 @@ const { ano, periodo } = proximoSemestre();
 const existente = (await listarGrades(u.id, ano, periodo)).find((g) => g.nome === "Minha grade");
 const gradeId = existente?.id ?? (await criarGrade(u.id, ano, periodo, "Minha grade"));
 const proposta = await carregarProposta(94, 2026, null);
-// Candidatas: até 3 do 4º semestre da proposta com oferta; se a grade não tem nenhuma delas (sobra de testes), zera os itens e monta de novo.
+// Candidatas: do primeiro semestre da proposta depois do atual (+1, +2, ...) que tenha disciplinas com oferta (oficial ou previsão) no próximo semestre, até 3, fora as já cursadas/cursando.
 const candidatas: { codigo: string; turma: string }[] = [];
-for (const codigo of proposta?.find((p) => p.semestre === 4)?.codigos ?? []) {
-  if (candidatas.length === 3) break;
-  const o = await getOferta(codigo, ano, periodo);
-  if (!o.encontrada) continue;
-  const turma = (o.tipo === "oficial" ? o.disciplina : o.base).turmas[0]?.turma;
-  if (turma) candidatas.push({ codigo, turma });
+const semestres = [...new Set((proposta ?? []).map((p) => p.semestre))].filter((n) => n > 3).sort((x, y) => x - y);
+for (const n of semestres) {
+  for (const codigo of proposta?.find((p) => p.semestre === n)?.codigos ?? []) {
+    if (candidatas.length === 3) break;
+    if (["cursada", "cursando"].includes(h.get(codigo) as string)) continue;
+    const o = await getOferta(codigo, ano, periodo);
+    if (!o.encontrada) continue;
+    const turma = (o.tipo === "oficial" ? o.disciplina : o.base).turmas[0]?.turma;
+    if (turma) candidatas.push({ codigo, turma });
+  }
+  if (candidatas.length) break;
 }
 const atual = (await getGrade(u.id, gradeId))?.itens ?? [];
 if (atual.length && !atual.some((i) => candidatas.some((c) => c.codigo === i.codigo))) await alterarGrade(u.id, gradeId, { remover: atual.map((i) => i.codigo) });
