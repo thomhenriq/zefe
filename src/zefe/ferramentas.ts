@@ -85,11 +85,12 @@ export function criarFerramentas(ctx: Contexto) {
 
   return {
     buscar_disciplinas: tool({
-      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos), professores e salas. O texto pode ter qualquer caixa e não precisa de acento.',
+      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos, e noHistorico = "cursada" ou "cursando" quando o aluno já tem essa disciplina no histórico), professores e salas. O texto pode ter qualquer caixa e não precisa de acento. Use poucas palavras: números como "1" não casam com "I" no nome, então busque só "calculo".',
       inputSchema: z.object({ texto: z.string().describe('Nome, pedaço do nome ou código, ex.: "calculo", "si702".') }),
       execute: seguro(async ({ texto }: { texto: string }) => {
         const r = await buscar(texto, 10);
-        return { disciplinas: r.disciplinas, professores: r.professores.map((p) => p.nome), salas: r.salas };
+        const h = await getHistorico(userId);
+        return { disciplinas: r.disciplinas.map((d) => ({ ...d, ...(h.has(d.codigo) ? { noHistorico: h.get(d.codigo) } : {}) })), professores: r.professores.map((p) => p.nome), salas: r.salas };
       }),
     }),
 
@@ -151,7 +152,7 @@ export function criarFerramentas(ctx: Contexto) {
     }),
 
     ver_grade: tool({
-      description: 'Mostra a grade que o aluno está montando: turmas escolhidas (com horários), bloqueios, créditos e a checagem (conflitos e avisos, calculados pelo sistema). Use antes de sugerir mudanças e depois de alterar. Se checagem.verificado for false, diga que a checagem está incompleta.',
+      description: 'Mostra a grade que o aluno está montando: turmas escolhidas (com horários), bloqueios, créditos e a checagem (conflitos e avisos, calculados pelo sistema). Use antes de sugerir mudanças e depois de alterar, e SEMPRE que o aluno perguntar de conflito ou da situação da grade (mesmo logo depois de alterar). A lista de bloqueios com id vem daqui. Se checagem.verificado for false, diga que a checagem está incompleta.',
       inputSchema: z.object({}),
       execute: seguro(async () => {
         const g = await gradeAberta();
