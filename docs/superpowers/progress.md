@@ -129,6 +129,12 @@ Correção da retomada: os executores originais NÃO tinham morrido, estavam pau
 - Task 8: minor (deferred): `/disciplina/zz999` faz 307 para `ZZ999` antes do 404; página de sala faz um `getSala` por semestre candidato; sem testes de página.
 - Task 9: minor (deferred): obrigatória sem crédito em nenhuma fonte vira `creditos: 0` sem sinalizar; `propostaEletivas` não usado no cálculo.
 
+## Segunda interrupção por limite de uso (≈15:55 → 19:01)
+
+Parados no limite: T16 (avaliação), T17a (shots.ts + README), T17b (polimento impeccable) e o executor da T4. Na retomada (19:01): a carga TERMINOU (resumo2 com FIM): caderno 2024/1 (refeito IA/IC/IE, 0 erros), 2025/1 2514, 2025/2 2475, 2026/1 2515, 2026/2 2516 — todos 0 erros; 2027/1 "não publicado" (0 no índice). Catálogo 2021–2025 e 2027: só os 404 reais (cursos 36 e 87; disciplinas EI em 2022–2025; curso 7 AF sem proposta). **Catálogo 2020 falhou alto**: `ErroParse: índice do catálogo sem cursos (layout mudou?)` — o índice de 2020 tem outro formato; nada gravado para 2020. Árvore de trabalho tinha: `scripts/shots.ts` (T17a, não commitado), `public/mascote-zefe.png` e `public/mascotes-zefe-adesivos.png` (14:48, origem não registrada), `src/app/icon.png` + `icon.svg` apagado + `Mascote.tsx` trocado para a PNG (T17b). Os três executores foram retomados por mensagem (mantêm o contexto).
+
+Ruling 9: o mascote continua o SVG desenhado no código — o plano exige "SVG no código (sem imagem gerada)" e a PNG em `public/` traz o emblema da Unicamp no lenço, contra o anti-objetivo 2 — custo se errado: o aluno queria a PNG; ela continua em `public/` (não apagada, não commitada) para ele decidir.
+
 ## Mudança do aluno (17/11 14:31)
 
 Commit 3801842 (do aluno): tema claro é o padrão; o app não segue mais o tema do sistema. Escuro só com `<html data-theme="dark">`. Consequência: capturas de escuro (`scripts/shots.ts`, briefs de CQ) põem `data-theme="dark"` no `<html>` em vez de emular `prefers-color-scheme`; o claro é o tema principal a julgar; botão de tema é opcional. Não reverter.
@@ -150,6 +156,8 @@ Commit 3801842 (do aluno): tema claro é o padrão; o app não segue mais o tema
 - (T3) Grupo de eletivas só é "verificado" quando todas as linhas são códigos concretos. Padrões como `EX---` ficam "não verificado" com o texto original.
 - (T3) Códigos guardados sem espaço (`F 128` → `F128`). Páginas de disciplina do catálogo sincronizadas só para os prefixos que aparecem nos currículos.
 - (Ruling 8) "Qualquer disciplina oferecida pela Unicamp" conta como grupo aberto verificado: toda disciplina cursada fora das obrigatórias soma nas eletivas.
+- (Ruling 9) Mascote: mantido o SVG do código. Há duas PNGs em `public/` (origem não registrada); a `mascote-zefe.png` tem o emblema da Unicamp no lenço — se for usar, tirar o emblema.
+- (T4) Catálogo 2020 não carrega (índice com outro layout → `ErroParse`); quem ingressou em 2020 precisa escolher outro catálogo no cadastro.
 - (T3) Cursos 36 e 87 aparecem no índice do catálogo 2026 mas `curriculo.html` dá 404 — ficam de fora.
 
 ## Bloqueios
