@@ -5,8 +5,8 @@ description: Papel quente, tinta quente, verde "rio" como primário; capivara co
 
 # Zefe: sistema visual
 
-## Sistema v2 (landing agora; app na próxima rodada)
-Dono rejeitou a landing v1 ("fora da identidade, tipografia fora do padrão, AI Gen UI") e pediu algo macio, arredondado, próximo de abacatepay.com. Paleta: verde-petróleo + âmbar capivara. Vale só dentro de `<div data-ds="v2">` (a landing; `src/app/(site)/page.tsx`); os tokens do app abaixo seguem intactos. Tokens em `src/app/globals.css` (`--ds-*` no escopo, utilitários Tailwind `*-ds-*`); componentes em `src/components/ds/`. **Nada de cor, raio ou tamanho literal na landing.**
+## Sistema v2 (landing e app)
+Dono rejeitou a landing v1 ("fora da identidade, tipografia fora do padrão, AI Gen UI") e pediu algo macio, arredondado, próximo de abacatepay.com. Paleta: verde-petróleo + âmbar capivara. Vale na landing (`<div data-ds="v2">`) e, promovido para `:root`, no app inteiro (ver "Migração do app"). Tokens em `src/app/globals.css` (`--ds-*` no escopo, utilitários Tailwind `*-ds-*`); componentes em `src/components/ds/`. **Nada de cor, raio ou tamanho literal na landing.**
 
 **Tipografia**: uma família só, **Fustat** (variável, `next/font/google`, `--font-fustat`), pesos 400/500/700. Sem monoespaçada: códigos em 500 com `tabular-nums` (`.ds-num`). Títulos 700, tracking -0.045em (display) a -0.03em (h3), entrelinha 1.05-1.2; corpo 400/500, entrelinha 1.5-1.55; frase simples sempre, sem caixa-alta espaçada, sem eyebrow.
 | Token | px | Uso |
@@ -36,56 +36,58 @@ O âmbar faz **um trabalho**: a ação principal (Entrar com e-mail). O tint âm
 **Regras anti "AI-gerado"**: sem texto em gradiente, sem blur/glass além da nav, sem blobs/glows, sem emoji, sem eyebrow em caixa-alta, sem fios de tinta 2px, sem mono, sem fileira de 3 cartões iguais como estrutura, sem hero centralizado, sem pseudo-3D, sem gradiente roxo-azul. Mesmo padding de cartão em todo lugar; tudo na escala de 8.
 **Dados de exemplo a trocar depois**: estados da fita (curso 94), cenários do demo "Peça e veja", semana de matrícula, conversa do calouro, mascote (PNG do dono).
 
-## v1: em vigor no app até a migração (a landing não usa mais nada daqui)
+## App (Operate), sistema v2
 
-Contrato de todas as telas. Valores vivem em `src/app/globals.css`; use os tokens, nunca cores literais. Modo: **Operate** nas telas do app (grade, árvore, busca), **Persuade** só em `/`. Nada de institucional: sem vermelho/brasão Unicamp, nada que pareça oficial.
+Contrato das telas do app. Valores vivem em `src/app/globals.css` (bloco "PROMOÇÃO V2 → APP"); use os tokens, nunca cores literais. Modo: **Operate** nas telas do app (grade, árvore, busca), **Persuade** só em `/`. Nada de institucional: sem vermelho/brasão Unicamp, nada que pareça oficial.
 
 ## Tema
 Claro é o padrão e o principal; o app não segue o tema do sistema (sem `prefers-color-scheme`). O escuro só vale com `<html data-theme="dark">` (variante Tailwind `dark:` = esse atributo); sem alternância na interface na v1. Todo token tem valor claro e escuro; teste os dois. `::placeholder` usa `muted-foreground` (AA).
 
 ## Tokens
-Cores (Tailwind: `bg-background`, `text-muted-foreground`...), em OKLCH:
-- Superfícies: `background` (papel quente), `card`, `popover`, `painel` (fundo do painel do Zefe), `muted`, `secondary`, `accent` (tinta verde clara).
-- Texto: `foreground`, `muted-foreground` (≥ 4.5:1 sobre background), `primary-foreground`.
-- Marca: `primary` (verde "rio", L 0.42 claro / 0.78 escuro), `ring` (foco), `border`, `input`, `destructive`.
-- Mascote: `capi`, `capi-claro`, `capi-escuro` (tons de capivara).
-Tipografia (self-hosted via `next/font/google`): `font-heading` Bricolage Grotesque (títulos, h1-h3 já aplicam), `font-sans` Hanken Grotesk (texto/UI), `font-mono` JetBrains Mono (códigos de disciplina, horários; use `tabular-nums`/classe `.tabular` em colunas numéricas). Escala: texto base 16px, UI densa `text-sm`/`text-xs`; h1 de página `text-4xl` (landing até `lg:text-6xl`), h2 `text-xl`-`text-3xl`. Medida de leitura ≤ 68ch.
-Espaçamento: escala padrão do Tailwind (4px); gutter de página `px-4` celular, `lg:px-6`; seções da landing `py-16 lg:py-24`. `h-barra` = 3.5rem (barra superior), `w-painel` = 22.5rem (painel).
-Raio: `--radius` 0.75rem; `rounded-lg` controles, `rounded-xl/2xl` cartões, `rounded-full` selos.
-Sombra: `shadow-suave` (cartões em repouso), `shadow-elevada` (destaque/painéis flutuantes). Sempre com offset e blur; sem sombra dura.
+Os `--ds-*` valem em `:root`; os semânticos do shadcn derivam deles (Tailwind: `bg-background`, `text-muted-foreground`...).
+- Superfícies: `background` gelo #F4F7F8, `card`/`popover`/`painel` branco, `muted` #EDF2F3 (hover), `secondary` #E6EDEF, `accent` #E4F0EF (item ativo de menu, linha marcada).
+- Texto: `foreground` tinta #153F40, `muted-foreground` #3E5658 (7:1), `link` #1F6F6B (`text-link`; foco, links, "libera").
+- Ação: `primary` âmbar #F2B24A com `primary-foreground` tinta: **só a ação principal** (botão `default`). Seleção (aba de semestre, estado marcado) usa tinta: `bg-foreground text-background`. Nunca `text-primary` (âmbar não passa em texto).
+- Bordas: `border` #DDE6E8 (decorativa, 1px); `input` #7D9A9C (contorno de campo, ≥ 3:1); `ring` = link. `destructive` = conflito.
+- Escuro (`<html data-theme="dark">`): superfícies verde-petróleo profundo (#0C1F20/#132B2C), tinta clara #EBF4F4, link #7FD0C8, âmbar igual; estados com texto claro sobre fundo profundo. Não segue o sistema.
+Tipografia: **Fustat** é a única fonte (`font-sans`, `font-heading` e `font-mono` apontam para ela); pesos 400/500/700; sem monoespaçada: código de disciplina em 500 + `tabular-nums`. h1 de página `text-ds-h2` (40), h2 `text-xl` (20) ou `text-ds-h3` (24), corpo 14-16, legenda/chip 12 (mínimo). Entradas de formulário 16px (sem zoom no iOS).
+Espaçamento: escala 4/8/12/16/24/32/48; cartão 24 (16 em lista densa); gutter `px-4 lg:px-6`. `h-barra` = 4.5rem (pílula de 56 + 12 de respiro), `w-painel` = 24rem.
+Raio (escada): 12 `rounded-lg` (campos, blocos de grade, cartões da árvore) · 20 `rounded-xl` (cartões) · 32 `rounded-3xl` (painel do Zefe, gaveta, cartão de login, rodapé) · pílula `rounded-full` (botões, nav, chips, abas). `rounded-md/sm/2xl` caem num degrau da escada.
+Sombra: nenhuma nos cartões; `shadow-elevada` (0 12 40 -16, tinta 18%) só nas peças flutuantes (barra superior, navegação inferior, dropdown, escolha de turma no celular).
 
 ## Estados de disciplina (cor + ícone + texto, nunca só cor)
-Cada estado tem tokens `X` (texto/ícone), `X-bg`, `X-borda` (ex.: `text-cursada bg-cursada-bg border-cursada-borda`). Use `<EstadoBadge>` ou `corDe()` de `@/components/ui/estado`.
+Chips v2 são pílulas 12px sem contorno (só previsão e não verificado têm borda tracejada). Cada estado tem tokens `X` (texto/ícone), `X-bg`, `X-borda` (mistura de X no bg, usada nos cartões densos da árvore e da grade) (ex.: `text-cursada bg-cursada-bg border-cursada-borda`). Use `<EstadoBadge>` ou `corDe()` de `@/components/ui/estado`.
 | Estado | Cor | Ícone (lucide) |
 |---|---|---|
-| cursada | verde (h150) | CheckCircle2 |
-| cursando | azul (h250) | Clock |
-| planejada | violeta (h300) | CalendarCheck |
-| faltando | neutro quente | CircleDashed |
-| travada | laranja (h45) | Lock |
+| cursada | verde #1E6B3A | CheckCircle2 |
+| cursando | azul #1D5A9E | Clock |
+| planejada | violeta #5B3FA0 | CalendarCheck |
+| faltando | cinza-petróleo | CircleDashed |
+| travada | laranja #9A4A0C | Lock |
 
 ## Níveis de aviso
 | Nível | Cor | Ícone | Borda |
 |---|---|---|---|
-| conflito | vermelho (h27) | OctagonX | sólida |
-| aviso | âmbar (h85) | AlertTriangle | sólida |
-| previsão | ciano (h215) | Telescope | **tracejada** |
-| não verificado | cinza frio (h270) | HelpCircle | **tracejada** |
+| conflito | vermelho #A3261E | OctagonX | sem borda (chip) |
+| aviso | âmbar escuro #7A4F00 sobre tint âmbar | AlertTriangle | sem borda (chip) |
+| previsão | petróleo #0F6577 | Telescope | **tracejada** |
+| não verificado | cinza #4F5B66 | HelpCircle | **tracejada** |
 Tracejado = "informação incerta/derivada": previsão e não verificado nunca parecem fato. `<AvisoBadge nivel>`.
 
 ## Casca (layout)
-- Barra superior sticky (`h-barra`): logo + nome, navegação (Planejador, Árvore, Busca, Sobre), busca (campo-link para `/busca`), Entrar.
-- Computador: área principal flexível + **painel do Zefe à direita**, `w-painel` (22.5rem), altura `100dvh - barra`, sticky. **Aberto por padrão só a partir de `xl` (80rem)**; entre `lg` e `xl` começa recolhido na faixa de `w-14` com o mascote (a tela densa fica com a largura toda) e o aluno abre quando quiser; botão recolhe/reabre. O padrão vem de CSS (sem piscar); a escolha do aluno não persiste entre visitas na v1.
-- Celular: navegação inferior fixa (`h-16`: Planejador, Árvore, Busca, Zefe); "Zefe" abre **gaveta inferior** (`Sheet side="bottom"`, 70dvh). O `main` tem `pb-20` para não ficar sob a barra.
-- Rodapé sempre: aviso de que o Zefe não é oficial da Unicamp nem da DAC.
-- Duas variantes por grupo de rotas: `src/app/(app)/` usa `Casca` (com painel; páginas logadas e públicas de consulta: planejador, árvore, busca, disciplina, professor, sala, sobre). `src/app/(site)/` usa `CascaLeve` (sem painel; apresentação `/`, e `/entrar`, `/comecar`).
+Dashboard macio e arredondado, como o produto da landing (referência: painel do AbacatePay).
+- **Barra superior**: pílula branca flutuante (`h-14`, borda 1px, `shadow-elevada`, blur só nela), mesma da landing, dentro de um header sticky `h-barra`: logo + nome, navegação em pílulas (ativa em `accent`), busca em pílula `muted`, Entrar (âmbar) / Sair (contorno), botões `size="sm"` (40).
+- Computador: área principal + **painel do Zefe** à direita, `w-painel` (24rem) + 16px de respiro, altura `100dvh - barra`, sticky; painel branco de raio 32 com borda. **Aberto por padrão só a partir de `xl`**; entre `lg` e `xl` recolhido numa faixa de `w-20` com o mascote; botão recolhe/reabre. O padrão vem de CSS (sem piscar).
+- Celular: navegação inferior **flutuante em pílula** (`fixed inset-x-3 bottom-3`, `h-16`, item ativo em `accent` arredondado: Planejador, Árvore, Busca, Zefe); "Zefe" abre **gaveta inferior** (`Sheet side="bottom"`, 70dvh, raio 32 no topo). O conteúdo tem `pb-24`.
+- Rodapé sempre: cartão branco r32 com o aviso de que o Zefe não é oficial.
+- Duas variantes por grupo de rotas: `src/app/(app)/` usa `Casca` (com painel: planejador, árvore, busca, disciplina, professor, sala, sobre). `src/app/(site)/` usa `CascaLeve` (sem painel; `/`, `/entrar`, `/comecar`, que ficam num cartão r32 sobre o gelo).
 - Link "Ir para o conteúdo" no início; o conteúdo é `<main id="conteudo">`.
 
 ## Componentes
-Base shadcn (estilo base-nova, Base UI) em `src/components/ui/`: `button`, `card`, `badge`, `separator`, `sheet`, `tooltip`, mais `estado.tsx`. Botão de link: `<Button render={<Link href=…/>} nativeButton={false}>`. Telas densas: cartões planos (`border` + `bg-card`, sem sombra), `text-sm`, sem cartões aninhados. Ícones: só lucide, `size-4`/`size-5`, `aria-hidden` quando há rótulo. Mascote: `<Mascote estado="parado|pensando|feliz" tamanho={px} />`; 24-36px em navegação (decorativo), 160px no painel.
+Base shadcn (estilo base-nova, Base UI) em `src/components/ui/`, restilizada para o v2: `button` (pílula; 48 padrão, `size="sm"` 40 nas telas densas, `xs` 32 dentro de cartão; `default` = âmbar, uma ação principal por tela; `outline` branco com borda), `card` (r20, p24, `size="sm"` p16), `badge` (pílula), `sheet` (r32 no lado aberto), `tooltip`, mais `estado.tsx`. Campos: `h-10`/`h-12`, r12, borda `input`, texto 16px. Botão de link: `<Button render={<Link href=…/>} nativeButton={false}>`. Telas densas: cartões planos (`border` + `bg-card` r20, sem sombra), conteúdo `text-sm` (14), legenda `text-xs` (12), sem cartões aninhados. Ícones: só lucide, `size-4`/`size-5`, `aria-hidden` quando há rótulo. Mascote: `<Mascote estado="parado|pensando|feliz" tamanho={px} />`; 24-36px em navegação (decorativo), 160px no painel.
 
 ## Foco, navegação, seleção
-Foco visível global (`:focus-visible` 2px `ring`, offset 2px). Seleção de texto e cursor em verde da marca. Barras de rolagem finas na paleta.
+Foco visível global (`:focus-visible` 2px `ring`, offset 2px). Seleção de texto em tint âmbar, cursor em `link`. Barras de rolagem finas na paleta.
 
 ## Movimento
 Esparso. Telas densas: sem animação além de transições de cor (150ms). Mascote: piscar lento (parado/feliz) e reticências pulsando (pensando). Tudo em CSS dentro de `@media (prefers-reduced-motion: no-preference)`; com redução, nada se move.
@@ -130,7 +132,7 @@ Seg–sáb, 07h–23h, 44px por hora. Itens sobrepostos ficam lado a lado (colun
 Regras do modo Operate: cartões planos, `text-sm`/`text-xs`, sem gradiente, sem sombra, sem animação. Estado e aviso sempre cor + ícone + texto. Largura útil do `main` com o painel aberto é pequena (1024 px com painel de 22.5rem dá ~664 px), por isso o painel só abre sozinho em `xl`.
 
 **Grade semanal** (`GradeSemanal`, props `itens`/`className`, não mudam):
-- Eixo de horas à esquerda (`2.75rem`, mono tabular, "08h"…), 07h–23h, **44 px por hora**, linha fina por hora; colunas Seg–Sáb de largura igual.
+- Eixo de horas à esquerda (`2.75rem`, tabular, "08h"…), 07h–23h, **44 px por hora**, linha fina por hora; colunas Seg–Sáb de largura igual.
 - Largura mínima da semana: **36rem**; de `sm` (640 px) em diante a semana inteira, rolando na horizontal se faltar espaço.
 - **Abaixo de `sm` (390 px): seletor de dia** (abas Seg–Sáb, ponto marca dias com aula, abre no primeiro dia com aula) e uma coluna só, com largura legível. Escolhido em vez de rolagem horizontal porque Qui–Sáb ficavam fora da tela.
 - Bloco: código em mono semibold + `início–fim` em tabular; turma e sala quando houver, em linhas seguintes (altura mínima 18 px). Nome completo sempre em `aria-label` e `title` ("código, dia, início às fim"). Cor = `tom` (estado/aviso).
@@ -138,8 +140,8 @@ Regras do modo Operate: cartões planos, `text-sm`/`text-xs`, sem gradiente, sem
 - Aulas **sem horário** não entram na grade: lista "Sem horário" abaixo, com selo "não verificado" quando o dado vier incompleto.
 - Em marketing, ilustração usa a mesma `GradeSemanal` com rótulos "Exemplo A…" (nunca código real).
 
-**Árvore de integralização** (Task 10, layout v2):
-- **Sem rolagem lateral em nenhuma largura.** A seção do quadro sai do `max-w-5xl` da página e usa até `90rem`. O contêiner (`@container`) decide pela *própria* largura (o painel do Zefe tira 22.5rem do `main` em `xl`): a partir de **52rem (832 px)** é o **quadro**, abaixo é a **lista**. Limite escolhido por teste: em 832 px as 8 colunas ficam com ~88 px de cartão e 24 px de calha (código mono 11 px inteiro, nome em 2 linhas); 1280 px com painel aberto dá 872 px (cabe), 768 px dá 736 (lista). Todas as classes `@min-[52rem]:` são esse limite.
+**Árvore de integralização** :
+- **Sem rolagem lateral em nenhuma largura.** A seção do quadro sai do `max-w-5xl` da página e usa até `90rem`. O contêiner (`@container`) decide pela *própria* largura (o painel do Zefe tira 22.5rem do `main` em `xl`): a partir de **52rem (832 px)** é o **quadro**, abaixo é a **lista**. Limite escolhido por teste: em 832 px as 8 colunas ficam com ~88 px de cartão e 24 px de calha (código 12 px inteiro, nome em 2 linhas); 1280 px com painel aberto dá 872 px (cabe), 768 px dá 736 (lista). Todas as classes `@min-[52rem]:` são esse limite.
 - **Quadro**: CSS grid, `repeat(N, minmax(0,1fr))`, colunas de semestre, linhas de **4.75rem** fixas (linhas alinhadas entre colunas), `gap-x-6` (calha de 24 px) e `gap-y-6` (canal de 24 px entre linhas). Cartão compacto `CartaoCompacto`: ícone de estado + código mono em negrito, nome em até 2 linhas (nome completo no `title` do botão e no painel), créditos ("4 cr") e chip tracejado "+SI206"/"+2 fora" para pré-requisito fora do currículo; estado = cor + ícone + rótulo só para leitor de tela. Sem escala no selecionado (não cria overflow).
 - **Lista** (celular/tablet): cada semestre é um grupo com título e cartões em grade de 2 (3 a partir de `sm`) colunas; nota de trava visível no cartão; selecionada mostra "← pré-requisitos / → libera" e botões Detalhes/Limpar logo abaixo; sem linhas SVG.
 - **Painel de detalhe**: abaixo do quadro, em largura total (3 colunas em `lg`: relações em 2, o resto em 1), aparece ao selecionar sem mexer no quadro; barra de seleção (código, nome, legenda, "Ver detalhes", "Limpar destaque") fica sticky sob a barra superior no quadro.
@@ -148,3 +150,10 @@ Regras do modo Operate: cartões planos, `text-sm`/`text-xs`, sem gradiente, sem
 - **Destaque por clique** (exceção deliberada a "sem animação", pedido do aluno): clicar/tocar/Enter escurece o resto (opacidade ~30%) e desenha as linhas em 340 ms escalonadas por distância. "Antes" = anel tinta + seta esquerda, "Depois" = anel verde + seta direita, "Selecionada" = anel grosso e alvo; "e" = contínua, "ou" = tracejada com selo "ou" ("*" = parcial). Esc, clique no vazio ou "Limpar destaque" desfazem; setas ←/→ andam entre relacionadas diretas. Com `prefers-reduced-motion`: sem traçado, o escurecimento continua. Lógica em `src/dominio/grafo.ts`.
 
 **Painel do Zefe**: aberto por padrão só a partir de `xl`; entre `lg` e `xl` recolhido (faixa `w-14`); abaixo de `lg` é a gaveta inferior. O mascote nunca fica sobre conteúdo.
+
+
+## Migração do app
+- `globals.css`: bloco único "PROMOÇÃO V2 → APP" (`:root` com os `--ds-*` + tokens semânticos + estados; `:root[data-theme="dark"]`). O bloco `[data-ds="v2"]` da landing não foi alterado e continua valendo (mesmos valores, a landing fica idêntica). Radii do shadcn mapeados na escada 12/20/32/56.
+- `layout.tsx`: só Fustat. Bricolage, Hanken e JetBrains Mono saíram; `font-mono` aponta para Fustat (rede de segurança).
+- Telas densas em v2: cartão da árvore com texto mínimo de 12px (linhas do quadro 5rem em vez de 4.75rem); as linhas de "antes" (tinta) e "depois" (`link`, petróleo) são parecidas em matiz, então o papel é lido também por seta, anel e tracejado; chips de estado sem contorno, com borda `X-borda` só nos cartões.
+- Seleção usa tinta, não âmbar: âmbar é só a ação principal.

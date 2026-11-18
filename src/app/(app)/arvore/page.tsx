@@ -12,7 +12,7 @@ import { Arvore } from "@/components/arvore/Arvore";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Árvore de integralização" };
 
-const Codigos = ({ cs }: { cs: string[] }) => cs.map((c, i) => <span key={c}>{i > 0 && ", "}<Link href={`/disciplina/${c}`} className="font-mono underline underline-offset-2">{c}</Link></span>);
+const Codigos = ({ cs }: { cs: string[] }) => cs.map((c, i) => <span key={c}>{i > 0 && ", "}<Link href={`/disciplina/${c}`} className="font-medium tabular-nums underline underline-offset-2">{c}</Link></span>);
 
 export default async function PaginaArvore() {
   const u = await exigirUsuario();
@@ -21,7 +21,7 @@ export default async function PaginaArvore() {
     return (
       <Pagina>
         <div className="max-w-xl space-y-4 rounded-xl border bg-card p-6">
-          <h1 className="text-3xl">Árvore de integralização</h1>
+          <h1 className="text-ds-h2">Árvore de integralização</h1>
           <p className="text-muted-foreground">Ainda não tenho o currículo do seu curso e catálogo carregado, então não consigo montar a árvore. Confira o curso e o catálogo no seu cadastro.</p>
           <Button render={<Link href="/comecar" />} nativeButton={false}>Revisar cadastro</Button>
         </div>
@@ -38,7 +38,7 @@ export default async function PaginaArvore() {
     <>
     <Pagina>
       <header className="space-y-2">
-        <h1 className="text-4xl">Árvore de integralização</h1>
+        <h1 className="text-ds-h2">Árvore de integralização</h1>
         <p className="text-sm text-muted-foreground">{nomeCurso ?? `Curso ${u.perfil.curso}`}{u.perfil.modalidade ? `, modalidade ${u.perfil.modalidade}` : ""} · catálogo {u.perfil.catalogo}</p>
         <p className="flex max-w-prose items-start gap-2 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />

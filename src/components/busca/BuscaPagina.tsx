@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Resultados } from "./Resultados";
 import { itensDe, total, useBusca, type Resultado } from "./useBusca";
 
@@ -52,10 +53,10 @@ export function BuscaPagina({ q: q0, inicial }: { q: string; inicial: Resultado 
             placeholder="Disciplina, professor ou sala" autoComplete="off" autoCapitalize="off" spellCheck={false}
             role="combobox" aria-expanded={n > 0} aria-controls={`${idBase}-lista`} aria-autocomplete="list"
             aria-activedescendant={ativoOk ? `${idBase}-${ativoOk.id}` : undefined}
-            className="h-10 w-full rounded-lg border bg-card px-3 text-sm placeholder:text-muted-foreground focus-visible:border-ring"
+            className="h-12 w-full rounded-full border border-input bg-card px-5 text-base placeholder:text-muted-foreground focus-visible:border-ring"
           />
         </label>
-        <button className="h-10 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">Buscar</button>
+        <Button type="submit">Buscar</Button>
       </form>
       <p className="sr-only" aria-live="polite">{!q || carregando ? "" : erro ? "Não consegui buscar agora." : n === 0 ? "Nenhum resultado" : `${n} ${n === 1 ? "resultado" : "resultados"}`}</p>
       {!q && <p className="text-muted-foreground">Digite um código (SI702, ou só SI7), parte de um nome (cálculo, Ana Estela) ou uma sala (PA06). Os resultados aparecem enquanto você digita.</p>}

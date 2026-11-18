@@ -16,7 +16,7 @@ import { fita, perguntasCalouro } from "@/components/landing/dados";
 // Padrão único de seção: título (h2) + frase de apoio sobre o gelo, conteúdo num Painel branco de raio 32.
 const secao = "ds-container py-16 lg:py-24";
 const cabeca = "mb-8 flex max-w-[44rem] flex-col gap-4 lg:mb-12";
-const h2 = "text-ds-display-sm md:text-ds-h2";
+const h2 = "text-ds-h2 md:text-ds-h2";
 const lead = "text-ds-lead";
 
 export default async function Apresentacao() {
@@ -37,7 +37,7 @@ export default async function Apresentacao() {
             <h1
               id="titulo"
               style={{ animationDelay: "0.06s" }}
-              className="ds-subir mt-6 text-ds-display-sm md:text-ds-display lg:text-ds-display-lg xl:text-ds-display-xl"
+              className="ds-subir mt-6 text-ds-h2 md:text-ds-display lg:text-ds-display-lg xl:text-ds-display-xl"
             >
               Do 1º semestre ao diploma, <span className="md:block">cada passo no lugar.</span>
             </h1>
@@ -116,7 +116,7 @@ export default async function Apresentacao() {
         <section aria-labelledby="t-entrar" className="ds-container pb-8">
           <div className="flex flex-col items-start gap-8 rounded-ds-panel bg-ds-band p-6 text-ds-on-band md:p-12 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-[40rem] space-y-4">
-              <h2 id="t-entrar" className="text-ds-display-sm text-ds-on-band! md:text-ds-h2">Comece pelo seu próximo semestre.</h2>
+              <h2 id="t-entrar" className="text-ds-h2 text-ds-on-band! md:text-ds-h2">Comece pelo seu próximo semestre.</h2>
               <p className="text-ds-lead text-ds-on-band/85">Entre com e-mail e um código, sem senha da DAC. A sua árvore já vem preenchida para você corrigir.</p>
             </div>
             <Pilula href="/entrar">

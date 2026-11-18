@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 
 type Dados<T extends Cartao["tipo"]> = Extract<Cartao, { tipo: T }>["dados"];
 
-const base = "rounded-xl border bg-card p-3 text-xs";
+const base = "rounded-xl border bg-card p-4 text-sm";
 const dias: Record<string, string> = { seg: "Seg", ter: "Ter", qua: "Qua", qui: "Qui", sex: "Sex", sab: "Sáb" };
-const codigo = "font-mono font-semibold tabular-nums";
+const codigo = "font-medium tabular-nums";
 
 function Horarios({ h }: { h: { dia: string; inicio: string; fim: string; sala?: string | undefined }[] }) {
   if (!h.length) return <span className="text-muted-foreground">sem horário</span>;
@@ -26,7 +26,7 @@ function Horarios({ h }: { h: { dia: string; inicio: string; fim: string; sala?:
 function Titulo({ children, selo }: { children: React.ReactNode; selo?: React.ReactNode }) {
   return (
     <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
-      <h3 className="font-sans text-sm font-semibold">{children}</h3>
+      <h3 className="font-sans text-sm font-bold">{children}</h3>
       {selo}
     </div>
   );
@@ -48,7 +48,7 @@ function Oferta({ d }: { d: Dados<"oferta"> }) {
           {d.turmas.map((t) => (
             <li key={t.turma} className="flex flex-col gap-0.5 py-1.5 first:pt-0 last:pb-0">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="font-semibold">Turma {t.turma}</span>
+                <span className="font-bold">Turma {t.turma}</span>
                 {!previsao && t.vagas !== undefined && <span className="tabular-nums text-muted-foreground">{t.vagas === null ? "vagas ?" : `${t.matriculados ?? "?"}/${t.vagas} vagas`}</span>}
               </div>
               <Horarios h={t.horarios} />
@@ -121,7 +121,7 @@ function Grade({ d }: { d: Dados<"grade"> }) {
       )}
       <ul className="mt-2 space-y-1">
         {conflitos.map((a, i) => (
-          <li key={i} className="flex items-start gap-1.5 rounded-md border border-conflito-borda bg-conflito-bg px-2 py-1 text-conflito">
+          <li key={i} className="flex items-start gap-1.5 rounded-lg border border-conflito-borda bg-conflito-bg px-3 py-2 text-conflito">
             <OctagonX className="mt-px size-3.5 shrink-0" aria-hidden />
             <span><span className="font-medium">Conflito:</span> {a.motivo}</span>
           </li>
@@ -130,9 +130,9 @@ function Grade({ d }: { d: Dados<"grade"> }) {
         {!c.verificado && <li><AvisoBadge nivel="naoverificado" rotulo="Checagem incompleta" /></li>}
       </ul>
       {avisos.length > 0 && (
-        <details className="mt-2 rounded-md border border-aviso-borda bg-aviso-bg text-aviso">
-          <summary className="flex cursor-pointer items-center gap-1.5 px-2 py-1 font-medium"><AlertTriangle className="size-3.5 shrink-0" aria-hidden />{avisos.length} {avisos.length === 1 ? "aviso" : "avisos"}</summary>
-          <ul className="space-y-1 px-2 pb-2">
+        <details className="mt-2 rounded-lg border border-aviso-borda bg-aviso-bg text-aviso">
+          <summary className="flex cursor-pointer items-center gap-1.5 px-3 py-2 font-medium"><AlertTriangle className="size-3.5 shrink-0" aria-hidden />{avisos.length} {avisos.length === 1 ? "aviso" : "avisos"}</summary>
+          <ul className="space-y-1 px-3 pb-3">
             {avisos.map((a, i) => <li key={i}>{a.motivo}</li>)}
           </ul>
         </details>
@@ -147,8 +147,8 @@ function Progresso({ d }: { d: Dados<"progresso"> }) {
     <section className={base} aria-label="Progresso">
       <Titulo>Onde você está</Titulo>
       <dl className="mb-2 grid grid-cols-2 gap-2 tabular-nums">
-        <div><dt className="text-muted-foreground">Obrigatórias</dt><dd className="text-sm font-semibold">{o.feitos}/{o.total}{o.emAndamento ? <span className="font-normal text-muted-foreground"> (+{o.emAndamento} cursando)</span> : null}</dd></div>
-        <div><dt className="text-muted-foreground">Eletivas</dt><dd className="text-sm font-semibold">{e.feitos}/{e.total}{e.naoVerificado ? <span className="font-normal text-muted-foreground"> ({e.naoVerificado} não verif.)</span> : null}</dd></div>
+        <div><dt className="text-muted-foreground">Obrigatórias</dt><dd className="text-sm font-bold">{o.feitos}/{o.total}{o.emAndamento ? <span className="font-normal text-muted-foreground"> (+{o.emAndamento} cursando)</span> : null}</dd></div>
+        <div><dt className="text-muted-foreground">Eletivas</dt><dd className="text-sm font-bold">{e.feitos}/{e.total}{e.naoVerificado ? <span className="font-normal text-muted-foreground"> ({e.naoVerificado} não verif.)</span> : null}</dd></div>
       </dl>
       {d.faltantes.length > 0 && (
         <>
@@ -176,7 +176,7 @@ function Progresso({ d }: { d: Dados<"progresso"> }) {
       {d.grupos.length > 0 && (
         <ul className="space-y-1">
           {d.grupos.map((g, i) => (
-            <li key={i} className={cn("rounded-md border px-2 py-1", !g.verificado && "border-dashed border-naoverificado-borda bg-naoverificado-bg text-naoverificado")}>
+            <li key={i} className={cn("rounded-lg border px-3 py-2", !g.verificado && "border-dashed border-naoverificado-borda bg-naoverificado-bg text-naoverificado")}>
               {g.texto} <span className="tabular-nums">{g.verificado ? `${g.feitos}/${g.creditos} cr.` : "não verificado"}</span>
             </li>
           ))}
@@ -236,7 +236,7 @@ export function CartaoFalha({ saida }: { saida: unknown }) {
   return (
     <details className={cn(base, "border-dashed border-naoverificado-borda")}>
       <summary className="cursor-pointer font-medium">Não consegui exibir este resultado</summary>
-      <pre className="mt-2 max-h-48 overflow-auto font-mono text-[0.7rem] whitespace-pre-wrap">{JSON.stringify(saida, null, 2)}</pre>
+      <pre className="mt-2 max-h-48 overflow-auto text-xs whitespace-pre-wrap">{JSON.stringify(saida, null, 2)}</pre>
     </details>
   );
 }

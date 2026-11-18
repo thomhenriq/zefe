@@ -7,10 +7,10 @@ import { itensNav } from "./itens";
 export function Rodape() {
   const { data: sessao, isPending } = authClient.useSession();
   return (
-    <footer className="border-t bg-card/50">
-      <div className="mx-auto flex max-w-[90rem] flex-col gap-3 px-4 py-8 text-sm text-muted-foreground lg:flex-row lg:items-start lg:justify-between lg:px-6">
+    <footer className="px-4 pb-4 lg:px-6">
+      <div className="mx-auto flex max-w-[90rem] flex-col gap-4 rounded-3xl border bg-card p-6 text-sm text-muted-foreground lg:flex-row lg:items-start lg:justify-between">
         <p className="max-w-[60ch]">
-          <strong className="font-semibold text-foreground">O Zefe não é oficial.</strong> É um projeto independente,
+          <strong className="font-bold text-foreground">O Zefe não é oficial.</strong> É um projeto independente,
           sem vínculo com a Unicamp nem com a DAC. Os dados vêm de páginas públicas da DAC e podem ter diferenças em
           relação ao sistema oficial: confira sempre antes de se matricular.
         </p>

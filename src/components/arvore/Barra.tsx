@@ -8,9 +8,9 @@ export function Barra({ titulo, feitos, emAndamento, total, extra }: { titulo: R
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
         <span className="font-medium">{titulo}</span>
-        <span className="tabular text-xs text-muted-foreground">{resumo}</span>
+        <span className="tabular-nums text-sm text-muted-foreground">{resumo}</span>
       </div>
-      <div role="img" aria-label={resumo} className="flex h-2.5 overflow-hidden rounded-full border bg-muted">
+      <div role="img" aria-label={resumo} className="flex h-3 overflow-hidden rounded-full bg-muted">
         <div className="bg-cursada" style={{ width: `${feitoPct}%` }} />
         <div className="bg-cursando" style={{ width: `${andamentoPct}%` }} />
       </div>

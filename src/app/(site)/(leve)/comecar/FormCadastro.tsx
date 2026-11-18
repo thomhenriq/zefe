@@ -59,7 +59,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
     });
   }
 
-  const titulo = "text-lg font-semibold tracking-tight";
+  const titulo = "text-xl font-bold";
   return (
     <form onSubmit={enviar} className="mt-10 space-y-10">
       <fieldset className="space-y-3">
@@ -68,18 +68,18 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
         <input id="busca-curso" type="search" value={busca} onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por nome ou número" className={campo} />
         {escolhido && (
-          <p className="flex items-center gap-2 rounded-lg border border-primary/40 bg-accent px-3 py-2 text-sm" aria-live="polite">
-            <Check className="size-4 shrink-0 text-primary" aria-hidden />
-            <span>Curso escolhido: <span className="font-mono text-xs tabular">{escolhido.numero}</span> <strong className="font-semibold">{escolhido.nome}</strong></span>
+          <p className="flex items-center gap-2 rounded-xl border border-link/40 bg-accent px-4 py-3 text-sm" aria-live="polite">
+            <Check className="size-4 shrink-0 text-link" aria-hidden />
+            <span>Curso escolhido: <span className="tabular-nums">{escolhido.numero}</span> <strong className="font-bold">{escolhido.nome}</strong></span>
           </p>
         )}
-        <div role="radiogroup" aria-label="Cursos" className="max-h-64 divide-y overflow-y-auto rounded-lg border bg-card">
-          {filtrados.length === 0 && <p className="p-3 text-sm text-muted-foreground">Nenhum curso encontrado.</p>}
+        <div role="radiogroup" aria-label="Cursos" className="max-h-64 divide-y overflow-y-auto rounded-xl border bg-card">
+          {filtrados.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhum curso encontrado.</p>}
           {filtrados.map((c) => (
-            <label key={c.numero} className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm has-checked:bg-accent has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:ring-inset">
+            <label key={c.numero} className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm has-checked:bg-accent has-focus-visible:ring-2 has-focus-visible:ring-ring has-focus-visible:ring-inset">
               <input type="radio" name="curso" value={c.numero} checked={curso === c.numero}
-                onChange={() => { setCurso(c.numero); setModalidade(null); setSemestre(null); }} className="accent-primary" />
-              <span className="font-mono text-xs tabular text-muted-foreground">{c.numero}</span>
+                onChange={() => { setCurso(c.numero); setModalidade(null); setSemestre(null); }} className="accent-link" />
+              <span className="tabular-nums text-muted-foreground">{c.numero}</span>
               <span className="flex-1">{c.nome}</span>
               {c.turno && <span className="text-xs text-muted-foreground">{c.turno}</span>}
             </label>
@@ -94,7 +94,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
             onChange={(e) => { const a = Number(e.target.value); setIngresso(a); setCatalogo(a); setModalidade(null); setSemestre(null); }}>
             {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
-          <p className="text-xs text-muted-foreground">O Zefe atende quem entrou de 2020 em diante.</p>
+          <p className="text-sm text-muted-foreground">O Zefe atende quem entrou de 2020 em diante.</p>
         </div>
         <div className="space-y-2">
           <label htmlFor="catalogo" className={titulo}>Catálogo (currículo)</label>
@@ -102,7 +102,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
             onChange={(e) => { setCatalogo(Number(e.target.value)); setModalidade(null); setSemestre(null); }}>
             {ANOS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
-          <p className="text-xs text-muted-foreground">Igual ao ingresso, salvo se você migrou de catálogo.</p>
+          <p className="text-sm text-muted-foreground">Igual ao ingresso, salvo se você migrou de catálogo.</p>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
       )}
 
       {curso !== null && semProposta && (
-        <p role="status" className="flex gap-2 rounded-lg border border-dashed border-naoverificado-borda bg-naoverificado-bg p-3 text-sm text-naoverificado">
+        <p role="status" className="flex gap-2 rounded-xl border border-dashed border-naoverificado-borda bg-naoverificado-bg p-4 text-sm text-naoverificado">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>O catálogo {catalogo} deste curso ainda não foi carregado. Você pode continuar, mas nada será pré-marcado como cursado.</span>
         </p>
@@ -139,7 +139,7 @@ export function FormCadastro({ cursos, inicial }: { cursos: Curso[]; inicial: In
       </div>
 
       {erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}
-      <Button type="submit" disabled={!pronto || enviando} className="h-12 w-full text-base sm:w-auto sm:px-8">
+      <Button type="submit" disabled={!pronto || enviando} className="w-full sm:w-auto sm:px-8">
         {enviando ? "Salvando…" : "Concluir"}
       </Button>
     </form>

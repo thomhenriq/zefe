@@ -27,7 +27,7 @@ export function Acao({ acaoId, descricao, aoDesfazer, desfeitaInicial = false }:
 
   const desfeita = s.tipo === "desfeita";
   return (
-    <div className="flex items-start gap-2 rounded-lg border bg-card px-3 py-2 text-sm" data-acao={acaoId}>
+    <div className="flex items-start gap-2 rounded-xl border bg-card px-4 py-3 text-sm" data-acao={acaoId}>
       <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-cursada" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className={desfeita ? "text-muted-foreground line-through" : undefined}>{descricao}</p>

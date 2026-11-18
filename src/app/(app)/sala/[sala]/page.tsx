@@ -21,14 +21,14 @@ export default async function PaginaSala({ params, searchParams }: { params: Pro
   return (
     <Pagina>
       <div>
-        <h1 className="font-mono text-4xl">{sala.sala}</h1>
+        <h1 className="text-ds-h2 tabular-nums">{sala.sala}</h1>
         <p className="text-muted-foreground">Ocupação semanal em {rotuloSemestre(escolhido.ano, escolhido.periodo)}, segundo o caderno da DAC.</p>
       </div>
       <nav aria-label="Semestre" className="flex flex-wrap gap-2">
         {com.map((c) => {
           const ativo = c === escolhido;
           return (
-            <Link key={`${c.ano}-${c.periodo}`} href={`?s=${c.ano}-${c.periodo}`} aria-current={ativo ? "true" : undefined} className={`rounded-full border px-3 py-1 text-sm ${ativo ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"}`}>
+            <Link key={`${c.ano}-${c.periodo}`} href={`?s=${c.ano}-${c.periodo}`} aria-current={ativo ? "true" : undefined} className={`inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium transition-colors ${ativo ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted"}`}>
               {rotuloSemestre(c.ano, c.periodo)}
             </Link>
           );

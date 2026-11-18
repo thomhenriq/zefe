@@ -30,7 +30,7 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
     <div className="flex min-h-dvh flex-col">
       <BarraSuperior />
       <div className="flex flex-1">
-        <div className="flex min-w-0 flex-1 flex-col pb-16 lg:pb-0">
+        <div className="flex min-w-0 flex-1 flex-col pb-24 lg:pb-0">
           <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
             {children}
           </main>
@@ -40,15 +40,17 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
         <aside
           aria-label="Zefe, o assistente"
           className={cn(
-            "sticky top-barra hidden h-[calc(100dvh-var(--altura-barra))] shrink-0 border-l bg-painel lg:block",
-            escolha === null ? "w-14 xl:w-painel" : escolha ? "w-painel" : "w-14",
+            "sticky top-barra hidden h-[calc(100dvh-var(--altura-barra))] shrink-0 pr-4 pb-4 lg:block",
+            escolha === null ? "w-20 xl:w-[calc(var(--largura-painel)+1rem)]" : escolha ? "w-[calc(var(--largura-painel)+1rem)]" : "w-20",
           )}
         >
+         {/* painel arredondado (raio 32), branco, como o produto da landing */}
+         <div className="h-full overflow-hidden rounded-3xl border bg-painel">
           <div className={cn("relative h-full", escolha === null ? "hidden xl:block" : !escolha && "hidden")}>
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2"
+                className="absolute top-3 right-3 z-10"
                 aria-expanded
                 aria-label="Recolher painel do Zefe"
                 onClick={() => setAberto(false)}
@@ -67,12 +69,13 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
               <Mascote estado={zefe.estado} tamanho={36} decorativo />
               <span className="text-xs font-medium [writing-mode:vertical-rl]">Zefe</span>
             </button>
+         </div>
         </aside>
       </div>
 
       <nav
         aria-label="Navegação"
-        className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t bg-background/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-3 bottom-3 z-40 grid h-16 grid-cols-4 gap-1 rounded-full border bg-card/90 p-1.5 shadow-elevada backdrop-blur-md lg:hidden"
       >
         {itensNav.map(({ href, rotulo, Icone }) => {
           const ativo = caminho === href || caminho.startsWith(href + "/");
@@ -82,8 +85,8 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
               href={href}
               aria-current={ativo ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted-foreground",
-                ativo && "text-primary",
+                "flex flex-col items-center justify-center gap-0.5 rounded-full text-xs font-medium text-muted-foreground",
+                ativo && "bg-accent text-foreground",
               )}
             >
               <Icone className="size-5" aria-hidden />
@@ -96,7 +99,7 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
           onClick={() => setGaveta(true)}
           aria-haspopup="dialog"
           aria-expanded={gaveta}
-          className="flex flex-col items-center justify-center gap-0.5 text-xs font-medium text-muted-foreground"
+          className="flex flex-col items-center justify-center gap-0.5 rounded-full text-xs font-medium text-muted-foreground"
         >
           <Mascote estado={zefe.estado} tamanho={24} decorativo />
           Zefe
@@ -104,7 +107,7 @@ export function Casca({ children, acesso }: { children: React.ReactNode; acesso:
       </nav>
 
       <Sheet open={gaveta} onOpenChange={setGaveta}>
-        <SheetContent side="bottom" className="h-[70dvh] rounded-t-2xl bg-painel lg:hidden">
+        <SheetContent side="bottom" className="h-[70dvh] bg-painel lg:hidden">
           <SheetTitle className="sr-only">Zefe, o assistente</SheetTitle>
           <SheetDescription className="sr-only">Painel do assistente</SheetDescription>
           <Painel acesso={acesso} zefe={zefe} />
