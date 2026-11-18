@@ -11,18 +11,18 @@ Dono rejeitou a landing v1 ("fora da identidade, tipografia fora do padrão, AI 
 **Tipografia**: uma família só, **Fustat** (variável, `next/font/google`, `--font-fustat`), pesos 400/500/700. Sem monoespaçada: códigos em 500 com `tabular-nums` (`.ds-num`). Títulos 700, tracking -0.045em (display) a -0.03em (h3), entrelinha 1.05-1.2; corpo 400/500, entrelinha 1.5-1.55; frase simples sempre, sem caixa-alta espaçada, sem eyebrow.
 | Token | px | Uso |
 |---|---|---|
-| `text-ds-display-xl/-lg/` (`ds-display`) / `-sm` | 72 / 64 / 56 / 40 (celular) | h1 (xl ≥1280, lg ≥1024, 56 ≥768) |
-| `text-ds-h2` | 40 | título de seção (celular usa 40 do display-sm) |
+| `text-ds-display-xl` / `-lg` / `ds-display` | 72 / 64 / 56 | h1 (xl ≥1280, lg ≥1024, 56 ≥768); no celular o h1 usa `text-ds-h2` (40) |
+| `text-ds-h2` | 40 | título de seção (e h1 no celular) |
 | `text-ds-h3` | 24 | semestre, logo |
 | `text-ds-lead` | 20 | frase de apoio |
 | `text-ds-body` | 16 | texto, botões |
-| `text-ds-small` | 14 | legendas, chips grandes |
-| `text-ds-caption` | 12 | mínimo (chips, eixos) |
+| `text-ds-small` | 14 | **conteúdo** dos demos (códigos, nomes de disciplina/turma, balões, chips) |
+| `text-ds-caption` | 12 | só legendas e eixos (horas, dias); 12 é o piso e só entra no conteúdo onde 14 não cabe (blocos de grade estreitos) |
 Como `cn()` usa twMerge, esses tamanhos estão registrados em `src/lib/utils.ts` (senão `text-ds-caption` some ao lado de `text-ds-*` de cor).
 
 **Cores** (hex é a fonte da verdade): `ds-bg` #F4F7F8 gelo; `ds-surface` #FFFFFF; `ds-frame` #E6EDEF (anel da moldura); `ds-ink` #153F40 (títulos, texto forte); `ds-body` #3E5658 (7,8:1 no branco, 7,3:1 no gelo); `ds-link` #1F6F6B (5,9:1; foco, links, "libera"); `ds-line` #DDE6E8 (bordas 1px); `ds-amber` #F2B24A com texto `ds-ink` (6,2:1), hover #E9A535; `ds-amber-tint` #FDF0D6 (realce); `ds-band` #153F40 com texto branco (11,6:1).
 Estados, chips suaves (texto sobre fundo, todos ≥ 5,3:1, sempre cor + ícone + texto): cursada #1E6B3A/#E3F4E8; cursando #1D5A9E/#E3EEFA; planejada #5B3FA0/#ECE6F8; travada #9A4A0C/#FCEBDA; faltando #4A5E60/#EDF1F2; conflito #A3261E/#FBE6E3; previsão #0F6577/#DFF1F5.
-O âmbar faz **um trabalho**: a ação principal (Entrar com e-mail). O tint âmbar só destaca (foco da árvore, "próximo").
+O âmbar faz **um trabalho**: a ação principal (Entrar com e-mail). Segundo uso explícito e único: o **tint âmbar** (`ds-amber-tint`) como realce de "aqui" (disciplina em foco na árvore, selo "próximo" na fita); nada além disso.
 
 **Raios (escada fixa)**: 12 `rounded-ds-input` (blocos de grade, nós da árvore) · 20 `rounded-ds-card` (cartões, colunas, balões) · 32 `rounded-ds-panel` (painéis de seção, painel interno da moldura, faixa final) · 56 `rounded-ds-frame` (moldura do produto) · `rounded-full` (botões, nav, chips, selos, campo). Nenhum outro.
 
@@ -30,11 +30,12 @@ O âmbar faz **um trabalho**: a ação principal (Entrar com e-mail). O tint âm
 
 **Elevação**: plano; borda 1px `ds-line`; um único `shadow-ds-frame` (0 12 40 -16, verde-petróleo 18%) na moldura e na nav. Sem sombra dura, sem brilho.
 
-**Componentes** (`src/components/ds/`): `Pilula` (botão/link, h 48, px 24, 500/16; `primaria` âmbar, `secundaria` branca com borda, `fantasma` texto; `pilula.base` para `<button>`) · `NavLanding` (pílula branca 80% + blur só aqui, borda 1px, altura 64, afastada 16px do topo, `sticky`; logo + Planejador, Árvore, Busca, Sobre, Entrar, Entrar com e-mail) · `Chip` (pílula 12px, tons de estado/aviso, ícone + texto) · `Cartao` (branco, r20, borda, p24) · `Painel` (r32) · `Moldura` (r56, anel `ds-frame`, painel branco r32 dentro) · `Selo` (pílula pequena, frase simples: "Exemplo", "Trecho real") · `RodapeLanding`.
-**Padrão de seção**: h2 + frase de apoio sobre o gelo, conteúdo num `Painel`; moldura só no produto do hero; faixa final em `ds-band` r32 com botão âmbar. Hero alinhado à esquerda.
+**Componentes** (`src/components/ds/`): `Pilula` (botão/link, h 48, px 24, 500/16; `primaria` âmbar, `secundaria` branca com borda, `fantasma` texto; `pilula.base` para `<button>`) · `NavLanding` (pílula branca 80% + blur só aqui, borda 1px, altura 64, afastada 16px do topo, `sticky`; logo + Planejador, Árvore, Busca, Sobre, Entrar, Entrar com e-mail) · `Chip` (pílula 12px, tons de estado/aviso, ícone + texto) · `Cartao` (branco, r20, borda, p24; usado na matrícula, no painel de conversa do Peça e veja e nas notas, sempre p24, variantes só de cor de fundo) · `Painel` (r32) · `Moldura` (r56, anel `ds-frame`, painel branco r32 dentro) · `Selo` (pílula pequena, frase simples, só duas falas: **"Exemplo"** para tudo ilustrativo e **"Trecho do catálogo 2026"** para dado conferido com a DAC; o selo com o mascote no hero ("Seu assistente de integralização") é o único selo permitido acima de um título: pílula em frase simples, não um eyebrow em caixa-alta espaçada) · `RodapeLanding`.
+**Padrão de seção**: h2 + frase de apoio (`max-w-ds-prose`, 40rem) sobre o gelo, com arranjos alternados: Peça e veja = painel largo com um h3 de afirmação; árvore = `Moldura` com o título dentro; matrícula = painel à esquerda, texto + `Cartao` à direita; calouro = conversa direto no fundo, sem painel; faixa final em `ds-band` r32 com botão âmbar e o mascote em 96/128px (`<Mascote tamanho decorativo>`). Hero alinhado à esquerda.
+**Navegação no celular**: abaixo de `lg` a nav mostra logo + "Menu" (folha r20 com Planejador, Árvore, Busca, Sobre, via `<details>` nativo) + "Entrar"; de `lg` os links ficam na pílula. No celular a fita mostra 1º-4º semestre e o resto abre por "Ver os outros semestres" (`aria-expanded`). Linhas da árvore: 1px e 2px.
 **Movimento**: ease `cubic-bezier(.22,1,.36,1)`, 300-500 ms; uma orquestração de entrada (`.ds-subir` no hero, colunas da fita e moldura escalonadas); blocos dos demos `.ds-bloco`; demos tocam uma vez; tudo estático com `prefers-reduced-motion`.
 **Regras anti "AI-gerado"**: sem texto em gradiente, sem blur/glass além da nav, sem blobs/glows, sem emoji, sem eyebrow em caixa-alta, sem fios de tinta 2px, sem mono, sem fileira de 3 cartões iguais como estrutura, sem hero centralizado, sem pseudo-3D, sem gradiente roxo-azul. Mesmo padding de cartão em todo lugar; tudo na escala de 8.
-**Dados de exemplo a trocar depois**: estados da fita (curso 94), cenários do demo "Peça e veja", semana de matrícula, conversa do calouro, mascote (PNG do dono).
+**Dados**: o trecho da árvore foi conferido com o catálogo 2026 do curso 94 (SI304 e TT060 também aceitam SI206, agora anotado). **Exemplos a trocar depois**: estados da fita, cenários do "Peça e veja", semana de matrícula, conversa do calouro, mascote (PNG do dono).
 
 ## v1: em vigor no app até a migração (a landing não usa mais nada daqui)
 

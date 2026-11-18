@@ -103,19 +103,19 @@ export const nos: NoArvore[] = [
   { codigo: "SI600", nome: "Projeto Integrador", semestre: 6, col: 5, y: 62 },
 ];
 
-/** Pré-requisito → disciplina, como no catálogo. ST266 pede "SI100 ou TT130": aresta "ou" (TT130 fora do trecho). */
+/** Pré-requisito → disciplina, conferido com o catálogo 2026 (curso 94). "ou" = alternativa; SI206 e TT130 ficam fora do trecho. */
 const prereqs: Record<string, Requisito[][]> = {
   SI100: [[]],
   SI203: [[{ codigo: "SI100", parcial: false }]],
   SI305: [[{ codigo: "SI100", parcial: false }]],
   ST266: [[{ codigo: "SI100", parcial: false }], [{ codigo: "TT130", parcial: false }]],
   SI300: [[{ codigo: "SI100", parcial: false }]],
-  SI304: [[{ codigo: "ST266", parcial: false }]],
+  SI304: [[{ codigo: "ST266", parcial: false }], [{ codigo: "SI206", parcial: false }]],
   SI201: [[{ codigo: "SI100", parcial: false }]],
   SI400: [[{ codigo: "SI300", parcial: false }]],
   SI401: [[{ codigo: "SI300", parcial: false }]],
   SI700: [[{ codigo: "SI201", parcial: true }, { codigo: "SI400", parcial: false }]],
-  TT060: [[{ codigo: "ST266", parcial: false }]],
+  TT060: [[{ codigo: "ST266", parcial: false }], [{ codigo: "SI206", parcial: false }]],
   SI600: [[
     { codigo: "SI201", parcial: false }, { codigo: "SI300", parcial: false }, { codigo: "SI304", parcial: false },
     { codigo: "SI305", parcial: false }, { codigo: "TT060", parcial: false },
@@ -124,7 +124,7 @@ const prereqs: Record<string, Requisito[][]> = {
 export const prereqDoTrecho = (codigo: string) => prereqs[codigo] ?? null;
 
 /** SI600 também pede SI404 e ST767 (fora do trecho). */
-export const foraDoTrecho: Record<string, string> = { SI600: "+2 fora do trecho (SI404, ST767)", ST266: "ou TT130 (fora do trecho)" };
+export const foraDoTrecho: Record<string, string> = { SI600: "+2 fora do trecho (SI404, ST767)", ST266: "ou TT130 (fora do trecho)", SI304: "ou SI206 (fora do trecho)", TT060: "ou SI206 (fora do trecho)" };
 
 /* ---------------- Peça e veja (tudo fictício) ---------------- */
 
@@ -142,7 +142,7 @@ export const baseGrade: Bloco[] = [
   { id: "bd", nome: "Banco de Dados II", sigla: "BD II", dia: 0, ini: 8, fim: 10, turma: "A" },
   { id: "web", nome: "Programação para a Web", sigla: "Web", dia: 2, ini: 14, fim: 16, turma: "A" },
   { id: "est", nome: "Estrutura de Dados I", sigla: "ED I", dia: 1, ini: 10, fim: 12, turma: "B" },
-  { id: "noite", nome: "Gestão de Projetos", sigla: "GP", dia: 3, ini: 19, fim: 21, turma: "N" },
+  { id: "noite", nome: "Gestão de Projetos", sigla: "GP", dia: 3, ini: 16, fim: 18, turma: "A" },
 ];
 
 const ia: Bloco = { id: "ia", nome: "Inteligência Artificial", sigla: "IA", dia: 1, ini: 10, fim: 12, turma: "A" };
@@ -177,13 +177,13 @@ export const cenarios: Cenario[] = [
     ],
   },
   {
-    id: "quinta", pedido: "libera a quinta à noite", inicial: baseGrade,
+    id: "quinta", pedido: "libera a quinta à tarde", inicial: baseGrade,
     passos: [
-      { t: "usuario", texto: "libera a quinta à noite" },
+      { t: "usuario", texto: "libera a quinta à tarde" },
       { t: "pensar" },
-      { t: "zefe", texto: "Só Gestão de Projetos cai na quinta à noite. Existe a turma B, no sábado de manhã." },
+      { t: "zefe", texto: "Só Gestão de Projetos cai na quinta à tarde. Existe a turma B, no sábado de manhã." },
       { t: "trocar", id: "noite", para: noiteB },
-      { t: "zefe", texto: "Quinta à noite livre. Confira se o sábado de manhã serve para você." },
+      { t: "zefe", texto: "Quinta à tarde livre. Confira se o sábado de manhã serve para você." },
     ],
   },
 ];

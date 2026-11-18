@@ -328,9 +328,6 @@
   --text-ds-display: 56px;
   --text-ds-display--line-height: 1.05;
   --text-ds-display--letter-spacing: -0.045em;
-  --text-ds-display-sm: 40px;
-  --text-ds-display-sm--line-height: 1.08;
-  --text-ds-display-sm--letter-spacing: -0.04em;
   --text-ds-h2: 40px;
   --text-ds-h2--line-height: 1.1;
   --text-ds-h2--letter-spacing: -0.04em;
@@ -346,6 +343,7 @@
   --text-ds-caption: 12px;
   --text-ds-caption--line-height: 1.4;
   --container-ds: 1216px;
+  --container-ds-prose: 40rem;
   --ease-ds: cubic-bezier(0.22, 1, 0.36, 1);
 }
 

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, OctagonX } from "lucide-react";
-import { Chip, Selo } from "@/components/ds/Blocos";
+import { OctagonX } from "lucide-react";
+import { Cartao, Chip, Selo } from "@/components/ds/Blocos";
 import { Mascote } from "@/components/zefe/Mascote";
 import { cn } from "@/lib/utils";
 import { cenarios, type Bloco, type Cenario } from "./dados";
 
 const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const HORA0 = 8;
-const HORA1 = 22;
+const HORA1 = 18; // a grade mostra só a faixa ocupada pelos exemplos
 const horas = Array.from({ length: HORA1 - HORA0 }, (_, i) => HORA0 + i);
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -38,7 +38,6 @@ export function PecaEVeja() {
   const [dig, setDig] = useState(Infinity); // caracteres já digitados da última fala do Zefe
   const rodada = useRef(0);
   const pedirRef = useRef<(i: number) => Promise<void>>(async () => {});
-  const fio = useRef<HTMLDivElement>(null);
   const raiz = useRef<HTMLDivElement>(null);
   const gradeRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +48,7 @@ export function PecaEVeja() {
     const c = cenarios[i];
     setCen(i);
     // em telas estreitas a grade fica acima do painel: traz para a vista
-    if (window.matchMedia("(max-width: 1023px)").matches) gradeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (window.matchMedia("(max-width: 1279px)").matches) gradeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setN(c.passos.length);
       setDig(Infinity);
@@ -97,14 +96,10 @@ export function PecaEVeja() {
     return () => io.disconnect();
   }, []);
 
-  useEffect(() => {
-    fio.current?.scrollTo({ top: fio.current.scrollHeight });
-  }, [n, dig]);
-
   return (
-    <div ref={raiz} className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-12">
-      <div className="flex min-w-0 flex-col rounded-ds-card bg-ds-bg lg:order-1">
-        <div className="flex items-center justify-between gap-2 px-6 pt-6 pb-2">
+    <div ref={raiz} className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] xl:gap-12">
+      <Cartao className="flex min-w-0 flex-col gap-4 border-transparent bg-ds-bg xl:order-1">
+        <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-2 text-ds-body font-bold text-ds-ink">
             <Mascote estado={pensando ? "pensando" : "feliz"} tamanho={32} decorativo className="size-8" />
             Zefe
@@ -113,8 +108,8 @@ export function PecaEVeja() {
             {pensando ? "pensando…" : "acordado"}
           </p>
         </div>
-        <p className="px-6 pb-2"><Selo className="bg-ds-surface">Exemplo, dados fictícios</Selo></p>
-        <div ref={fio} className="flex h-72 flex-col gap-2 overflow-y-auto px-6 py-2" role="log" aria-label="Conversa de exemplo com o Zefe">
+        <p><Selo className="bg-ds-surface">Exemplo</Selo></p>
+        <div className="flex min-h-96 flex-col gap-2" role="log" aria-label="Conversa de exemplo com o Zefe">
           {falas.map((f, i) => {
             const ultima = i === falas.length - 1 && f.de === "zefe";
             const texto = ultima ? f.texto.slice(0, dig) : f.texto;
@@ -131,14 +126,14 @@ export function PecaEVeja() {
             );
           })}
           {pensando && (
-            <p className="flex items-center gap-1 self-start rounded-ds-card bg-ds-surface px-4 py-3" aria-hidden>
-              <span className="zefe-ponto size-1.5 rounded-full bg-current" />
-              <span className="zefe-ponto size-1.5 rounded-full bg-current" />
-              <span className="zefe-ponto size-1.5 rounded-full bg-current" />
+            <p className="flex items-center gap-1 self-start rounded-ds-card bg-ds-surface px-4 py-4" aria-hidden>
+              <span className="zefe-ponto size-2 rounded-full bg-current" />
+              <span className="zefe-ponto size-2 rounded-full bg-current" />
+              <span className="zefe-ponto size-2 rounded-full bg-current" />
             </p>
           )}
         </div>
-        <div className="px-6 pt-2 pb-6">
+        <div>
           <p className="mb-2 text-ds-caption">Clique num pedido</p>
           <ul className="flex flex-wrap gap-2">
             {cenarios.map((s, i) => (
@@ -158,27 +153,39 @@ export function PecaEVeja() {
             ))}
           </ul>
         </div>
-      </div>
+      </Cartao>
 
-      <div ref={gradeRef} className="order-first min-w-0 scroll-mt-24 space-y-4 lg:order-2">
-        <div className="flex gap-1.5 pl-9 sm:pl-11" aria-hidden={false}>
+      <div ref={gradeRef} className="@container order-first min-w-0 scroll-mt-24 space-y-4 xl:order-2">
+        <div className="flex min-h-8 flex-wrap items-center gap-2 text-ds-small" aria-live="polite">
+          {conflitos.size ? (
+            <>
+              <Chip tom="conflito">Conflito</Chip>
+              <span>{nomes.join(" e ")} no mesmo horário.</span>
+            </>
+          ) : (
+            <Chip tom="cursada">Sem conflitos nesta grade</Chip>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <div className="w-8 shrink-0" aria-hidden />
           {dias.map((d) => (
             <p key={d} className="min-w-0 flex-1 text-center text-ds-caption">{d}</p>
           ))}
         </div>
-        <div className="flex gap-1.5">
-          <div className="w-7 shrink-0 sm:w-9" aria-hidden>
+        <div className="flex gap-2">
+          <div className="w-8 shrink-0" aria-hidden>
             {horas.map((h) => (
-              <p key={h} className="h-[2rem] -translate-y-1.5 text-right text-ds-caption ds-num">{h}h</p>
+              <p key={h} className="h-12 -translate-y-2 text-right text-ds-caption ds-num">{h}h</p>
             ))}
           </div>
           <div
-            className="grid min-w-0 flex-1 grid-cols-6 gap-1.5 rounded-ds-card border border-ds-line bg-ds-surface [background-image:repeating-linear-gradient(to_bottom,var(--ds-line)_0,var(--ds-line)_1px,transparent_1px,transparent_2rem)]"
+            className="grid min-w-0 flex-1 grid-cols-6 overflow-hidden rounded-ds-card border border-ds-line bg-ds-surface"
             role="group"
             aria-label="Grade semanal de exemplo, segunda a sábado"
           >
             {dias.map((d, di) => (
-              <div key={d} className="relative h-[28rem] min-w-0">
+              <div key={d} className="relative min-w-0">
+                {horas.map((h) => <div key={h} aria-hidden className="h-12 border-t border-ds-line first:border-t-0" />)}
                 {grade
                   .filter((b) => b.dia === di)
                   .map((b) => {
@@ -196,12 +203,12 @@ export function PecaEVeja() {
                         }}
                         aria-label={`${b.nome}, turma ${b.turma}, ${dias[b.dia]} das ${b.ini}h às ${b.fim}h${bate ? ", em conflito" : ""}`}
                         className={cn(
-                          "ds-bloco absolute overflow-hidden rounded-ds-input px-1.5 py-1 text-ds-caption leading-tight [overflow-wrap:anywhere]",
+                          "ds-bloco absolute overflow-hidden rounded-ds-input p-1 text-ds-caption leading-tight [overflow-wrap:anywhere] @min-[40rem]:p-2 @min-[40rem]:text-ds-small",
                           bate ? "bg-ds-conflito-bg text-ds-conflito" : "bg-ds-planejada-bg text-ds-planejada",
                         )}
                       >
-                        <p className="flex items-start gap-0.5 font-semibold">
-                          {bate && <OctagonX className="mt-px size-3 shrink-0" aria-hidden />}
+                        <p className="flex items-start gap-1 font-medium">
+                          {bate && <OctagonX className="mt-1 size-3 shrink-0" aria-hidden />}
                           <span className="sm:hidden">{b.sigla}</span>
                           <span className="hidden sm:inline">{b.nome}</span>
                         </p>
@@ -212,18 +219,6 @@ export function PecaEVeja() {
               </div>
             ))}
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 pl-9 text-ds-small sm:pl-11" aria-live="polite">
-          {conflitos.size ? (
-            <>
-              <Chip tom="conflito">Conflito</Chip>
-              <span>{nomes.join(" e ")} no mesmo horário.</span>
-            </>
-          ) : (
-            <span className="flex items-center gap-1.5 text-ds-cursada">
-              <CheckCircle2 className="size-4" aria-hidden /> Sem conflitos nesta grade.
-            </span>
-          )}
         </div>
       </div>
     </div>

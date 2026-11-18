@@ -45,8 +45,8 @@ export function Chip({ tom, children, compacto, className }: { tom: TomChip; chi
   const Icone = tom in estados ? estados[tom as EstadoDisciplina].Icone : iconesAviso[tom];
   const rotulo = tom in estados ? estados[tom as EstadoDisciplina].rotulo : tom === "conflito" ? "Conflito" : tom === "previsao" ? "Previsão" : "Aviso";
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-1 text-ds-caption leading-none font-medium whitespace-nowrap ds-num", tons[tom], className)}>
-      <Icone className="size-3.5 shrink-0" aria-hidden />
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-1 text-ds-small leading-none font-medium whitespace-nowrap", tons[tom], className)}>
+      <Icone className="size-4 shrink-0" aria-hidden />
       {children}
       {compacto ? <span className="sr-only">: {rotulo}</span> : null}
     </span>

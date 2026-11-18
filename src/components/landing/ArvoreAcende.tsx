@@ -22,6 +22,10 @@ const curva = (de: NoArvore, para: NoArvore) => {
 };
 const nome = (c: string) => porCodigo.get(c)?.nome ?? c;
 const semestres = [1, 2, 3, 4, 5, 6];
+const LINHA_FINA = 1; // px
+const LINHA_GROSSA = 2; // px
+/** "I", "II"... ficam grudados à palavra anterior (sem órfão na linha de baixo). */
+const semQuebra = (n: string) => n.replace(/ ([IVX]+)$/, "\u00a0$1");
 
 export function ArvoreAcende() {
   const [fixo, setFixo] = useState<string | null>(null);
@@ -51,7 +55,7 @@ export function ArvoreAcende() {
         onBlur={() => setPrevia(null)}
         className={cn(
           "rounded-ds-input border border-ds-line bg-ds-surface px-3 py-2 text-left transition-[opacity,box-shadow,border-color,background-color] duration-300 ease-ds",
-          p === "apagado" && "border-transparent bg-ds-bg opacity-70",
+          p === "apagado" && "border-transparent bg-ds-bg",
           p === "foco" && "border-ds-link bg-ds-amber-tint ring-2 ring-ds-link",
           p === "antes" && "border-ds-ink ring-1 ring-ds-ink",
           p === "depois" && "border-ds-link bg-ds-previsao-bg ring-1 ring-ds-link",
@@ -69,10 +73,10 @@ export function ArvoreAcende() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <p className="text-ds-small"><Selo>Trecho real</Selo> <span className="ml-1">Sistemas de Informação, catálogo 2026</span></p>
+      <p className="flex flex-wrap items-center gap-x-4 gap-y-2 text-ds-small"><Selo>Trecho do catálogo 2026</Selo> Sistemas de Informação (curso 94)</p>
       {/* Quadro: a partir de md */}
       <div
-        className="relative hidden h-[26rem] md:block"
+        className="relative hidden h-[40rem] lg:block"
         onClick={(e) => e.target === e.currentTarget && setFixo(null)}
       >
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 size-full" aria-hidden>
@@ -83,7 +87,7 @@ export function ArvoreAcende() {
               fill="none"
               vectorEffect="non-scaling-stroke"
               className={cn("stroke-ds-body/35 transition-opacity", rel && "opacity-30")}
-              strokeWidth={1.25}
+              strokeWidth={LINHA_FINA}
             />
           ))}
           {rel?.arestas
@@ -94,7 +98,7 @@ export function ArvoreAcende() {
                 d={curva(porCodigo.get(a.de)!, porCodigo.get(a.para)!)}
                 fill="none"
                 vectorEffect="non-scaling-stroke"
-                strokeWidth={2.25}
+                strokeWidth={LINHA_GROSSA}
                 strokeLinecap="round"
                 className={cn("arv-extra", a.lado === "antes" ? "stroke-ds-ink" : "stroke-ds-link", a.tipo === "ou" && "opacity-70")}
                 style={{ "--ordem": a.ordem } as React.CSSProperties}
@@ -106,8 +110,8 @@ export function ArvoreAcende() {
             n,
             "w-full",
             <>
-              <span className="block text-ds-caption font-bold text-ds-ink ds-num">{n.codigo}</span>
-              <span className="block text-ds-caption leading-tight">{n.nome}</span>
+              <span className="block text-ds-small font-bold text-ds-ink ds-num">{n.codigo}</span>
+              <span className="block text-ds-small leading-tight text-balance">{semQuebra(n.nome)}</span>
             </>,
           ),
         ).map((el, i) => (
@@ -122,7 +126,7 @@ export function ArvoreAcende() {
       </div>
 
       {/* Lista: abaixo de md, com a mesma iluminação e sem linhas */}
-      <div className="space-y-4 md:hidden">
+      <div className="space-y-4 lg:hidden">
         {semestres.map((s) => (
           <section key={s} aria-label={`${s}º semestre`}>
             <h3 className="mb-2 text-ds-body font-bold text-ds-ink">{s}º semestre</h3>
@@ -137,11 +141,11 @@ export function ArvoreAcende() {
                         n,
                         "flex w-full items-center gap-2",
                         <>
-                          <span className="text-ds-caption font-bold text-ds-ink ds-num">{n.codigo}</span>
-                          <span className="min-w-0 flex-1 text-ds-small">{n.nome}</span>
-                          {p === "antes" && <span className="flex items-center gap-1 text-ds-caption font-medium"><ArrowLeft className="size-3.5" aria-hidden />pede</span>}
-                          {p === "depois" && <span className="flex items-center gap-1 text-ds-caption font-medium text-ds-link"><ArrowRight className="size-3.5" aria-hidden />libera</span>}
-                          {p === "foco" && <span className="flex items-center gap-1 text-ds-caption font-medium text-ds-link"><Crosshair className="size-3.5" aria-hidden />escolhida</span>}
+                          <span className="text-ds-small font-bold text-ds-ink ds-num">{n.codigo}</span>
+                          <span className="min-w-0 flex-1 text-ds-small">{semQuebra(n.nome)}</span>
+                          {p === "antes" && <span className="flex items-center gap-1 text-ds-small font-medium"><ArrowLeft className="size-4" aria-hidden />pede</span>}
+                          {p === "depois" && <span className="flex items-center gap-1 text-ds-small font-medium text-ds-link"><ArrowRight className="size-4" aria-hidden />libera</span>}
+                          {p === "foco" && <span className="flex items-center gap-1 text-ds-small font-medium text-ds-link"><Crosshair className="size-4" aria-hidden />escolhida</span>}
                         </>,
                       )}
                     </li>
