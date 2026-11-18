@@ -3,7 +3,8 @@ import { convertToModelMessages, isStepCount, readUIMessageStream, streamText, t
 import { z } from 'zod';
 import { acao, conversa, curso, db, mensagem } from '@/db';
 import { getPerfil } from '@/dados/aluno';
-import { getGrade } from '@/dados/grades';
+import { getGrade, listarGrades } from '@/dados/grades';
+import { semestreDe } from '@/dac/tipos';
 import { normalizarCodigo } from '@/dominio/codigo';
 import { proximoSemestre } from '@/dominio/oferta';
 import { criarFerramentas } from './ferramentas';
@@ -18,7 +19,7 @@ export const MAX_PASSOS = 8; // passos de ferramenta por mensagem
 export const MAX_HISTORICO = 20; // mensagens enviadas ao modelo
 const TEMPERATURA = 0.2;
 
-export const telaSchema = z.object({ rota: z.string().max(200).default('/'), gradeId: z.string().max(40).optional(), codigo: z.string().max(12).optional() });
+export const telaSchema = z.object({ rota: z.string().max(200).default('/'), gradeId: z.string().max(40).optional(), ano: z.coerce.number().int().min(1990).max(2100).optional().catch(undefined), periodo: z.coerce.number().int().min(1).max(2).optional().catch(undefined), codigo: z.string().max(12).optional() });
 export type Tela = z.infer<typeof telaSchema>;
 
 export interface EntradaResposta {
@@ -40,18 +41,25 @@ export interface EntradaResposta {
 const textoDoUsuario = (ms: UIMessage[]) => ms.findLast((m) => m.role === 'user')?.parts.map((p) => (p.type === 'text' ? p.text : '')).join(' ') ?? '';
 const sanear = (s: string) => s.replace(/[^\w\-\/.]/g, '').slice(0, 80);
 
-async function descreverTela(userId: string, tela: Tela): Promise<{ texto: string; gradeId: string | null }> {
+export interface TelaResolvida { texto: string; gradeId: string | null; /** Semestre da grade/tela do planejador; null fora dele. */ semestre: { ano: number; periodo: 1 | 2 } | null }
+
+/** Resolve a tela do cliente. No planejador, a grade aberta é `?grade=`; sem ela, a principal (ou a primeira) do semestre `?ano=&periodo=`; sem nada, a do próximo semestre (como a página). */
+export async function descreverTela(userId: string, tela: Tela, agora: Date = new Date()): Promise<TelaResolvida> {
   const rota = sanear(tela.rota) || '/';
   if (rota.startsWith('/planejador')) {
-    const g = tela.gradeId ? await getGrade(userId, tela.gradeId).catch(() => null) : null; // só aceita grade do próprio aluno
-    return { texto: g ? `Planejador, com a grade "${g.nome}" de ${g.periodo}S/${g.ano} aberta` : 'Planejador', gradeId: g?.id ?? null };
+    let g = tela.gradeId ? await getGrade(userId, tela.gradeId).catch(() => null) : null; // só aceita grade do próprio aluno
+    if (g && tela.ano && tela.periodo && (g.ano !== tela.ano || g.periodo !== tela.periodo)) g = null; // como a página: grade de outro semestre é ignorada
+    const sem: { ano: number; periodo: 1 | 2 } = g ? { ano: g.ano, periodo: g.periodo as 1 | 2 } : tela.ano && tela.periodo ? { ano: tela.ano, periodo: tela.periodo as 1 | 2 } : proximoSemestre(agora);
+    if (!g) { const gs = await listarGrades(userId, sem.ano, sem.periodo); const e = gs.find((x) => x.principal) ?? gs[0]; g = e ? await getGrade(userId, e.id) : null; }
+    const rot = `${sem.periodo}S/${sem.ano}`;
+    return { texto: g ? `Planejador, com a grade "${g.nome}" de ${rot} aberta` : `Planejador, semestre ${rot} (ainda sem grade)`, gradeId: g?.id ?? null, semestre: sem };
   }
-  if (rota.startsWith('/arvore')) return { texto: 'Árvore de integralização (o que falta para se formar)', gradeId: null };
+  if (rota.startsWith('/arvore')) return { texto: 'Árvore de integralização (o que falta para se formar)', gradeId: null, semestre: null };
   if (rota.startsWith('/disciplina/')) {
     const c = normalizarCodigo(tela.codigo ?? rota.split('/')[2] ?? '').codigo;
-    return { texto: `Página da disciplina ${c}`, gradeId: null };
+    return { texto: `Página da disciplina ${c}`, gradeId: null, semestre: null };
   }
-  return { texto: `Outra tela (${rota})`, gradeId: null };
+  return { texto: `Outra tela (${rota})`, gradeId: null, semestre: null };
 }
 
 const temTexto = (p: UIMessage['parts'][number]) => p.type !== 'text' || p.text.trim() !== '';
@@ -110,12 +118,13 @@ export async function responder(e: EntradaResposta): Promise<ReadableStream<UIMe
   if (!perfil) throw new Error('perfil não encontrado');
   const [c] = perfil.curso ? await db.select({ nome: curso.nome }).from(curso).where(eq(curso.numero, perfil.curso)) : [];
   const agora = e.agora ?? new Date();
-  const alvo = proximoSemestre(agora);
-  const tela = await descreverTela(e.userId, e.tela);
-  const tools = criarFerramentas({ userId: e.userId, conversaId: String(e.conversaId), gradeId: tela.gradeId, agora });
+  const tela = await descreverTela(e.userId, e.tela, agora);
+  const alvo = tela.semestre ?? proximoSemestre(agora);
+  const atual = semestreDe(agora);
+  const tools = criarFerramentas({ userId: e.userId, conversaId: String(e.conversaId), gradeId: tela.gradeId, ...(tela.semestre ? { semestre: tela.semestre } : {}), agora });
   const instructions = montarPrompt({
     nome: null, curso: c?.nome ?? `curso ${perfil.curso ?? '?'}`, catalogo: perfil.catalogo ?? 0, semestreAtual: perfil.semestre_atual ?? 0,
-    semestreAlvo: `${alvo.periodo}S/${alvo.ano}`, tela: tela.texto, hoje: agora.toISOString().slice(0, 10),
+    semestreAlvo: `${alvo.periodo}S/${alvo.ano}`, semestreCorrente: `${atual.periodo}S/${atual.ano}`, naTela: tela.semestre !== null, tela: tela.texto, hoje: agora.toISOString().slice(0, 10),
   });
 
   const r = streamText({

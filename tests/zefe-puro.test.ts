@@ -74,7 +74,7 @@ describe('cartões validados por zod', () => {
 });
 
 describe('prompt', () => {
-  const ctx = { nome: null, curso: 'Sistemas de Informação', catalogo: 2026, semestreAtual: 5, semestreAlvo: '1S/2027', tela: 'Planejador', hoje: '2026-11-17' };
+  const ctx = { nome: null, curso: 'Sistemas de Informação', catalogo: 2026, semestreAtual: 5, semestreAlvo: '1S/2027', semestreCorrente: '2S/2026', naTela: false, tela: 'Planejador', hoje: '2026-11-17' };
   test('versionado e na ordem do brief', () => {
     expect(VERSAO_PROMPT).toMatch(/\S/);
     const p = montarPrompt(ctx);

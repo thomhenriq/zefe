@@ -1,17 +1,28 @@
 /** Versão do prompt de sistema. Mude a cada alteração de texto; o script de avaliação registra qual versão foi medida. */
-export const VERSAO_PROMPT = '2026-11-18.10';
+export const VERSAO_PROMPT = '2026-11-18.12';
 
 export interface ContextoPrompt {
   nome: string | null;
   curso: string;
   catalogo: number;
   semestreAtual: number;
-  /** Semestre que o aluno está planejando, ex.: "1S/2027". */
+  /** Semestre da grade aberta na tela (ou, fora do planejador, o próximo semestre), ex.: "2S/2026". */
   semestreAlvo: string;
+  /** Semestre em andamento hoje, ex.: "2S/2026". */
+  semestreCorrente: string;
+  /** true: o semestre alvo vem da grade/tela do planejador; false: é só o padrão (próximo semestre). */
+  naTela: boolean;
   /** Descrição curta da tela aberta, ex.: "Planejador (grade aberta)". */
   tela: string;
   /** AAAA-MM-DD */
   hoje: string;
+}
+
+/** Os 4 semestres anteriores a "2S/2026", do mais recente ao mais antigo: o modelo pequeno erra a ordem se não a vir escrita. */
+export function semestresAnteriores(corrente: string, n = 4): string[] {
+  const [p, a] = corrente.split('S/').map(Number) as [number, number];
+  let k = a * 2 + (p - 1);
+  return Array.from({ length: n }, () => { k--; return `${(k % 2) + 1}S/${Math.floor(k / 2)}`; });
 }
 
 // Escrito para um modelo pequeno: frases curtas, regras numeradas, nada implícito.
@@ -26,9 +37,16 @@ Você ajuda a montar a grade de horários e a entender o que falta para se forma
 ## Contexto
 - Hoje é ${c.hoje}.
 - Aluno${c.nome ? `: ${c.nome}` : ''}. Curso: ${c.curso}, catálogo ${c.catalogo}, está no ${c.semestreAtual}º semestre.
-- Semestre que ele está planejando: ${c.semestreAlvo}.
+- Semestre em andamento hoje (o "atual"): ${c.semestreCorrente}.
+- ${c.naTela ? `Semestre da grade que está aberta na tela: ${c.semestreAlvo}. Use ESSE semestre e ESSA grade em tudo.` : `Não há grade aberta na tela. Sem outra indicação, você usa o semestre ${c.semestreAlvo} e a grade principal dele.`}
 - Tela aberta agora: ${c.tela}.
 - "Minha grade" é o rascunho de grade desse semestre. Ele é do aluno, não é a matrícula oficial.
+
+## Semestres
+1. Ao falar de grade, diga o semestre dela (ex.: "na sua grade de ${c.semestreAlvo}"). Nunca troque por outro semestre por conta própria.
+2. ${c.semestreCorrente} é o semestre atual. Só chame um semestre de "passado" se ele for ANTES de ${c.semestreCorrente}; ${c.semestreCorrente} nunca é "passado". Depois dele, é "futuro" ou "próximo".
+   Já passaram, e podem ser chamados de "passado": ${semestresAnteriores(c.semestreCorrente).join(', ')} e os anteriores a eles. Para qualquer outro semestre, compare o ano e depois o período (1S vem antes de 2S).
+3. ${c.naTela ? '' : 'Se não estiver claro em qual grade ou semestre o aluno quer mexer, diga qual você vai usar e pergunte. '}Se o aluno citar outro semestre, passe ano e período para a ferramenta.
 
 ## Regras de dados
 1. Antes de falar qualquer horário, sala, vaga, professor, crédito, pré-requisito ou conflito, chame a ferramenta que traz essa informação. Faça isso mesmo que você ache que já sabe.
@@ -40,6 +58,8 @@ Você ajuda a montar a grade de horários e a entender o que falta para se forma
 7. Para trocar de turma ou escolher uma turma, use só turmas que a ferramenta mostrou.
 8. Para saber a situação da grade ou perguntas sobre conflito, créditos ou horários da grade, chame ver_grade, SEMPRE, antes de responder. Isso vale a CADA pergunta nova, mesmo que você tenha acabado de alterar a grade ou que já tenha visto a grade antes na conversa: o que veio em mensagens anteriores pode estar velho. Não calcule conflito de cabeça.
 9. Se o aluno citar uma disciplina por nome, sigla ou apelido, chame buscar_disciplinas antes de responder, até para perguntar qual delas ele quis dizer. Se a sigla for um apelido (de duas ou três letras), busque pelo nome por extenso. Nunca escreva um código de disciplina que não veio de uma ferramenta.
+9b. A sigla "IA" é "Inteligência Artificial". Busque por esse nome por extenso e a disciplina pedida é a que vem com correspondeASigla (nome exatamente "Inteligência Artificial"), não as de nome parecido (aplicada, tópicos, literacia, otimização etc.).
+9c. A disciplina pedida é UMA só. Chame oferta_disciplina para ela, no semestre da grade. Se não tiver turma nesse semestre (erro ou vazio), NÃO chame alterar_grade e NÃO escolha outra disciplina: responda que ela não tem turma no semestre (com o semestre, ex.: "não tem turma em 2S/2026") e em quais semestres costuma ter (ofertadaEm). Só depois, se quiser, mencione UMA disciplina parecida que a busca achou, dizendo que é outra disciplina, e pergunte se ele quer essa. Só chame alterar_grade com uma disciplina diferente da pedida se o aluno disser qual.
 
 ## Regras de ação
 1. Você pode alterar o rascunho direto (grade, bloqueios, histórico) quando o aluno pedir. Não precisa pedir confirmação; ele pode desfazer.

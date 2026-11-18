@@ -5,14 +5,14 @@ import { acao, db } from '@/db';
 import type { Fonte } from '@/dac/tipos';
 import { getHistorico, getIntegralizacao, marcarHistorico, type Estado } from '@/dados/aluno';
 import { buscar } from '@/dados/busca';
-import { buscarTurmas, getDisciplina, getOferta } from '@/dados/disciplinas';
+import { buscarTurmas, getDisciplina, getOferta, semestresComOferta } from '@/dados/disciplinas';
 import { alterarGrade, criarBloqueio, criarGrade, excluirBloqueio, getGrade, listarGrades, type GradeResolvida } from '@/dados/grades';
 import { normalizarCodigo } from '@/dominio/codigo';
 import type { Integralizacao } from '@/dominio/integralizacao';
 import { proximoSemestre } from '@/dominio/oferta';
 import { lerBloqueio, type Desfazer } from './desfazer';
 
-export interface Contexto { userId: string; conversaId: string; gradeId: string | null; agora?: Date } // agora: só para testes (define o "próximo semestre")
+export interface Contexto { userId: string; conversaId: string; gradeId: string | null; /** Semestre da tela aberta (planejador); sem ele vale o próximo semestre. */ semestre?: { ano: number; periodo: 1 | 2 }; agora?: Date } // agora: só para testes (define o "próximo semestre")
 type Per = 1 | 2;
 
 const MAX = 30; // itens por lista devolvida ao modelo
@@ -24,6 +24,11 @@ const anoSchema = z.coerce.number().int().optional().describe('Ano do semestre, 
 const periodoSchema = z.coerce.number().int().min(1).max(2).optional().describe('1 ou 2. Se faltar, usa o semestre da grade aberta (ou o próximo semestre).');
 const horaSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).describe('Horário no formato HH:MM, ex.: "08:00".');
 const diaSchema = z.enum(['seg', 'ter', 'qua', 'qui', 'sex', 'sab']);
+
+// Siglas que alunos usam; a busca literal por "IA" acharia disciplinas que só citam a sigla no nome. Vão primeiro os resultados do nome por extenso.
+const SIGLAS: Record<string, string> = { ia: 'Inteligência Artificial', bd: 'Banco de Dados', ml: 'Aprendizado de Máquina', so: 'Sistemas Operacionais', poo: 'Orientação a Objetos', ed: 'Estruturas de Dados' };
+const sn = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+const siglaDe = (t: string) => SIGLAS[t.trim().toLowerCase().replace(/[.\s]/g, '')];
 
 // Nunca lança para o modelo: qualquer falha vira { erro }.
 const seguro = <I, O>(fn: (i: I) => Promise<O>) => async (i: I): Promise<O | { erro: string }> => {
@@ -63,15 +68,17 @@ export function criarFerramentas(ctx: Contexto) {
   const { userId } = ctx;
   const conversaId = Number.isInteger(Number(ctx.conversaId)) ? Number(ctx.conversaId) : null; // conversa.id é serial
 
+  const alvo = () => ctx.semestre ?? proximoSemestre(ctx.agora);
+
   async function semestreDe(ano?: number, periodo?: Per): Promise<{ ano: number; periodo: Per }> {
     const g = ano && periodo ? null : ctx.gradeId ? await getGrade(userId, ctx.gradeId) : null;
-    const base = g ?? proximoSemestre(ctx.agora);
+    const base = g ?? alvo();
     return { ano: ano ?? base.ano, periodo: periodo ?? base.periodo };
   }
 
   async function gradeAberta(): Promise<GradeResolvida | null> {
     if (ctx.gradeId) return getGrade(userId, ctx.gradeId);
-    const { ano, periodo } = proximoSemestre(ctx.agora);
+    const { ano, periodo } = alvo();
     const p = (await listarGrades(userId, ano, periodo)).find((g) => g.principal);
     return p ? getGrade(userId, p.id) : null;
   }
@@ -85,23 +92,25 @@ export function criarFerramentas(ctx: Contexto) {
 
   return {
     buscar_disciplinas: tool({
-      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos, e noHistorico = "cursada" ou "cursando" quando o aluno já tem essa disciplina no histórico), professores e salas. O texto pode ter qualquer caixa e não precisa de acento. Se não achar, tente de novo só com a palavra principal.',
+      description: 'Procura disciplinas, professores e salas pelo nome ou pelo código. Use quando o aluno citar uma disciplina pelo nome ou quando você não souber o código. Devolve até 10 disciplinas (codigo, nome, creditos, e noHistorico = "cursada" ou "cursando" quando o aluno já tem essa disciplina no histórico), professores e salas. Siglas comuns (IA, BD, ML, SO...) são lidas como o nome por extenso (veja interpretadoComo), e esses resultados vêm primeiro. O texto pode ter qualquer caixa e não precisa de acento. Se não achar, tente de novo só com a palavra principal.',
       inputSchema: z.object({ texto: z.string().describe('Nome, pedaço do nome ou código, ex.: "calculo", "si702".') }),
       execute: seguro(async ({ texto }: { texto: string }) => {
-        const r = await buscar(texto, 10);
+        const extenso = siglaDe(texto);
+        const r = await buscar(extenso ?? texto, 10);
+        if (extenso) { const lit = await buscar(texto, 10); for (const d of lit.disciplinas) if (!r.disciplinas.some((x) => x.codigo === d.codigo)) r.disciplinas.push(d); r.disciplinas.splice(10); }
         const h = await getHistorico(userId);
-        return { disciplinas: r.disciplinas.map((d) => ({ ...d, ...(h.has(d.codigo) ? { noHistorico: h.get(d.codigo) } : {}) })), professores: r.professores.map((p) => p.nome), salas: r.salas };
+        return { ...(extenso ? { interpretadoComo: extenso } : {}), disciplinas: r.disciplinas.map((d) => ({ ...d, ...(extenso && sn(d.nome) === sn(extenso) ? { correspondeASigla: true } : {}), ...(h.has(d.codigo) ? { noHistorico: h.get(d.codigo) } : {}) })), professores: r.professores.map((p) => p.nome), salas: r.salas };
       }),
     }),
 
     oferta_disciplina: tool({
-      description: 'Mostra as turmas, horários, salas, docentes e vagas de UMA disciplina em um semestre. Use para "tem turma de X?", "que horas é X?". Devolve tipo "oficial" (caderno publicado) ou "previsao" (semestre ainda não publicado, baseado em anos anteriores: diga sempre que é previsão). Inclui fonte (link da DAC e semestre). O código pode ser digitado de qualquer jeito.',
+      description: 'Mostra as turmas, horários, salas, docentes e vagas de UMA disciplina em um semestre. Use para "tem turma de X?", "que horas é X?". Devolve tipo "oficial" (caderno publicado) ou "previsao" (semestre ainda não publicado, baseado em anos anteriores: diga sempre que é previsão). Inclui fonte (link da DAC e semestre). Se a disciplina não tem turma no semestre, devolve erro e ofertadaEm (semestres recentes em que ela teve turma): diga ao aluno que não há turma nesse semestre e quando costuma ter; não troque por outra disciplina. O código pode ser digitado de qualquer jeito.',
       inputSchema: z.object({ codigo: codigoSchema, ano: anoSchema, periodo: periodoSchema }),
       execute: seguro(async ({ codigo, ano, periodo }: { codigo: string; ano?: number | undefined; periodo?: number | undefined }) => {
         const s = await semestreDe(ano, periodo as Per | undefined);
         const o = await getOferta(codigo, s.ano, s.periodo);
         const sem = rotulo(s.ano, s.periodo);
-        if (!o.encontrada) return { erro: o.motivo, encontrada: false, tipo: o.tipo, semestre: sem };
+        if (!o.encontrada) return { erro: o.motivo, encontrada: false, tipo: o.tipo, semestre: sem, ofertadaEm: await semestresComOferta(codigo) }; // ofertadaEm: onde ela costuma aparecer (vazio = nunca no caderno)
         const d = o.tipo === 'oficial' ? o.disciplina : o.base;
         const t = corta(d.turmas.map((x) => ({ turma: x.turma, horarios: x.horarios, docentes: x.docentes, ...(o.tipo === 'previsao' ? {} : { vagas: x.vagas, matriculados: x.matriculados, reservas: x.reservas }), ...(x.horarioIncompleto ? { horarioIncompleto: true } : {}) })));
         return {
@@ -157,7 +166,7 @@ export function criarFerramentas(ctx: Contexto) {
       execute: seguro(async () => {
         const g = await gradeAberta();
         if (!g) {
-          const p = proximoSemestre(ctx.agora);
+          const p = alvo();
           return { erro: `você ainda não tem grade para ${rotulo(p.ano, p.periodo)}` };
         }
         return descreverGrade(g);
@@ -176,7 +185,7 @@ export function criarFerramentas(ctx: Contexto) {
         let gradeCriada = false;
         if (!g && ctx.gradeId) throw new Error('não achei essa grade');
         if (!g) {
-          const { ano, periodo } = proximoSemestre(ctx.agora);
+          const { ano, periodo } = alvo();
           g = (await getGrade(userId, await criarGrade(userId, ano, periodo, 'Minha grade')))!;
           gradeCriada = true;
         }
@@ -233,6 +242,7 @@ export function criarFerramentas(ctx: Contexto) {
       description: 'Remove um horário bloqueado pelo id (o id aparece em ver_grade, em "bloqueios", ou na resposta de criar_bloqueio). Devolve acaoId e descricao; o aluno pode desfazer.',
       inputSchema: z.object({ id: z.coerce.string().describe('Id do bloqueio.') }),
       execute: seguro(async ({ id }: { id: string }) => {
+        if (!ctx.gradeId) throw new Error('não há grade aberta: pergunte ao aluno de qual grade (semestre e nome) é o bloqueio');
         const b = await lerBloqueio(userId, id);
         if (!b || String(b.grade_id) !== String(ctx.gradeId)) throw new Error('bloqueio não encontrado');
         const descricao = `Removi o bloqueio "${b.nome}": ${b.dia} ${b.inicio}–${b.fim}`;
@@ -241,5 +251,4 @@ export function criarFerramentas(ctx: Contexto) {
       }),
     }),
   };
-        if (!ctx.gradeId) throw new Error('não há grade aberta: pergunte ao aluno de qual grade (semestre e nome) é o bloqueio');
 }

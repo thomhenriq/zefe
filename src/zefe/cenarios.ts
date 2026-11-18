@@ -1,7 +1,7 @@
 // Cenários da avaliação do assistente (Task 16). Fatos conferidos no banco (SI703/SI704 têm turmas A e B em 1S/2026; SI702 só A; nada às 22h de sábado).
 export const MUTANTES = ['alterar_grade', 'marcar_historico', 'criar_bloqueio', 'remover_bloqueio'];
 
-export interface Estado { grade: Map<string, string>; bloqueios: { id: number; nome: string; dia: string; inicio: string; fim: string }[]; historico: Map<string, string> }
+export interface Estado { grade: Map<string, string>; /** Itens da grade 2S/2026 (a "atual" do usuário de avaliação). */ grade26: Map<string, string>; bloqueios: { id: number; nome: string; dia: string; inicio: string; fim: string }[]; historico: Map<string, string> }
 
 export interface Cenario {
   id: string;
@@ -23,6 +23,10 @@ export interface Cenario {
   proibido?: RegExp;
   /** (f, informativo) Semestre não publicado: texto deve dizer "previsão". */
   previsao?: boolean;
+  /** Grade aberta na tela: "atual" = a de 2S/2026, "proximo" = a de 1S/2027 (padrão), "nenhuma" = tela sem grade (/arvore). */
+  tela?: 'atual' | 'proximo' | 'nenhuma';
+  /** (g) Contexto/vocabulário: o texto da resposta ao ÚLTIMO turno precisa casar com todos os `exige` e com nenhum `proibido`. */
+  texto?: { exige?: RegExp[]; proibido?: RegExp };
   /** Semente antes de rodar (além do estado do demo). */
   semente?: { grade?: [string, string][]; bloqueios?: { nome: string; dia: string; inicio: string; fim: string }[] };
 }
@@ -70,6 +74,8 @@ export const CENARIOS: Cenario[] = [
   { id: 'grade-sigla-ml', grupo: 'ajuste', turnos: ['bota ML na minha grade'], esperadas: [['buscar_disciplinas']] },
   { id: 'grade-sigla-so', grupo: 'ajuste', turnos: ['bota SO na minha grade'], esperadas: [['buscar_disciplinas']] },
   { id: 'fora-codigo-js', grupo: 'ajuste', turnos: ['Faz uma função em JavaScript que inverte uma string.'], fora: true, proibido: CODIGO },
+  // Acrescentado depois da rodada 10: mesma classe da falha de v3-semestre-passado (semestre anterior ao atual dito "não passado"), com outras palavras e outro semestre.
+  { id: 'semestre-ja-passou', grupo: 'ajuste', tela: 'atual', turnos: ['O 2S/2025 já passou, né?'], texto: { exige: [/passad|j[áa] (acabou|passou|terminou)|anterior|sim/i], proibido: /n[ãa]o (é|foi) (um )?(semestre )?passado|ainda n[ãa]o (acabou|terminou)|em andamento|\batual\b/i } },
   // ---- Conjunto de VALIDAÇÃO: escrito antes de rodar o Bedrock com ele; não usar para afinar prompt/ferramentas. ----
   // Estado inicial do usuário de avaliação: grade 1S/2027 com SI405 A (seg 19-23), SI700 A (ter 8-12), SI701 A (sex 14-16); bloqueio Estágio ter 13:30-17:30; histórico com EB101, SI305 cursadas e ST567 cursando.
   { id: 'v-bota-ia', grupo: 'validacao', turnos: ['bota IA na minha grade'], esperadas: [['alterar_grade']], banco: (_a, d) => d.grade.has('SI702') },
@@ -100,4 +106,11 @@ export const CENARIOS: Cenario[] = [
   { id: 'v2-sobreposicao', grupo: 'validacao', turnos: ['Tira SI700 da grade.', 'Dá pra encaixar tudo isso sem sobreposição?'], esperadas: [['alterar_grade']], esperadasUltimo: ['ver_grade'], banco: (_a, d) => !d.grade.has('SI700') },
   { id: 'v2-quantas-materias', grupo: 'validacao', turnos: ['Adiciona SI703 turma A.', 'Quantas matérias eu tô fazendo agora?'], esperadas: [['alterar_grade']], esperadasUltimo: ['ver_grade'], banco: (_a, d) => d.grade.get('SI703') === 'A' },
   { id: 'v2-como-ficou', grupo: 'validacao', turnos: ['O que tem na minha grade?', 'Tira SI701.', 'Como ficou?'], esperadas: [['ver_grade'], ['alterar_grade']], esperadasUltimo: ['ver_grade'], banco: (_a, d) => !d.grade.has('SI701') },
+  // ---- Validação do relato "coloca IA na minha grade" em 2S/2026 (escrita ANTES de rodar). Estado: grade 2S/2026 "Atual" vazia (o semestre em andamento hoje, 18/11/2026) e a de 1S/2027 como nos demais. SI702 só tem turma em 1S (A); não tem em 2S/2026. ----
+  { id: 'v3-ia-grade-atual', grupo: 'validacao', tela: 'atual', turnos: ['coloca IA na minha grade'], esperadas: [['buscar_disciplinas'], ['oferta_disciplina']], banco: (a, d) => d.grade26.size === 0 && d.grade.size === a.grade.size, texto: { exige: [/2S\/2026/, /SI702|Intelig[êe]ncia Artificial/i, /n[ãa]o (tem|h[áa]|encontrei|oferec)/i], proibido: /1S\/2027|semestre passado/i } },
+  { id: 'v3-ia-grade-proxima', grupo: 'validacao', tela: 'proximo', turnos: ['coloca IA na minha grade'], esperadas: [['alterar_grade']], banco: (a, d) => d.grade.get('SI702') === 'A' && d.grade26.size === a.grade26.size, texto: { proibido: /2S\/2026|semestre passado/i } },
+  { id: 'v3-ia-sem-grade-na-tela', grupo: 'validacao', tela: 'nenhuma', turnos: ['coloca IA na minha grade'], esperadas: [['buscar_disciplinas']], texto: { exige: [/[12]S\/20\d\d/], proibido: /semestre passado/i } },
+  { id: 'v3-semestre-atual', grupo: 'validacao', tela: 'atual', turnos: ['O semestre dessa grade que estou montando é o atual ou já passou?'], texto: { exige: [/atual|em andamento|em curso|corrente|este semestre|neste semestre/i], proibido: /(é|foi|está) (um |o )?(semestre )?passado|j[áa] (passou|acabou|terminou)/i } },
+  { id: 'v3-semestre-passado', grupo: 'validacao', tela: 'proximo', turnos: ['O 1S/2026 é um semestre passado?'], texto: { exige: [/passad|j[áa] (acabou|passou|terminou)|anterior/i], proibido: /ainda n[ãa]o (acabou|terminou)|em andamento|\batual\b/i } },
+  { id: 'v3-ver-grade-atual', grupo: 'validacao', tela: 'atual', turnos: ['O que tem na minha grade?'], esperadas: [['ver_grade']], texto: { exige: [/2S\/2026/], proibido: /1S\/2027|semestre passado/i } },
 ];

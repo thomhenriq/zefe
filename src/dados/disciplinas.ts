@@ -75,6 +75,12 @@ export async function getDisciplina(codigoBruto: string, catalogo?: number) {
   };
 }
 
+/** Semestres (mais recentes primeiro, até 6) em que a disciplina aparece no caderno, ex.: ["1S/2026", "1S/2025"]. */
+export async function semestresComOferta(codigoBruto: string): Promise<string[]> {
+  const rs = await db.select({ ano: oferecimento.ano, periodo: oferecimento.periodo }).from(oferecimento).where(eq(oferecimento.codigo, normalizarCodigo(codigoBruto).codigo)).orderBy(desc(oferecimento.ano), desc(oferecimento.periodo)).limit(6);
+  return rs.map((r) => rotulo(r.ano, r.periodo));
+}
+
 export async function getOferta(codigoBruto: string, ano: number, periodo: Per): Promise<Oferta> {
   const { codigo } = normalizarCodigo(codigoBruto);
   const s = await semestreRow(ano, periodo);

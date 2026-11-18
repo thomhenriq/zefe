@@ -9,11 +9,16 @@ import type { EstadoMascote } from "./Mascote";
 
 const CABECALHO = "x-zefe-conversa";
 
-/** Tela atual para o assistente: rota, grade do planejador (?grade=) e código da disciplina (/disciplina/<codigo>). */
+/** Tela atual para o assistente: rota, grade do planejador (?grade=), semestre dele (?ano=&periodo=) e código da disciplina (/disciplina/<codigo>). */
 function telaAtual(caminho: string) {
-  const grade = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("grade");
+  const q = typeof location === "undefined" ? new URLSearchParams() : new URLSearchParams(location.search);
+  const plan = caminho.startsWith("/planejador");
   const codigo = caminho.startsWith("/disciplina/") ? decodeURIComponent(caminho.split("/")[2] ?? "") : undefined;
-  return { rota: caminho, ...(grade && caminho.startsWith("/planejador") ? { gradeId: grade } : {}), ...(codigo ? { codigo } : {}) };
+  return {
+    rota: caminho,
+    ...(plan ? Object.fromEntries((["grade", "ano", "periodo"] as const).flatMap((k) => { const v = q.get(k); return v ? [[k === "grade" ? "gradeId" : k, v]] : []; })) : {}),
+    ...(codigo ? { codigo } : {}),
+  };
 }
 
 /**

@@ -168,3 +168,24 @@ Custo (tokens de entrada / saída, passos de modelo, cada rodada completa): 5: 6
 - Os critérios (b) e (c) são checagens de texto. O aterramento não confere nomes de professor, números de vagas nem afirmações sem dado; (e) só pega código e vazamento de prompt pelos padrões em `cenarios.ts`.
 - O alvo de 90% com n=21 e n=18 dá margem de 2 cenários.
 - `bun run build` não foi rodado nesta sessão: o servidor de produção do dono roda desta pasta e um build sobrescreveria o `.next` dele. Verifiquei com `tsc --noEmit` e `eslint` (limpos) e `bun test` (201 passam).
+
+## Contexto de grade e "IA" (rodadas 10 e 11, 2026-11-18)
+
+**Relato do dono**: na grade de 2S/2026 pediu "coloca IA na minha grade"; o Zefe falou de "sua grade de 1S/2027", chamou 2S/2026 de "semestre passado" e ofereceu EX071 (Literacia Digital...). Numa segunda ocorrência (grade de 1S/2027) deu um menu de 3 opções com EX071 e inventou "se você já a fez em 2S/2026".
+
+**Causa raiz do contexto errado**: o planejador escolhe a grade por `?ano=&periodo=` (e `?grade=` só ao clicar numa grade). O cliente mandava só `?grade=`; na aba de semestre sem `?grade=` o servidor não recebia grade nem semestre e caía no "próximo semestre" (1S/2027) e na principal dele. Agora o cliente manda `gradeId`, `ano` e `periodo`; `descreverTela` (responder.ts) resolve como a página (grade da URL; senão a principal do semestre da URL; senão a do próximo semestre) e passa `gradeId` e `semestre` às ferramentas (`Contexto.semestre`) e ao prompt (semestre alvo = o da tela).
+
+**Prompt 2026-11-18.12**: semestre atual calculado da data; seção "Semestres" (nunca "passado" para o atual; lista dos 4 semestres anteriores escritos); "IA" = Inteligência Artificial; disciplina pedida é UMA só: sem turma no semestre, não adiciona outra, diz o semestre e quando costuma ter. Ferramentas: `buscar_disciplinas` lê siglas (IA, BD, ML, SO, POO, ED) pelo nome por extenso, com `correspondeASigla` (a busca literal por "IA" põe EX071/CD304 primeiro, `src/dados/busca.ts` não foi mexido); `oferta_disciplina` sem turma devolve `ofertadaEm`.
+
+**Cenários novos** (escritos antes de rodar): validação `v3-*` (6: IA na grade de 2S/2026, de 1S/2027 e sem grade na tela; "atual" vs "passado"; ver_grade na grade atual) e ajuste `semestre-ja-passou` (acrescentado depois da rodada 10). Critério novo (g): regex de exigido/proibido na última resposta. Usuário de avaliação ganhou grade vazia 2S/2026.
+
+**Orçamento**: 2 rodadas completas, Nova 2 Lite (rodada 10 e 11); sem Nova Pro.
+
+| Rodada | Grupo (n) | (a) | (b) | (c) | (d) | (e) | (g) |
+|---|---|---|---|---|---|---|---|
+| 10 (.11) | ajuste (33) | 29/29 | 33/33 | 3/3 | 12/12 | 4/4 | - |
+| 10 (.11) | validação (32) | 24/25 96% | 32/32 | 2/2 | 19/20 95% | 4/4 | 5/6 83% |
+| 11 (.12) | ajuste (34) | 29/29 | 34/34 | 3/3 | 12/12 | 4/4 | 0/1 |
+| 11 (.12) | validação (32) | 24/25 96% | 32/32 | 2/2 | 19/20 95% | 4/4 | 4/6 67% |
+
+Metas anteriores (b 100%, demais 90%): (a)-(e) mantidas. (g) abaixo de 90% na rodada 11, mas lido à mão as 3 falhas são defeitos do critério, não do modelo: `semestre-ja-passou` e `v3-semestre-passado` responderam certo ("Sim, ... já passou") e o `proibido` casou com a menção ao semestre atual; `v3-ia-grade-atual` respondeu certo (SI702 sem turma em 2S/2026, costuma ter em 1S) e o `proibido` casou com "1S/2027" como semestre em que pode haver turma. Não rodei de novo com o critério corrigido (orçamento esgotado), então o número oficial é o da tabela. Na rodada 10 `v3-semestre-passado` falhou de verdade ("o 1S/2026 não é passado"), motivo da lista de semestres anteriores no prompt .12. Falhas que continuam, já presentes antes: `v2-como-ficou` (a), `v-ambiguo-calculo` (d, adicionou Cálculo I sem perguntar).
