@@ -15,6 +15,7 @@ export type DisciplinaArvore = {
   codigo: string;
   nome: string;
   creditos: number;
+  creditosDesconhecidos?: boolean;
   semestreSugerido: number | null;
   estado: EstadoDisciplina;
   faltamPrereq: string[];
@@ -82,7 +83,7 @@ const OPCOES: { rotulo: string; valor: "cursada" | "cursando" | null }[] = [
 const Resumo = ({ d }: { d: DisciplinaArvore }) => (
   <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
     <span className="font-mono tabular">{d.codigo}</span>
-    <span>{d.creditos} créditos</span>
+    <span>{d.creditosDesconhecidos ? "créditos desconhecidos" : `${d.creditos} créditos`}</span>
     <EstadoBadge estado={d.estado} />
   </span>
 );

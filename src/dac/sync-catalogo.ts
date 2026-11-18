@@ -2,7 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { db as Db } from '@/db';
 import { catalogoDisciplina, curriculo, curriculoEletiva, curriculoObrigatoria, curriculoPropostaEletiva, curso } from '@/db/schema';
 import type { Baixar } from './baixar';
-import { parseCatalogo, urlCatalogo } from './catalogo';
+import { idsCoordenadorias2020, parseCatalogo, parseCatalogo2020, urlCatalogo, urlCoordenadoria2020, urlIndiceCoordenadorias2020 } from './catalogo';
 import { parseCurriculoPleno, parseCursos, parseProposta, urlCurriculo, urlIndiceCatalogo, urlSugestao } from './curriculo';
 import type { CurriculoPleno, EntradaCatalogo, Proposta } from './tipos';
 
@@ -41,6 +41,23 @@ export async function sincronizarCatalogo(
       for (const cod of [...m.obrigatorias, ...m.eletivas.flatMap((g) => g.codigos ?? [])]) prefixos.add(prefixo(cod));
     }
   const disciplinas = new Map<string, EntradaCatalogo>();
+  if (ano === 2020) {
+    // 2020: uma página por coordenadoria, com todas as disciplinas; falha de uma coordenadoria vira erro, não derruba o resto
+    try {
+      await Promise.all(
+        idsCoordenadorias2020(await baixar(urlIndiceCoordenadorias2020)).map(async (id) => {
+          try {
+            for (const [k, v] of parseCatalogo2020(await baixar(urlCoordenadoria2020(id)))) disciplinas.set(k, v);
+          } catch (e) {
+            erros.push(`coordenadoria ${id}: ${(e as Error).message}`);
+          }
+        }),
+      );
+    } catch (e) {
+      erros.push(`coordenadorias 2020: ${(e as Error).message}`);
+    }
+    if (!disciplinas.size) erros.push('catálogo 2020: nenhuma disciplina lida');
+  } else
   await Promise.all(
     [...prefixos].map(async (p) => {
       try {

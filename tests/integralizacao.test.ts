@@ -128,3 +128,12 @@ test('obrigatória também em lista de eletiva conta só como obrigatória', asy
   expect(est(r, 'EB101').estado).toBe('cursada');
   expect(r.foraDoCurriculo).toEqual([]);
 });
+
+test('crédito desconhecido é rotulado, não contado como 0 em silêncio', async () => {
+  const e = await base94();
+  e.obrigatorias = e.obrigatorias.map((o) => (o.codigo === 'EB101' ? { ...o, creditos: null } : o));
+  const r = calcularIntegralizacao(e);
+  expect(est(r, 'EB101')).toMatchObject({ creditos: 0, creditosDesconhecidos: true });
+  expect(est(r, 'SI100').creditosDesconhecidos).toBe(false);
+  expect(r.creditos.obrigatorias.semCredito).toBe(1);
+});

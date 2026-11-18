@@ -1,7 +1,7 @@
 import type { Estado, GrupoEletiva, Requisito } from '@/dac/tipos';
 
 export interface EntradaIntegralizacao {
-  obrigatorias: { codigo: string; nome: string; creditos: number; semestreSugerido: number | null }[];
+  obrigatorias: { codigo: string; nome: string; creditos: number | null; semestreSugerido: number | null }[];
   eletivas: GrupoEletiva[]; // ordem do catálogo
   propostaEletivas: { semestre: number; creditos: number }[];
   historico: Map<string, 'cursada' | 'cursando'>;
@@ -15,7 +15,8 @@ export interface Integralizacao {
   disciplinas: {
     codigo: string;
     nome: string;
-    creditos: number;
+    creditos: number; // 0 quando desconhecido: ver creditosDesconhecidos
+    creditosDesconhecidos?: boolean; // sem crédito no catálogo nem no oferecimento; a tela diz "créditos desconhecidos"
     semestreSugerido: number | null;
     estado: Estado;
     faltamPrereq: string[]; // só quando travada: requisitos que faltam na alternativa mais próxima
@@ -28,7 +29,7 @@ export interface Integralizacao {
   /** Idem, mas existe grupo não verificado (conteúdo desconhecido): não dá para afirmar que está fora do currículo. */
   naoClassificadas: string[];
   creditos: {
-    obrigatorias: { feitos: number; total: number; emAndamento: number };
+    obrigatorias: { feitos: number; total: number; emAndamento: number; semCredito?: number };
     eletivas: { feitos: number; total: number; naoVerificado: number; emAndamento: number };
   };
 }
@@ -50,7 +51,7 @@ export function calcularIntegralizacao(e: EntradaIntegralizacao): Integralizacao
       estado = 'travada';
       faltamPrereq = alts.map((a) => a.filter((r) => !cumprido(r)).map((r) => r.codigo)).sort((x, y) => x.length - y.length)[0]!;
     } else if (!h && e.planejadas.has(o.codigo)) estado = 'planejada';
-    return { ...o, estado, faltamPrereq, prereqDesconhecido: alts === null };
+    return { ...o, creditos: o.creditos ?? 0, creditosDesconhecidos: o.creditos === null, estado, faltamPrereq, prereqDesconhecido: alts === null };
   });
 
   const obrig = new Set(e.obrigatorias.map((o) => o.codigo));
@@ -86,6 +87,7 @@ export function calcularIntegralizacao(e: EntradaIntegralizacao): Integralizacao
         feitos: soma(disciplinas.filter((d) => d.estado === 'cursada').map((d) => d.creditos)),
         total: soma(disciplinas.map((d) => d.creditos)),
         emAndamento: soma(disciplinas.filter((d) => d.estado === 'cursando').map((d) => d.creditos)),
+        semCredito: disciplinas.filter((d) => d.creditosDesconhecidos).length,
       },
       eletivas: {
         feitos: soma(ver.map((g) => g.feitos)),

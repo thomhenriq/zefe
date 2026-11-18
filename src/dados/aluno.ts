@@ -128,7 +128,7 @@ export async function getIntegralizacao(userId: string): Promise<Integralizacao>
     obrigatorias: obrig.map((o) => ({
       codigo: o.codigo,
       nome: cat.get(o.codigo)?.nome ?? recente.get(o.codigo)?.nome ?? o.codigo,
-      creditos: creditosDe(o.codigo) ?? 0,
+      creditos: creditosDe(o.codigo),
       semestreSugerido: o.semestre_sugerido,
     })),
     eletivas: eletivas.map((g) => ({ creditos: g.creditos ?? 0, texto: g.texto, codigos: g.codigos, verificado: g.verificado })),

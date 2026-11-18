@@ -200,3 +200,4 @@ Ruling 11: a pasta `.superpowers/sdd/2026-11-16-zefe/` (ignorada pelo git) fica 
 - (T3) Cursos 36 e 87 aparecem no índice do catálogo 2026 mas `curriculo.html` dá 404 — ficam de fora.
 
 ## Bloqueios
+- Catálogo 2020, disciplinas (fecha a pendência da T4): em 2020 ficam em `coordenadorias/NNNN/NNNN.html` (uma página por coordenadoria, 54 no índice `coordenadorias.html`; 6 vazias legítimas). `parseCatalogo2020` lê créditos (`C:nnn`), pré-requisito (`/` = ou, espaço = e, `*` = parcial; espaço liga mais forte) e ementa. Sync real: 6975 disciplinas (todas com crédito, 4934 com pré-requisito), 64/66 cursos (só os 404 de sempre: 36 e 87), 0 coordenadorias com erro; outros anos intactos. Crédito desconhecido agora aparece como "créditos desconhecidos" na árvore (`creditosDesconhecidos`, `semCredito`).

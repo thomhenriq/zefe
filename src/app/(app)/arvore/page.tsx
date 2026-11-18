@@ -48,7 +48,7 @@ export default async function PaginaArvore() {
       <section aria-labelledby="h-progresso" className="space-y-4 rounded-xl border bg-card p-4">
         <h2 id="h-progresso" className="text-xl">Progresso</h2>
         <Barra titulo={<strong>Total</strong>} feitos={totalFeitos} emAndamento={totalAndamento} total={totalCreditos} extra={c.eletivas.naoVerificado > 0 ? `Não inclui ${c.eletivas.naoVerificado} créditos de grupos de eletivas não verificados.` : undefined} />
-        <Barra titulo="Obrigatórias" feitos={c.obrigatorias.feitos} emAndamento={c.obrigatorias.emAndamento} total={c.obrigatorias.total} />
+        <Barra titulo="Obrigatórias" feitos={c.obrigatorias.feitos} emAndamento={c.obrigatorias.emAndamento} total={c.obrigatorias.total} extra={(c.obrigatorias.semCredito ?? 0) > 0 ? `${c.obrigatorias.semCredito} obrigatória(s) com créditos desconhecidos não entram na soma.` : undefined} />
         <div className="space-y-4">
           <h3 className="text-base">Grupos de eletivas</h3>
           {grupos.map((g, i) => {
