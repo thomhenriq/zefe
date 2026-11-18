@@ -32,11 +32,14 @@ export interface Cartao {
 export type Situacao = { tipo: 'livre' } | { tipo: 'travada'; motivo: string } | { tipo: 'sem-oferta'; motivo: string };
 export type CartaoComSituacao = Cartao & { situacao: Situacao };
 
-/** Cartões do planejador: só o que ainda cabe cursar, por semestre sugerido (sem semestre por último); dentro do semestre, o que dá para arrastar vem primeiro. */
-export function agruparCandidatos(cartoes: Cartao[]): { semestre: number | null; cartoes: CartaoComSituacao[] }[] {
+/**
+ * Cartões do planejador por semestre sugerido (sem semestre por último); dentro do semestre, o que dá para arrastar vem primeiro.
+ * `feitas`: semestre atual ou passado, em que cursando/cursada também viram cartões (reproduzir a grade que o aluno tem/teve); com oferta são arrastáveis, sem oferta ficam recolhidos com o motivo.
+ */
+export function agruparCandidatos(cartoes: Cartao[], feitas = false): { semestre: number | null; cartoes: CartaoComSituacao[] }[] {
   const grupos = new Map<number | null, CartaoComSituacao[]>();
   for (const c of cartoes) {
-    if (c.estado === 'cursada' || c.estado === 'cursando') continue;
+    if (!feitas && (c.estado === 'cursada' || c.estado === 'cursando')) continue;
     const situacao: Situacao = c.estado === 'travada' ? { tipo: 'travada', motivo: c.faltamPrereq.length ? `falta ${c.faltamPrereq.join(', ')}` : 'pré-requisito não cumprido' }
       : !c.oferta ? { tipo: 'sem-oferta', motivo: c.semOfertaMotivo ?? 'sem oferta' } : { tipo: 'livre' };
     grupos.set(c.semestre, [...(grupos.get(c.semestre) ?? []), { ...c, situacao }]);

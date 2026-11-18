@@ -213,7 +213,7 @@ function Candidatos({ grupos, itens, rotuloSem, publicado, onAdicionar }: { grup
   if (grupos.length === 0) return <p className="rounded-xl border bg-card p-3 text-sm text-muted-foreground">Nada faltando na sua árvore.</p>;
   return (
     <section aria-labelledby="h-prop" className="space-y-3">
-      <h2 id="h-prop" className="font-heading text-lg font-semibold">Pode cursar em {rotuloSem}</h2>
+      <h2 id="h-prop" className="font-heading text-lg font-semibold">Disciplinas para {rotuloSem}</h2>
       {grupos.map((g) => {
         const livres = g.cartoes.filter((c) => c.situacao.tipo === "livre"), inertes = g.cartoes.filter((c) => c.situacao.tipo !== "livre");
         const semOferta = inertes.filter((c) => c.situacao.tipo === "sem-oferta").length, travadas = inertes.length - semOferta;
@@ -242,6 +242,7 @@ function CartaoInerte({ c, rotuloSem, publicado }: { c: CartaoComSituacao; rotul
       <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-mono font-semibold">{c.codigo}</span><span className="tabular text-xs">{c.creditos} cr.</span></p>
       <p className="leading-snug [overflow-wrap:anywhere]">{c.nome}</p>
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        {(c.estado === "cursando" || c.estado === "cursada") && <EstadoBadge estado={c.estado} />}
         {c.situacao.tipo === "travada" && <><EstadoBadge estado="travada" /><span>{c.situacao.motivo}</span></>}
         {c.situacao.tipo === "sem-oferta" && (publicado
           ? <span>sem oferta em {rotuloSem}</span>
@@ -260,6 +261,7 @@ function CartaoLivre({ c, naGrade, onAdicionar }: { c: CartaoComSituacao; naGrad
         <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-mono font-semibold">{c.codigo}</span><span className="tabular text-xs text-muted-foreground">{c.creditos} cr.</span></p>
         <p className="leading-snug [overflow-wrap:anywhere]">{c.nome}</p>
         <div className="flex flex-wrap items-center gap-1.5">
+          {(c.estado === "cursando" || c.estado === "cursada") && <EstadoBadge estado={c.estado} />}
           {naGrade && <EstadoBadge estado="planejada" rotulo={`Na grade · turma ${naGrade.turma}`} />}
           {c.oferta?.tipo === "previsao" && <AvisoBadge nivel="previsao" />}
           {c.prereqDesconhecido && <AvisoBadge nivel="naoverificado" rotulo="pré-requisito não verificado" />}

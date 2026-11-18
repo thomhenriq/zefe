@@ -58,6 +58,7 @@ async function prereqs(userId: string, codigos: string[]) {
   const faltam = new Map<string, string[]>();
   const naoVerificado = new Set<string>();
   for (const codigo of codigos) {
+    if (hist.has(codigo)) continue; // já cursada/cursando: o aluno só reproduz a grade, pré-requisito não se aplica
     const [c] = perfil?.catalogo ? await db.select().from(catalogoDisciplina).where(and(eq(catalogoDisciplina.ano, perfil.catalogo), eq(catalogoDisciplina.codigo, codigo))) : [];
     if (!c || !Array.isArray(c.alternativas)) { naoVerificado.add(codigo); continue; }
     const alts = c.alternativas as Requisito[][];

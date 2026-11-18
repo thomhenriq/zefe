@@ -51,9 +51,11 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   // Oferta de cada disciplina da grade: turmas para trocar e evidências da previsão.
   const ofertas: Map<string, Awaited<ReturnType<typeof getOferta>>> = grade ? new Map(await Promise.all(grade.itens.map(async (i) => [i.codigo, await getOferta(i.codigo, ano, periodo)] as const))) : new Map();
   const evidencias = [...new Set(grade?.itens.flatMap((i) => { const o = ofertas.get(i.codigo); return o?.encontrada && o.tipo === "previsao" ? o.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)) : []; }) ?? [])];
+  // Semestre atual ou passado: o que o aluno cursa/cursou também vira cartão, para montar a grade real.
+  const feitas = ano * 2 + periodo <= prox.ano * 2 + prox.periodo - 1;
   // Cartões da árvore do aluno: o que ainda pode/deve cursar, com a oferta do semestre escolhido (travadas não precisam de oferta).
   const arvore = grade ? await getIntegralizacao(u.id).catch((e) => { if (e instanceof SemCurriculo) return null; throw e; }) : null;
-  const cartoes: Cartao[] = arvore ? await Promise.all(arvore.disciplinas.filter((x) => x.estado === "faltando" || x.estado === "planejada" || x.estado === "travada").map(async (x) => {
+  const cartoes: Cartao[] = arvore ? await Promise.all(arvore.disciplinas.filter((x) => feitas || (x.estado !== "cursada" && x.estado !== "cursando")).map(async (x) => {
     const o = x.estado === "travada" ? null : await ofertaPlanejador(x.codigo, ano, periodo);
     return { codigo: x.codigo, nome: x.nome, creditos: x.creditos, semestre: x.semestreSugerido, estado: x.estado, faltamPrereq: x.faltamPrereq, prereqDesconhecido: x.prereqDesconhecido, oferta: o?.oferta ?? null, ...(o?.oferta === null ? { semOfertaMotivo: o.motivo } : {}) };
   })) : [];
@@ -114,7 +116,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
               </details>
             </div>
             <Montagem gradeId={grade.id} ano={ano} periodo={periodo} rotuloSem={rotuloSemestre(ano, periodo)} itens={grade.itens} bloqueios={grade.bloqueios}
-              semanais={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} grupos={agruparCandidatos(cartoes)} semArvore={!arvore} publicado={publicado} {...(u.perfil.curso != null ? { curso: u.perfil.curso } : {})} />
+              semanais={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} grupos={agruparCandidatos(cartoes, feitas)} semArvore={!arvore} publicado={publicado} {...(u.perfil.curso != null ? { curso: u.perfil.curso } : {})} />
           </section>
 
           <section className={SECAO} aria-labelledby="h-resumo">

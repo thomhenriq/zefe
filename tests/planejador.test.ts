@@ -77,6 +77,21 @@ describe('agruparCandidatos', () => {
   });
 });
 
+describe('agruparCandidatos em semestre atual/passado (feitas)', () => {
+  const c = (codigo: string, estado: Cartao['estado'], extra: Partial<Cartao> = {}): Cartao =>
+    ({ codigo, nome: codigo, creditos: 4, semestre: 3, estado, faltamPrereq: [], prereqDesconhecido: false, oferta: disc([turma('A', h('seg', '08:00', '10:00'))]), ...extra });
+  const lista = [c('C1', 'cursando'), c('D1', 'cursada', { oferta: null, semOfertaMotivo: 'não aparece em 2S/2026' }), c('F1', 'faltando')];
+
+  test('cursando com oferta vira cartão livre; cursada sem oferta fica recolhida com o motivo', () => {
+    const por = Object.fromEntries(agruparCandidatos(lista, true)[0]!.cartoes.map((k) => [k.codigo, k.situacao]));
+    expect(por.C1).toEqual({ tipo: 'livre' });
+    expect(por.D1).toEqual({ tipo: 'sem-oferta', motivo: 'não aparece em 2S/2026' });
+  });
+  test('em semestre futuro continuam de fora', () => {
+    expect(agruparCandidatos(lista)[0]!.cartoes.map((k) => k.codigo)).toEqual(['F1']);
+  });
+});
+
 test('dentro do semestre, o que dá para arrastar vem antes de travada e sem oferta', () => {
   const k = (codigo: string, extra: Partial<Cartao>): Cartao => ({ codigo, nome: codigo, creditos: 4, semestre: 1, estado: 'faltando', faltamPrereq: [], prereqDesconhecido: false, oferta: disc([]), ...extra });
   const g = agruparCandidatos([k('A', { oferta: null }), k('B', { estado: 'travada', faltamPrereq: ['X'] }), k('C', {})]);
