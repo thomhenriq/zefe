@@ -50,7 +50,7 @@ export function ArvoreAcende() {
         onBlur={() => setPrevia(null)}
         className={cn(
           "rounded-lg border bg-card px-2 py-1.5 text-left transition-[opacity,box-shadow,border-color,background-color] duration-200",
-          p === "apagado" && "opacity-30",
+          p === "apagado" && "border-transparent bg-muted/60 text-muted-foreground",
           p === "foco" && "border-primary bg-accent ring-2 ring-primary",
           p === "antes" && "border-foreground ring-1 ring-foreground",
           p === "depois" && "border-primary ring-1 ring-primary",
@@ -68,6 +68,7 @@ export function ArvoreAcende() {
 
   return (
     <div className="min-w-0 space-y-4">
+      <p className="font-mono text-xs text-muted-foreground md:text-right">trecho real · Sistemas de Informação · catálogo 2026</p>
       {/* Quadro: a partir de md */}
       <div
         className="relative hidden h-[26rem] md:block"
@@ -82,7 +83,6 @@ export function ArvoreAcende() {
               vectorEffect="non-scaling-stroke"
               className={cn("stroke-muted-foreground/45 transition-opacity", rel && "opacity-30")}
               strokeWidth={1.25}
-              strokeDasharray={a.tipo === "ou" ? "5 4" : undefined}
             />
           ))}
           {rel?.arestas
@@ -106,7 +106,7 @@ export function ArvoreAcende() {
             "w-full",
             <>
               <span className="block font-mono text-xs font-semibold">{n.codigo}</span>
-              <span className="block text-[0.6875rem] leading-tight text-muted-foreground lg:text-xs">{n.nome}</span>
+              <span className="block text-xs leading-tight text-muted-foreground">{n.nome}</span>
             </>,
           ),
         ).map((el, i) => (

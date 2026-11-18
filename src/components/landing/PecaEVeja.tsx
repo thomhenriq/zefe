@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, OctagonX, Send } from "lucide-react";
 import { AvisoBadge, corDe } from "@/components/ui/estado";
+import { Mascote } from "@/components/zefe/Mascote";
 import { cn } from "@/lib/utils";
 import { cenarios, type Bloco, type Cenario } from "./dados";
 
@@ -36,7 +37,10 @@ export function PecaEVeja() {
   const [n, setN] = useState(cenarios[0].passos.length); // padrão: estado final (sem JS e com movimento reduzido)
   const [dig, setDig] = useState(Infinity); // caracteres já digitados da última fala do Zefe
   const rodada = useRef(0);
+  const pedirRef = useRef<(i: number) => Promise<void>>(async () => {});
   const fio = useRef<HTMLDivElement>(null);
+  const raiz = useRef<HTMLDivElement>(null);
+  const gradeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => void rodada.current++, []);
 
@@ -44,6 +48,8 @@ export function PecaEVeja() {
     const id = ++rodada.current;
     const c = cenarios[i];
     setCen(i);
+    // em telas estreitas a grade fica acima do painel: traz para a vista
+    if (window.matchMedia("(max-width: 1023px)").matches) gradeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setN(c.passos.length);
       setDig(Infinity);
@@ -75,21 +81,39 @@ export function PecaEVeja() {
   const nomes = grade.filter((b) => conflitos.has(b.id)).map((b) => b.nome);
 
   useEffect(() => {
+    pedirRef.current = pedir;
+  });
+
+  // primeira vez que a seção entra na tela: toca o primeiro pedido sozinho
+  useEffect(() => {
+    const el = raiz.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver(([x]) => {
+      if (!x.isIntersecting) return;
+      io.disconnect();
+      void pedirRef.current(0);
+    }, { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
     fio.current?.scrollTo({ top: fio.current.scrollHeight });
   }, [n, dig]);
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-10">
-      <div className="flex min-w-0 flex-col rounded-2xl border bg-painel">
+    <div ref={raiz} className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-10">
+      <div className="flex min-w-0 flex-col rounded-2xl border bg-painel lg:order-1">
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
           <p className="flex items-center gap-2 font-heading font-semibold">
-            <span aria-hidden className="grid size-7 place-items-center rounded-full bg-primary text-sm text-primary-foreground">Z</span>
+            <Mascote estado={pensando ? "pensando" : "feliz"} tamanho={32} decorativo className="size-8" />
             Zefe
           </p>
           <p className="font-mono text-xs text-muted-foreground" aria-live="polite">
             {pensando ? "pensando…" : "acordado"}
           </p>
         </div>
+        <p className="border-b px-4 py-1.5 font-mono text-xs text-muted-foreground">exemplo · dados fictícios</p>
         <div ref={fio} className="flex h-72 flex-col gap-2.5 overflow-y-auto px-4 py-4" role="log" aria-label="Conversa de exemplo com o Zefe">
           {falas.map((f, i) => {
             const ultima = i === falas.length - 1 && f.de === "zefe";
@@ -138,7 +162,7 @@ export function PecaEVeja() {
         </div>
       </div>
 
-      <div className="min-w-0 space-y-3">
+      <div ref={gradeRef} className="order-first min-w-0 scroll-mt-20 space-y-3 lg:order-2">
         <div className="flex gap-1.5 pl-9 sm:pl-11" aria-hidden={false}>
           {dias.map((d) => (
             <p key={d} className="min-w-0 flex-1 text-center font-mono text-xs text-muted-foreground">{d}</p>
@@ -147,7 +171,7 @@ export function PecaEVeja() {
         <div className="flex gap-1.5">
           <div className="w-7 shrink-0 sm:w-9" aria-hidden>
             {horas.map((h) => (
-              <p key={h} className="h-[1.625rem] -translate-y-1.5 text-right font-mono text-[0.625rem] text-muted-foreground tabular">{h}h</p>
+              <p key={h} className="h-[1.625rem] -translate-y-1.5 text-right font-mono text-xs text-muted-foreground tabular">{h}h</p>
             ))}
           </div>
           <div
@@ -174,7 +198,7 @@ export function PecaEVeja() {
                         }}
                         aria-label={`${b.nome}, turma ${b.turma}, ${dias[b.dia]} das ${b.ini}h às ${b.fim}h${bate ? ", em conflito" : ""}`}
                         className={cn(
-                          "anim-bloco absolute overflow-hidden rounded-md border px-1 py-0.5 text-[0.6875rem] leading-tight",
+                          "anim-bloco absolute overflow-hidden rounded-md border px-1 py-0.5 text-xs leading-tight",
                           corDe(bate ? "conflito" : "planejada"),
                         )}
                       >
@@ -183,7 +207,7 @@ export function PecaEVeja() {
                           <span className="sm:hidden">{b.sigla}</span>
                           <span className="hidden sm:inline">{b.nome}</span>
                         </p>
-                        <p className="hidden font-mono text-[0.625rem] sm:block">turma {b.turma}</p>
+                        <p className="hidden font-mono text-xs sm:block">turma {b.turma}</p>
                       </div>
                     );
                   })}
