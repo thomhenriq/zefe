@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { cenarios, type Bloco, type Cenario } from "./dados";
 
 const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const diasLongos = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const HORA0 = 8;
 const HORA1 = 18; // a grade mostra só a faixa ocupada pelos exemplos
 const horas = Array.from({ length: HORA1 - HORA0 }, (_, i) => HORA0 + i);
@@ -98,7 +99,7 @@ export function PecaEVeja() {
 
   return (
     <div ref={raiz} className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] xl:gap-12">
-      <Cartao className="flex min-w-0 flex-col gap-4 border-transparent bg-ds-bg xl:order-1">
+      <Cartao className="flex min-w-0 flex-col gap-4 border-transparent bg-ds-bg xl:order-1 xl:self-start">
         <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-2 text-ds-body font-bold text-ds-ink">
             <Mascote estado={pensando ? "pensando" : "feliz"} tamanho={32} decorativo className="size-8" />
@@ -109,7 +110,7 @@ export function PecaEVeja() {
           </p>
         </div>
         <p><Selo className="bg-ds-surface">Exemplo</Selo></p>
-        <div className="flex min-h-96 flex-col gap-2" role="log" aria-label="Conversa de exemplo com o Zefe">
+        <div className="flex flex-col gap-2" role="log" aria-label="Conversa de exemplo com o Zefe">
           {falas.map((f, i) => {
             const ultima = i === falas.length - 1 && f.de === "zefe";
             const texto = ultima ? f.texto.slice(0, dig) : f.texto;
@@ -166,13 +167,13 @@ export function PecaEVeja() {
             <Chip tom="cursada">Sem conflitos nesta grade</Chip>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="hidden gap-2 md:flex">
           <div className="w-8 shrink-0" aria-hidden />
           {dias.map((d) => (
             <p key={d} className="min-w-0 flex-1 text-center text-ds-caption">{d}</p>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="hidden gap-2 md:flex">
           <div className="w-8 shrink-0" aria-hidden>
             {horas.map((h) => (
               <p key={h} className="h-12 -translate-y-2 text-right text-ds-caption ds-num">{h}h</p>
@@ -204,15 +205,14 @@ export function PecaEVeja() {
                         aria-label={`${b.nome}, turma ${b.turma}, ${dias[b.dia]} das ${b.ini}h às ${b.fim}h${bate ? ", em conflito" : ""}`}
                         className={cn(
                           "ds-bloco absolute overflow-hidden rounded-ds-input p-1 text-ds-caption leading-tight [overflow-wrap:anywhere] @min-[40rem]:p-2 @min-[40rem]:text-ds-small",
-                          bate ? "bg-ds-conflito-bg text-ds-conflito" : "bg-ds-planejada-bg text-ds-planejada",
+                          bate ? "bg-ds-conflito-bg text-ds-conflito" : b.id === "ia" ? "bg-ds-planejada-bg text-ds-planejada" : "border border-ds-line bg-ds-bg text-ds-ink",
                         )}
                       >
                         <p className="flex items-start gap-1 font-medium">
                           {bate && <OctagonX className="mt-1 size-3 shrink-0" aria-hidden />}
-                          <span className="sm:hidden">{b.sigla}</span>
-                          <span className="hidden sm:inline">{b.nome}</span>
+                          {b.nome}
                         </p>
-                        <p className="hidden text-ds-caption sm:block">turma {b.turma}</p>
+                        <p className="text-ds-caption">turma {b.turma}</p>
                       </div>
                     );
                   })}
@@ -220,6 +220,33 @@ export function PecaEVeja() {
             ))}
           </div>
         </div>
+        {/* Celular: agenda por dia, nome e horário em 14px */}
+        <ul className="space-y-4 md:hidden" aria-label="Grade de exemplo, por dia">
+          {diasLongos.map((nome, di) => {
+            const doDia = grade.filter((b) => b.dia === di).sort((a, b) => a.ini - b.ini);
+            if (!doDia.length) return null;
+            return (
+              <li key={nome}>
+                <h4 className="mb-2 text-ds-body font-bold text-ds-ink">{nome}</h4>
+                <ul className="space-y-2">
+                  {doDia.map((b) => (
+                    <li
+                      key={`${b.id}-${b.turma}`}
+                      className={cn(
+                        "ds-bloco flex items-start gap-2 rounded-ds-input px-4 py-2 text-ds-small",
+                        conflitos.has(b.id) ? "bg-ds-conflito-bg text-ds-conflito" : b.id === "ia" ? "bg-ds-planejada-bg text-ds-planejada" : "border border-ds-line bg-ds-bg text-ds-ink",
+                      )}
+                    >
+                      {conflitos.has(b.id) && <OctagonX className="mt-1 size-4 shrink-0" aria-hidden />}
+                      <span className="ds-num whitespace-nowrap">{b.ini}h–{b.fim}h</span>
+                      <span className="font-medium">{b.nome} · turma {b.turma}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

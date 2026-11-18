@@ -113,7 +113,7 @@ export default async function Apresentacao() {
         </section>
 
         {/* 4. Conversa direto no fundo, sem painel */}
-        <section aria-labelledby="t-calouro" className={`${secao} grid gap-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-12`}>
+        <section aria-labelledby="t-calouro" className={`${secao} grid gap-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,40rem)] lg:justify-between lg:gap-12`}>
           <div className={`${cabeca} lg:sticky lg:top-32 lg:self-start`}>
             <h2 id="t-calouro" className={h2}>Primeiro mês de curso? Pergunte o básico.</h2>
             <p className={lead}>Crédito, catálogo, eletiva: o Zefe explica em poucas palavras, sem presumir que você já saiba.</p>
@@ -133,13 +133,13 @@ export default async function Apresentacao() {
         </section>
 
         <section aria-labelledby="t-entrar" className="ds-container pb-8">
-          <div className="flex flex-col items-start gap-8 rounded-ds-panel bg-ds-band p-6 text-ds-on-band md:flex-row md:items-center md:p-12">
+          <div className="flex flex-col items-start gap-8 rounded-ds-panel bg-ds-band p-6 text-ds-on-band lg:flex-row lg:items-center md:p-12">
             <Mascote estado="feliz" tamanho={128} decorativo className="size-24 md:size-32" />
             <div className="max-w-ds-prose flex-1 space-y-4">
               <h2 id="t-entrar" className="text-ds-h2 text-ds-on-band!">Comece pelo seu próximo semestre.</h2>
               <p className="text-ds-lead text-ds-on-band/85">Entre com e-mail e um código, sem senha da DAC. A sua árvore já vem preenchida para você corrigir.</p>
             </div>
-            <Pilula href="/entrar" className="w-full md:w-auto">
+            <Pilula href="/entrar" className="w-full sm:w-auto">
               Entrar com e-mail <ArrowRight className="size-4" aria-hidden />
             </Pilula>
           </div>

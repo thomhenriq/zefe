@@ -143,6 +143,9 @@ export const baseGrade: Bloco[] = [
   { id: "web", nome: "Programação para a Web", sigla: "Web", dia: 2, ini: 14, fim: 16, turma: "A" },
   { id: "est", nome: "Estrutura de Dados I", sigla: "ED I", dia: 1, ini: 10, fim: 12, turma: "B" },
   { id: "noite", nome: "Gestão de Projetos", sigla: "GP", dia: 3, ini: 16, fim: 18, turma: "A" },
+  { id: "so", nome: "Sistemas Operacionais", sigla: "SO", dia: 3, ini: 8, fim: 10, turma: "A" },
+  { id: "redes", nome: "Redes de Comunicação I", sigla: "Redes", dia: 0, ini: 14, fim: 16, turma: "C" },
+  { id: "estat", nome: "Estatística", sigla: "Est", dia: 2, ini: 8, fim: 10, turma: "A" },
 ];
 
 const ia: Bloco = { id: "ia", nome: "Inteligência Artificial", sigla: "IA", dia: 1, ini: 10, fim: 12, turma: "A" };

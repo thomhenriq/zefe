@@ -54,7 +54,7 @@ export function SemanaMatricula() {
 
   const blocos = etapa === 0 ? fixos : etapa === 1 ? [...fixos, turmaA] : [...fixos, turmaB];
   const choca = (b: B) => etapa === 1 && blocos.some((o) => o.id !== b.id && o.dia === b.dia && o.ini < b.fim && b.ini < o.fim);
-  const tom = (b: B) => (choca(b) ? "bg-ds-conflito-bg text-ds-conflito" : b.id === "ia" ? "bg-ds-planejada-bg text-ds-planejada" : "bg-ds-cursando-bg text-ds-cursando");
+  const tom = (b: B) => (choca(b) ? "bg-ds-conflito-bg text-ds-conflito" : b.id === "ia" ? "bg-ds-planejada-bg text-ds-planejada" : "border border-ds-line bg-ds-bg text-ds-ink");
   const rotulo = (b: B) => `${b.nome}, turma ${b.turma}, ${diasLongos[b.dia]} das ${b.ini}h às ${b.fim}h${choca(b) ? ", em conflito" : ""}`;
 
   return (
