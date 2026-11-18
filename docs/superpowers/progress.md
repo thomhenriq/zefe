@@ -158,6 +158,8 @@ Ruling 9: o mascote continua o SVG desenhado no código — o plano exige "SVG n
 A. Mascote e favicon: o aluno trocou ele mesmo (com o Codex) e disse "não mude de volta"; commit 02a7c8e (Mascote.tsx usa as PNGs; `public/mascote-zefe.png`, `public/mascotes-zefe-adesivos.png`, `public/favicon.png`, `src/app/icon.png`; `icon.svg` removido). **O Ruling 9 está SUPERADO**: vale a versão do aluno; nenhum executor pode reverter, regenerar, redesenhar ou restaurar o SVG. Linha acrescentada no DESIGN.md. Só sinalizar no relatório: a `mascote-zefe.png` mostra o emblema da Unicamp no lenço, e o design diz que nada deve parecer oficial — decisão dele.
 B. Nova Task 18: refazer o planejador como o GDE original (cartões arrastáveis das disciplinas que faltam, vindos da integralização, soltos na grade semanal com prévia das turmas; busca de texto secundária e recolhida, sem recarregar nem voltar ao topo). Sonnet + revisão Sonnet + um revisor Opus novo só sobre esta mudança.
 
+- Task 18: despachada (Sonnet) às 00:0x de 18/11; brief em `.superpowers/sdd/2026-11-16-zefe/task-18-brief.md`. App volta ao modo produção ao fim da tarefa.
+
 Carga 2020–2023 (T17c) terminou antes do limite: 8 semestres, todos exit 0 e 0 erros (2020/1 2155, 2020/2 2059, 2021/1 2151, 2021/2 2097, 2022/1 2131, 2022/2 2119, 2023/1 2174, 2023/2 2216 disciplinas). O executor Haiku caiu no limite antes de escrever o relatório; os números acima são do orquestrador.
 
 ## Mudança do aluno (17/11 14:31)
