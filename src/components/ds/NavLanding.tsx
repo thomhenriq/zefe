@@ -40,7 +40,6 @@ export function NavLanding() {
                 </nav>
               </div>
             </details>
-            <Pilula href="/entrar" variante="fantasma" className="hidden lg:inline-flex">Entrar</Pilula>
             <Pilula href="/entrar" className="px-5 md:px-6">
               <span className="md:hidden">Entrar</span>
               <span className="hidden md:inline">Entrar com e-mail</span>
