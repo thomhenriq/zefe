@@ -32,3 +32,9 @@ test("opcoesSemestre: junta, dedup, ordena, corta antigos", () => {
   const r = opcoesSemestre([{ ano: 2018, periodo: 1 }, { ano: 2026, periodo: 1 }, { ano: 2025, periodo: 2 }], { ano: 2027, periodo: 1 }, { ano: 2026, periodo: 1 });
   expect(r).toEqual([{ ano: 2027, periodo: 1 }, { ano: 2026, periodo: 1 }, { ano: 2025, periodo: 2 }]);
 });
+test("opcoesSemestre: com ingresso, nada antes de 1S do ano de ingresso; grade antiga e selecionado continuam", () => {
+  const banco = [{ ano: 2025, periodo: 2 }, { ano: 2026, periodo: 1 }, { ano: 2026, periodo: 2 }] as const;
+  const prox = { ano: 2027, periodo: 1 } as const;
+  expect(opcoesSemestre([...banco], prox, prox, 2026)).toEqual([{ ano: 2027, periodo: 1 }, { ano: 2026, periodo: 2 }, { ano: 2026, periodo: 1 }]);
+  expect(opcoesSemestre([...banco], prox, prox, 2026, [{ ano: 2025, periodo: 2 }]).at(-1)).toEqual({ ano: 2025, periodo: 2 });
+});

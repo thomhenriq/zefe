@@ -3,7 +3,7 @@ import { Star, Trash2 } from "lucide-react";
 import { exigirUsuario } from "@/sessao";
 import { listarGrades, listarTodasGrades, getGrade } from "@/dados/grades";
 import { getOferta } from "@/dados/disciplinas";
-import { getIntegralizacao, SemCurriculo } from "@/dados/aluno";
+import { getIntegralizacao, getPerfil, SemCurriculo } from "@/dados/aluno";
 import { listarSemestres, ofertaPlanejador } from "@/dados/planejador";
 import { proximoSemestre } from "@/dominio/oferta";
 import { rotuloSemestre } from "@/dominio/semestre";
@@ -38,7 +38,8 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   const periodo = (Number(um(sp.periodo)) === 2 ? 2 : Number(um(sp.periodo)) === 1 ? 1 : ano === prox.ano ? prox.periodo : 1) as 1 | 2;
   const sem = { ano, periodo };
   const [semestres, grades, allGrades] = await Promise.all([listarSemestres(), listarGrades(u.id, ano, periodo), listarTodasGrades(u.id)]);
-  const opcoes = opcoesSemestre(semestres, prox, sem);
+  const perfilAluno = await getPerfil(u.id);
+  const opcoes = opcoesSemestre(semestres, prox, sem, perfilAluno?.ingresso, allGrades.map((g) => ({ ano: g.ano, periodo: g.periodo as 1 | 2 })));
   const publicado = semestres.some((s) => s.ano === ano && s.periodo === periodo && s.publicado);
   const escolhida = grades.find((g) => g.id === um(sp.grade)) ?? grades.find((g) => g.principal) ?? grades[0];
   const grade = escolhida ? await getGrade(u.id, escolhida.id) : null;

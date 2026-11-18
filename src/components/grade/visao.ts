@@ -39,7 +39,9 @@ export const resumoHorarios = (hs: Horario[]) =>
 
 const chave = (s: Sem) => s.ano * 10 + s.periodo;
 /** Semestres do banco desde dois anos antes do próximo, mais o próximo e o selecionado; mais recente primeiro, sem repetir. */
-export function opcoesSemestre(noBanco: Sem[], proximo: Sem, selecionado: Sem): Sem[] {
-  const todos = [...noBanco.filter((s) => s.ano >= proximo.ano - 2), proximo, selecionado];
+/** `ingresso` = ano de ingresso do aluno: nada antes de 1S desse ano (sem ele, os 2 últimos anos). Grades já criadas (`comGrade`) e o semestre selecionado sempre aparecem. */
+export function opcoesSemestre(noBanco: Sem[], proximo: Sem, selecionado: Sem, ingresso?: number | null, comGrade: Sem[] = []): Sem[] {
+  const desde = ingresso ?? proximo.ano - 2;
+  const todos = [...noBanco.filter((s) => s.ano >= desde), proximo, selecionado, ...comGrade];
   return [...new Map(todos.map((s) => [chave(s), s])).values()].sort((a, b) => chave(b) - chave(a));
 }
