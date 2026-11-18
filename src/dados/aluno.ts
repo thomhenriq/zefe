@@ -88,8 +88,15 @@ export async function marcarHistorico(userId: string, codigo: string, estado: Es
     .onConflictDoUpdate({ target: [historico.user_id, historico.codigo], set: { estado, origem: "aluno" } });
 }
 
+export interface DadosGrafo {
+  /** Pré-requisitos (alternativas) do currículo e, transitivamente, de quem ele cita; null = sem entrada no catálogo. */
+  prereqs: Record<string, Requisito[][] | null>;
+  /** Códigos citados que não são obrigatórias do currículo. */
+  externos: Record<string, { nome: string | null; marca: Estado | null }>;
+}
+
 /** Integralização do aluno com dados do banco; perfil ou currículo ausente → erro (o chamador já exige onboarding). */
-export async function getIntegralizacao(userId: string): Promise<Integralizacao> {
+export async function getIntegralizacao(userId: string): Promise<Integralizacao & { grafo: DadosGrafo }> {
   const p = await getPerfil(userId);
   if (!p || p.curso == null || p.catalogo == null) throw new SemCurriculo("perfil incompleto");
   const [cur] = await db
@@ -124,7 +131,25 @@ export async function getIntegralizacao(userId: string): Promise<Integralizacao>
   }
   const creditosDe = (c: string) => cat.get(c)?.creditos ?? recente.get(c)?.creditos ?? null;
 
-  return calcularIntegralizacao({
+  // fecha o grafo de pré-requisitos: busca no catálogo os códigos citados que ainda não conhecemos (outros cursos, eletivas)
+  const vistos = new Set(obrig.map((o) => o.codigo));
+  for (let pendentes = [...cat.values()]; pendentes.length; ) {
+    const novos = [...new Set(pendentes.flatMap((e) => ((e.alternativas as Requisito[][] | null) ?? []).flat().map((r) => r.codigo)))].filter((c) => !cat.has(c) && !vistos.has(c));
+    novos.forEach((c) => vistos.add(c));
+    pendentes = novos.length === 0 ? [] : await db.select().from(catalogoDisciplina).where(and(eq(catalogoDisciplina.ano, p.catalogo), inArray(catalogoDisciplina.codigo, novos)));
+    pendentes.forEach((e) => cat.set(e.codigo, e));
+  }
+  const noCur = new Set(obrig.map((o) => o.codigo));
+  const prereqs: DadosGrafo["prereqs"] = {};
+  const externos: DadosGrafo["externos"] = {};
+  const citados = new Set([...cat.values()].flatMap((e) => ((e.alternativas as Requisito[][] | null) ?? []).flat().map((r) => r.codigo)));
+  for (const c of new Set([...noCur, ...citados])) {
+    const e = cat.get(c);
+    prereqs[c] = e ? ((e.alternativas as Requisito[][] | null) ?? []) : null;
+    if (!noCur.has(c)) externos[c] = { nome: e?.nome ?? null, marca: hist.get(c) ?? null };
+  }
+
+  return { ...calcularIntegralizacao({
     obrigatorias: obrig.map((o) => ({
       codigo: o.codigo,
       nome: cat.get(o.codigo)?.nome ?? recente.get(o.codigo)?.nome ?? o.codigo,
@@ -140,5 +165,5 @@ export async function getIntegralizacao(userId: string): Promise<Integralizacao>
       const e = cat.get(c);
       return e ? ((e.alternativas as Requisito[][] | null) ?? []) : null; // sem entrada no catálogo do aluno = desconhecido
     },
-  });
+  }), grafo: { prereqs, externos } };
 }

@@ -259,3 +259,15 @@
   .zefe-ponto:nth-child(2) { animation-delay: 0.2s; }
   .zefe-ponto:nth-child(3) { animation-delay: 0.4s; }
 }
+
+/* Árvore: linhas de pré-requisito (traçado escalonado por `--ordem`); com redução de movimento as linhas aparecem prontas */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes arvore-tracar { to { stroke-dashoffset: 0; } }
+  @keyframes arvore-apagar { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 1; } }
+  @keyframes arvore-surgir { to { opacity: 1; } }
+  @keyframes arvore-sumir { to { opacity: 0; } }
+  .arv-linha { stroke-dasharray: 1; stroke-dashoffset: 1; animation: arvore-tracar 0.34s ease-out calc(var(--ordem) * 90ms) forwards; }
+  .arv-linha[data-saindo] { stroke-dashoffset: 0; animation: arvore-apagar 0.22s ease-in forwards; }
+  .arv-extra { opacity: 0; animation: arvore-surgir 0.2s ease-out calc(var(--ordem) * 90ms + 280ms) forwards; }
+  .arv-extra[data-saindo] { opacity: 1; animation: arvore-sumir 0.15s ease-in forwards; }
+}

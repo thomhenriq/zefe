@@ -82,7 +82,7 @@ export default async function PaginaArvore() {
 
       <section aria-labelledby="h-arvore" className="space-y-3">
         <h2 id="h-arvore" className="text-xl">Disciplinas por semestre da proposta</h2>
-        <Arvore disciplinas={integ.disciplinas} />
+        <Arvore disciplinas={integ.disciplinas} grafo={integ.grafo} />
       </section>
     </Pagina>
   );
