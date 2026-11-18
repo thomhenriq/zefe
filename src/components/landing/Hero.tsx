@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { pilula } from "@/components/ds/Pilula";
+import { cn } from "@/lib/utils";
 import type { EstadoMascote } from "@/components/zefe/Mascote";
 
 const PEDIDO = "monta meu 4º semestre";
@@ -56,7 +58,7 @@ export function HeroProvider({ children, total }: { children: React.ReactNode; t
 export function PedidoForm() {
   const { e, digitar } = useContext(Ctx);
   return (
-    <form action="/entrar" className="flex max-w-[40rem] items-center gap-3 rounded-full border bg-card py-1.5 pr-1.5 pl-5 shadow-elevada focus-within:ring-2 focus-within:ring-ring">
+    <form action="/entrar" className="flex items-center gap-2 rounded-full border border-ds-line bg-ds-bg py-1 pr-1 pl-6 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ds-link">
       <label className="sr-only" htmlFor="pedido">Peça ao Zefe</label>
       <input
         id="pedido"
@@ -64,13 +66,11 @@ export function PedidoForm() {
         onChange={(ev) => digitar(ev.target.value)}
         placeholder="Peça ao Zefe…"
         autoComplete="off"
-        className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none"
+        className="min-w-0 flex-1 bg-transparent py-2 text-ds-body text-ds-ink outline-none"
       />
-      <button
-        type="submit"
-        className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85"
-      >
-        Entrar com e-mail <ArrowRight className="hidden size-4 sm:block" aria-hidden />
+      <button type="submit" className={cn(pilula.base, pilula.primaria)}>
+        <span className="sm:hidden">Entrar</span>
+        <span className="hidden sm:inline">Entrar com e-mail</span> <ArrowRight className="hidden size-4 sm:block" aria-hidden />
       </button>
     </form>
   );

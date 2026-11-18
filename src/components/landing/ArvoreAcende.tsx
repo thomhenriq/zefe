@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Crosshair } from "lucide-react";
 import { construirGrafo, relacionadas } from "@/dominio/grafo";
+import { Selo } from "@/components/ds/Blocos";
 import { cn } from "@/lib/utils";
 import { foraDoTrecho, nos, prereqDoTrecho, type NoArvore } from "./dados";
 
@@ -49,11 +50,11 @@ export function ArvoreAcende() {
         onFocus={() => setPrevia(n.codigo)}
         onBlur={() => setPrevia(null)}
         className={cn(
-          "rounded-lg border bg-card px-2 py-1.5 text-left transition-[opacity,box-shadow,border-color,background-color] duration-200",
-          p === "apagado" && "border-transparent bg-muted/60 text-muted-foreground",
-          p === "foco" && "border-primary bg-accent ring-2 ring-primary",
-          p === "antes" && "border-foreground ring-1 ring-foreground",
-          p === "depois" && "border-primary ring-1 ring-primary",
+          "rounded-ds-input border border-ds-line bg-ds-surface px-3 py-2 text-left transition-[opacity,box-shadow,border-color,background-color] duration-300 ease-ds",
+          p === "apagado" && "border-transparent bg-ds-bg opacity-70",
+          p === "foco" && "border-ds-link bg-ds-amber-tint ring-2 ring-ds-link",
+          p === "antes" && "border-ds-ink ring-1 ring-ds-ink",
+          p === "depois" && "border-ds-link bg-ds-previsao-bg ring-1 ring-ds-link",
           extra,
         )}
       >
@@ -68,7 +69,7 @@ export function ArvoreAcende() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <p className="font-mono text-xs text-muted-foreground md:text-right">trecho real · Sistemas de Informação · catálogo 2026</p>
+      <p className="text-ds-small"><Selo>Trecho real</Selo> <span className="ml-1">Sistemas de Informação, catálogo 2026</span></p>
       {/* Quadro: a partir de md */}
       <div
         className="relative hidden h-[26rem] md:block"
@@ -81,7 +82,7 @@ export function ArvoreAcende() {
               d={curva(porCodigo.get(a.de)!, porCodigo.get(a.para)!)}
               fill="none"
               vectorEffect="non-scaling-stroke"
-              className={cn("stroke-muted-foreground/45 transition-opacity", rel && "opacity-30")}
+              className={cn("stroke-ds-body/35 transition-opacity", rel && "opacity-30")}
               strokeWidth={1.25}
             />
           ))}
@@ -95,7 +96,7 @@ export function ArvoreAcende() {
                 vectorEffect="non-scaling-stroke"
                 strokeWidth={2.25}
                 strokeLinecap="round"
-                className={cn("arv-extra", a.lado === "antes" ? "stroke-foreground" : "stroke-primary", a.tipo === "ou" && "opacity-70")}
+                className={cn("arv-extra", a.lado === "antes" ? "stroke-ds-ink" : "stroke-ds-link", a.tipo === "ou" && "opacity-70")}
                 style={{ "--ordem": a.ordem } as React.CSSProperties}
               />
             ))}
@@ -105,8 +106,8 @@ export function ArvoreAcende() {
             n,
             "w-full",
             <>
-              <span className="block font-mono text-xs font-semibold">{n.codigo}</span>
-              <span className="block text-xs leading-tight text-muted-foreground">{n.nome}</span>
+              <span className="block text-ds-caption font-bold text-ds-ink ds-num">{n.codigo}</span>
+              <span className="block text-ds-caption leading-tight">{n.nome}</span>
             </>,
           ),
         ).map((el, i) => (
@@ -124,8 +125,8 @@ export function ArvoreAcende() {
       <div className="space-y-4 md:hidden">
         {semestres.map((s) => (
           <section key={s} aria-label={`${s}º semestre`}>
-            <h3 className="mb-1.5 font-heading text-lg font-extrabold tracking-[-0.02em]">{s}º semestre</h3>
-            <ul className="grid gap-1.5">
+            <h3 className="mb-2 text-ds-body font-bold text-ds-ink">{s}º semestre</h3>
+            <ul className="grid gap-2">
               {nos
                 .filter((n) => n.semestre === s)
                 .map((n) => {
@@ -136,11 +137,11 @@ export function ArvoreAcende() {
                         n,
                         "flex w-full items-center gap-2",
                         <>
-                          <span className="font-mono text-xs font-semibold">{n.codigo}</span>
-                          <span className="min-w-0 flex-1 text-sm">{n.nome}</span>
-                          {p === "antes" && <span className="flex items-center gap-1 text-xs font-medium"><ArrowLeft className="size-3.5" aria-hidden />pede</span>}
-                          {p === "depois" && <span className="flex items-center gap-1 text-xs font-medium text-primary"><ArrowRight className="size-3.5" aria-hidden />libera</span>}
-                          {p === "foco" && <span className="flex items-center gap-1 text-xs font-medium text-primary"><Crosshair className="size-3.5" aria-hidden />escolhida</span>}
+                          <span className="text-ds-caption font-bold text-ds-ink ds-num">{n.codigo}</span>
+                          <span className="min-w-0 flex-1 text-ds-small">{n.nome}</span>
+                          {p === "antes" && <span className="flex items-center gap-1 text-ds-caption font-medium"><ArrowLeft className="size-3.5" aria-hidden />pede</span>}
+                          {p === "depois" && <span className="flex items-center gap-1 text-ds-caption font-medium text-ds-link"><ArrowRight className="size-3.5" aria-hidden />libera</span>}
+                          {p === "foco" && <span className="flex items-center gap-1 text-ds-caption font-medium text-ds-link"><Crosshair className="size-3.5" aria-hidden />escolhida</span>}
                         </>,
                       )}
                     </li>
@@ -151,10 +152,10 @@ export function ArvoreAcende() {
         ))}
       </div>
 
-      <p className="min-h-[3.25rem] text-sm text-muted-foreground" aria-live="polite">
+      <p className="min-h-[3.25rem] text-ds-small" aria-live="polite">
         {ativo ? (
           <>
-            <strong className="font-semibold text-foreground">{ativo}, {nome(ativo)}.</strong>{" "}
+            <strong className="font-bold text-ds-ink">{ativo}, {nome(ativo)}.</strong>{" "}
             {pede.length ? <>Pede {pede.join(", ")}{ativo === "SI700" ? " (SI201 pode ser feita junto)" : ""}. </> : "Não pede nada no trecho. "}
             {libera.length ? <>Libera {libera.join(", ")}.</> : "Não libera nada neste trecho."}
             {foraDoTrecho[ativo] && <> No catálogo: {foraDoTrecho[ativo]}.</>}

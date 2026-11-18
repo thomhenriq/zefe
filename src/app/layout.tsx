@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Fustat, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const titulo = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-titulo", display: "swap" });
+const fustat = Fustat({ subsets: ["latin"], variable: "--font-fustat", display: "swap" }); // sistema v2 (landing)
 const corpo = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-corpo", display: "swap" });
 const codigo = JetBrains_Mono({ subsets: ["latin"], variable: "--font-codigo", display: "swap" });
 
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${titulo.variable} ${corpo.variable} ${codigo.variable} h-full antialiased`}>
+    <html lang="pt-BR" className={`${titulo.variable} ${corpo.variable} ${codigo.variable} ${fustat.variable} h-full antialiased`}>
       <body className="min-h-full">
         <a
           href="#conteudo"

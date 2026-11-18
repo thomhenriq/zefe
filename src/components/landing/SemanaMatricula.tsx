@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, FileDown, OctagonX } from "lucide-react";
-import { AvisoBadge, corDe } from "@/components/ui/estado";
+import { Chip, Selo } from "@/components/ds/Blocos";
 import { cn } from "@/lib/utils";
 
 const dias = ["Seg", "Ter", "Qua", "Qui", "Sex"];
@@ -49,16 +49,16 @@ export function SemanaMatricula() {
   const choca = etapa === 1;
 
   return (
-    <div ref={ref} className="min-w-0 space-y-4 rounded-2xl border bg-card p-4">
-      <p className="flex items-center justify-between gap-2 font-mono text-xs text-muted-foreground">
-        <span>exemplo · dados fictícios</span>
-        <span>semana de matrícula</span>
+    <div ref={ref} className="min-w-0 space-y-4 rounded-ds-card bg-ds-bg p-6">
+      <p className="flex flex-wrap items-center justify-between gap-2 text-ds-caption">
+        <Selo className="bg-ds-surface">Exemplo, dados fictícios</Selo>
+        <span>Semana de matrícula</span>
       </p>
       <div className="grid grid-cols-5 gap-1.5" role="group" aria-label="Semana de exemplo, segunda a sexta">
         {dias.map((d, di) => (
           <div key={d}>
-            <p className="mb-1 text-center font-mono text-xs text-muted-foreground">{d}</p>
-            <div className="relative h-36 rounded-md bg-muted/60">
+            <p className="mb-1 text-center text-ds-caption">{d}</p>
+            <div className="relative h-36 rounded-ds-input bg-ds-surface">
               {blocos
                 .filter((b) => b.dia === di)
                 .map((b, k, arr) => {
@@ -74,8 +74,8 @@ export function SemanaMatricula() {
                       }}
                       aria-label={`${b.nome}, ${d} das ${b.ini}h às ${b.fim}h${bate ? ", em conflito" : ""}`}
                       className={cn(
-                        "anim-bloco absolute flex items-start gap-0.5 overflow-hidden rounded-md border p-1 text-xs leading-tight font-semibold",
-                        corDe(bate ? "conflito" : b.id === "t" ? "planejada" : "cursando"),
+                        "ds-bloco absolute flex items-start gap-0.5 overflow-hidden rounded-ds-input p-1 text-ds-caption leading-tight font-medium",
+                        bate ? "bg-ds-conflito-bg text-ds-conflito" : b.id === "t" ? "bg-ds-planejada-bg text-ds-planejada" : "bg-ds-cursando-bg text-ds-cursando",
                       )}
                     >
                       {bate && <OctagonX className="mt-px size-3 shrink-0" aria-hidden />}
@@ -87,29 +87,29 @@ export function SemanaMatricula() {
           </div>
         ))}
       </div>
-      <p className="min-h-6 text-sm" aria-live="polite">
+      <p className="min-h-6 text-ds-small" aria-live="polite">
         {choca ? (
           <span className="flex flex-wrap items-center gap-2">
-            <AvisoBadge nivel="conflito" /> A Turma A bate com Estrutura de Dados I na terça.
+            <Chip tom="conflito">Conflito</Chip> A Turma A bate com Estrutura de Dados I na terça.
           </span>
         ) : etapa === 2 ? (
-          <span className="flex items-center gap-1.5 text-cursada">
+          <span className="flex items-center gap-1.5 text-ds-cursada">
             <CheckCircle2 className="size-4" aria-hidden /> Turma B, sexta cedo: sem conflito.
           </span>
         ) : (
-          <span className="text-muted-foreground">Estrutura de Dados I já está na grade.</span>
+          <span>Estrutura de Dados I já está na grade.</span>
         )}
       </p>
-      <div className="space-y-2 rounded-xl border border-dashed border-previsao-borda bg-previsao-bg p-3 text-previsao">
-        <AvisoBadge nivel="previsao" className="bg-card" />
-        <p className="text-sm">
+      <div className="space-y-2 rounded-ds-card bg-ds-previsao-bg p-4 text-ds-previsao">
+        <Chip tom="previsao" className="bg-ds-surface">Previsão</Chip>
+        <p className="text-ds-small">
           O caderno do semestre ainda não saiu: estes horários são estimados a partir de semestres anteriores e ficam como
           previsão até a DAC publicar.
         </p>
       </div>
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      <p className="flex items-center gap-2 text-ds-small">
         <FileDown className="size-4 shrink-0" aria-hidden />
-        Arquivo exportado: <code className="font-mono text-foreground">grade-2s-2027.ics</code>
+        Arquivo exportado: <span className="font-medium text-ds-ink">grade-2s-2027.ics</span>
       </p>
     </div>
   );

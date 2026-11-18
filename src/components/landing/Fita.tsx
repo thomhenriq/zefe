@@ -1,106 +1,73 @@
 "use client";
 
-import { corDe, estados, type EstadoDisciplina } from "@/components/ui/estado";
+import { estados, type EstadoDisciplina } from "@/components/ui/estado";
+import { Chip, Selo } from "@/components/ds/Blocos";
 import { Mascote } from "@/components/zefe/Mascote";
-import { cn } from "@/lib/utils";
-import { fita, type Chip } from "./dados";
+import { fita, type Chip as ChipDados } from "./dados";
 import { useHero } from "./Hero";
 
 const legenda: EstadoDisciplina[] = ["cursada", "cursando", "planejada", "faltando", "travada"];
 
-function ChipDisc({ chip, estado }: { chip: Chip; estado: EstadoDisciplina }) {
-  const { Icone, rotulo } = estados[estado];
+function ChipDisc({ chip, estado }: { chip: ChipDados; estado: EstadoDisciplina }) {
   return (
-    <li
-      title={`${chip.codigo}, ${chip.nome}: ${rotulo.toLowerCase()}`}
-      className={cn(
-        "flex items-center gap-1 rounded-lg border px-1.5 py-1 font-mono text-xs leading-none font-medium transition-colors duration-300",
-        corDe(estado),
-      )}
-    >
-      <Icone className="size-3.5 shrink-0" aria-hidden />
-      <span>{chip.codigo}</span>
-      <span className="sr-only">: {rotulo}</span>
+    <li title={`${chip.codigo}, ${chip.nome}: ${estados[estado].rotulo.toLowerCase()}`}>
+      <Chip tom={estado} compacto className="transition-colors duration-300 ease-ds">{chip.codigo}</Chip>
     </li>
   );
 }
 
-/** A graduação numa régua horizontal: uma coluna por semestre, chips por estado. Estados são ilustrativos. */
+/** A graduação numa régua: uma coluna por semestre (de lg; abaixo, linhas empilhadas), chips por estado. Estados são ilustrativos. */
 export function Fita() {
   const hero = useHero();
   return (
     <figure className="min-w-0">
-      <figcaption className="flex flex-col gap-2 pb-3 lg:h-[4.75rem] lg:flex-row lg:items-start lg:justify-end lg:pb-0">
-        <p className="font-mono text-xs text-muted-foreground lg:text-right">
-          <span className="rounded-full border border-dashed border-border px-2 py-0.5 text-foreground">exemplo</span>{" "}
-          Sistemas de Informação · catálogo 2026. Os estados são ilustrativos.
-        </p>
+      <figcaption className="flex flex-wrap items-center gap-x-3 gap-y-2 pb-6 text-ds-small">
+        <Selo>Exemplo</Selo>
+        Sistemas de Informação, catálogo 2026. Os estados são ilustrativos.
       </figcaption>
-      <ol className="border-foreground lg:grid lg:grid-cols-7 lg:border-t-2" aria-label="Semestres sugeridos do curso, do 1º ao 8º">
+      <ol className="grid gap-2 lg:grid-cols-7" aria-label="Semestres sugeridos do curso, do 1º ao 8º">
         {fita.map((col, i) => (
           <li
             key={col.rotulo}
-            style={{ animationDelay: `${0.25 + i * 0.07}s` }}
-            className={cn(
-              "anim-subir relative flex gap-3 border-t border-foreground py-3 first:border-t-2 lg:first:border-t-0 lg:block lg:border-t-0 lg:border-l-2 lg:px-2.5 lg:py-3",
-              col.atual && "pb-[4.5rem] lg:pb-3",
-            )}
+            style={{ animationDelay: `${0.35 + i * 0.06}s` }}
+            className="ds-subir flex gap-4 rounded-ds-card bg-ds-bg p-4 lg:flex-col lg:gap-3"
           >
             <div className="w-16 shrink-0 lg:w-auto">
-              <h3 className="font-heading text-2xl leading-none font-extrabold tracking-[-0.03em] lg:text-[1.75rem]">
-                {col.rotulo}
-              </h3>
-              <p className="mt-1 font-mono text-xs text-muted-foreground tabular">
+              <h3 className="text-ds-h3">{col.rotulo}</h3>
+              <p className="text-ds-caption ds-num">
                 {col.creditos} cr
-                {col.proximo && (
-                  <span className="mt-1.5 block w-fit rounded-full bg-primary px-1.5 py-0.5 text-primary-foreground">
-                    próximo
-                  </span>
-                )}
+                {col.proximo && <span className="mt-1 block w-fit rounded-full bg-ds-amber-tint px-2 py-1 leading-none font-medium text-ds-ink">próximo</span>}
               </p>
             </div>
-            <ul className="flex min-w-0 flex-1 flex-wrap content-start gap-1.5 lg:mt-2.5 lg:grid lg:grid-cols-2">
-              {col.chips.map((chip, k) => (
-                <ChipDisc
-                  key={chip.codigo}
-                  chip={chip}
-                  // no 4º semestre o Zefe "arruma" os chips: faltando até a vez de cada um
-                  estado={col.proximo && k >= hero.arrumados ? "faltando" : chip.estado}
-                />
-              ))}
-              {col.eletivos && (
-                <li className="rounded-lg border border-dashed border-border px-1.5 py-1 font-mono text-xs leading-none text-muted-foreground lg:col-span-2">
-                  +{col.eletivos} cr eletivos
-                </li>
-              )}
-            </ul>
-            {col.atual && (
-              <div className="pointer-events-none absolute bottom-2 left-[4.75rem] flex w-max items-center gap-2 lg:inset-x-0 lg:bottom-full lg:left-2.5 lg:items-end lg:pb-0">
-                <Mascote estado={hero.humor} tamanho={72} decorativo className="size-12 lg:size-[4.5rem]" />
-                <p className="rounded-xl border bg-card px-3 py-1.5 text-xs font-semibold shadow-suave lg:mb-2 lg:rounded-2xl lg:py-2 lg:text-sm">
-                  Você está aqui.
+            <div className="min-w-0 flex-1">
+              <ul className="flex flex-wrap content-start gap-1">
+                {col.chips.map((chip, k) => (
+                  <ChipDisc
+                    key={chip.codigo}
+                    chip={chip}
+                    // no 4º semestre o Zefe "arruma" os chips: faltando até a vez de cada um
+                    estado={col.proximo && k >= hero.arrumados ? "faltando" : chip.estado}
+                  />
+                ))}
+                {col.eletivos && (
+                  <li className="rounded-full border border-ds-line px-2 py-1 text-ds-caption leading-none ds-num">+{col.eletivos} cr eletivos</li>
+                )}
+              </ul>
+              {col.atual && (
+                <p className="mt-3 flex items-center gap-2 text-ds-caption font-medium text-ds-ink">
+                  <Mascote estado={hero.humor} tamanho={40} decorativo className="size-10" />
+                  Você está aqui
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </li>
         ))}
       </ol>
-      <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground" aria-label="Legenda">
-        {legenda.map((e) => {
-          const { Icone, rotulo } = estados[e];
-          return (
-            <li key={e} className="flex items-center gap-1.5">
-              <span className={cn("inline-flex size-5 items-center justify-center rounded-md border", corDe(e))}>
-                <Icone className="size-3.5" aria-hidden />
-              </span>
-              {rotulo}
-            </li>
-          );
-        })}
-        <li className="flex items-center gap-1.5">
-          <span className="inline-flex h-5 w-7 items-center justify-center rounded-md border border-dashed border-border font-mono text-xs">+N</span>
-          créditos eletivos
-        </li>
+      <ul className="mt-6 flex flex-wrap items-center gap-2" aria-label="Legenda">
+        {legenda.map((e) => (
+          <li key={e}><Chip tom={e}>{estados[e].rotulo}</Chip></li>
+        ))}
+        <li className="text-ds-caption">+N cr: créditos eletivos</li>
       </ul>
     </figure>
   );
