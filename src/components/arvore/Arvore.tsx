@@ -33,9 +33,9 @@ const reduzido = () => window.matchMedia("(prefers-reduced-motion: reduce)").mat
 type Papel = "sel" | "antes" | "depois";
 
 const PAPEL: Record<Papel, { rotulo: string; Icone: typeof Target; anel: string }> = {
-  sel: { rotulo: "Selecionada", Icone: Target, anel: "ring-[3px] ring-primary" },
+  sel: { rotulo: "Selecionada", Icone: Target, anel: "ring-[3px] ring-link" },
   antes: { rotulo: "Antes", Icone: ArrowLeft, anel: "ring-2 ring-foreground/70" },
-  depois: { rotulo: "Depois", Icone: ArrowRight, anel: "ring-2 ring-primary/70" },
+  depois: { rotulo: "Depois", Icone: ArrowRight, anel: "ring-2 ring-link/70" },
 };
 
 /*
@@ -125,19 +125,19 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
   return (
     <div className="@container space-y-3">
       <p role="status" aria-live="polite" className="sr-only">{aviso}</p>
-      <div className={cn("flex min-h-10 flex-wrap items-center gap-x-4 gap-y-2 text-xs", sel && "@min-[52rem]:sticky @min-[52rem]:top-barra @min-[52rem]:z-30 @min-[52rem]:-mx-2 @min-[52rem]:bg-background/95 @min-[52rem]:px-2 @min-[52rem]:py-2 @min-[52rem]:backdrop-blur")}>
+      <div className={cn("flex min-h-10 flex-wrap items-center gap-x-4 gap-y-2 text-sm", sel && "@min-[52rem]:sticky @min-[52rem]:top-barra @min-[52rem]:z-30 rounded-xl border bg-card px-4 py-2")}>
         {!sel || !atual ? (
           <p className="text-muted-foreground">Toque ou clique numa disciplina para ver o que ela exige e o que ela libera. Esc limpa o destaque.</p>
         ) : (
           <>
-            <p className="min-w-0 max-w-full truncate text-sm"><strong className="font-mono">{atual.codigo}</strong> <span className="text-muted-foreground">{atual.nome}</span></p>
+            <p className="min-w-0 max-w-full truncate text-sm"><strong className="font-medium tabular-nums">{atual.codigo}</strong> <span className="text-muted-foreground">{atual.nome}</span></p>
             <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5" aria-label="Legenda do destaque">
               {(["antes", "depois"] as const).map((p) => {
                 const { Icone, anel } = PAPEL[p];
                 const n = p === "antes" ? nAnc : nDesc;
                 return (
                   <li key={p} className="flex items-center gap-1.5">
-                    <span className={cn("grid size-5 place-items-center rounded bg-card", anel)}><Icone className="size-3" aria-hidden /></span>
+                    <span className={cn("grid size-5 place-items-center rounded-lg bg-card", anel)}><Icone className="size-3" aria-hidden /></span>
                     <span>{p === "antes" ? "Precisam vir antes" : "Liberadas por ela"} ({n})</span>
                   </li>
                 );
@@ -157,10 +157,10 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
       <div ref={roteiro} role="group" aria-label="Árvore de integralização"
         onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a")) limpar(); }}
         style={{ ["--n" as string]: colunas.length, ["--lin" as string]: nLinhas }}
-        className="relative grid grid-cols-1 gap-y-5 @min-[52rem]:[grid-template-columns:repeat(var(--n),minmax(0,1fr))] @min-[52rem]:[grid-template-rows:auto_repeat(var(--lin),4.75rem)] @min-[52rem]:gap-x-6 @min-[52rem]:gap-y-6 @min-[52rem]:pb-3">
+        className="relative grid grid-cols-1 gap-y-5 @min-[52rem]:[grid-template-columns:repeat(var(--n),minmax(0,1fr))] @min-[52rem]:[grid-template-rows:auto_repeat(var(--lin),5rem)] @min-[52rem]:gap-x-6 @min-[52rem]:gap-y-6 @min-[52rem]:pb-3">
         {colunas.map((c, i) => (
           <section key={c.semestre ?? "fora"} style={{ ["--c" as string]: i + 1 }} className="space-y-2 @min-[52rem]:contents" aria-label={c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}>
-            <h3 className="font-sans text-xs font-semibold text-muted-foreground @min-[52rem]:col-(--c) @min-[52rem]:row-1">{c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}</h3>
+            <h3 className="font-sans text-sm font-bold text-muted-foreground @min-[52rem]:col-(--c) @min-[52rem]:row-1">{c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}</h3>
             {c.itens.length === 0 && <p className="text-xs text-muted-foreground @min-[52rem]:col-(--c) @min-[52rem]:row-2">Sem disciplinas</p>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 @min-[52rem]:contents">
               {c.itens.map((d, r) => {
@@ -180,7 +180,7 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
                       onPointerEnter={(e) => e.pointerType === "mouse" && setHover(d.codigo)} onPointerLeave={() => setHover(null)}
                       onKeyDown={(e) => andar(e, d.codigo)}
                       aria-pressed={sel === d.codigo} aria-current={sel === d.codigo ? "true" : undefined}
-                      className={cn("relative block flex-1 rounded-md text-left outline-offset-2 @min-[52rem]:col-(--c) @min-[52rem]:row-(--r) motion-safe:transition-[opacity,transform,filter,box-shadow] motion-safe:duration-300",
+                      className={cn("relative block flex-1 rounded-lg text-left outline-offset-2 @min-[52rem]:col-(--c) @min-[52rem]:row-(--r) motion-safe:transition-[opacity,transform,filter,box-shadow] motion-safe:duration-300",
                         apagada ? "z-0 opacity-30 saturate-50" : "hover:brightness-95 dark:hover:brightness-110", p && "z-20",
                         Papel?.anel, previa.has(d.codigo) && "ring-1 ring-foreground/40")}>
                       {Papel && (
@@ -194,7 +194,7 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
                       {p === "depois" && <span className="sr-only">Liberada por {sel}</span>}
                     </button>
                     {sel === d.codigo && (
-                      <div className="space-y-1 text-[11px] leading-snug text-muted-foreground @min-[52rem]:hidden">
+                      <div className="space-y-1 text-xs leading-snug text-muted-foreground @min-[52rem]:hidden">
                         {(g.pais.get(d.codigo)?.length ?? 0) > 0 && <p><span aria-hidden>←</span> <span className="sr-only">Pede </span>{direto(g.pais.get(d.codigo))}</p>}
                         {(g.filhos.get(d.codigo)?.length ?? 0) > 0 && <p><span aria-hidden>→</span> <span className="sr-only">Libera </span>{direto(g.filhos.get(d.codigo))}</p>}
                         <p className="flex gap-1.5">
@@ -243,7 +243,7 @@ function Linhas({ rotas, saindo }: { rotas: RotaDesenho[]; saindo: boolean }) {
       {rotas.map(({ r, a, direta }, i) => {
         const d = caminhoArredondado(r.pontos);
         const fim = r.pontos.at(-1)!;
-        const [traco, ponta] = a.lado === "antes" ? ["stroke-foreground/70", "fill-foreground/70"] : ["stroke-primary", "fill-primary"];
+        const [traco, ponta] = a.lado === "antes" ? ["stroke-foreground/70", "fill-foreground/70"] : ["stroke-link", "fill-link"];
         const ordem = { ["--ordem" as string]: a.ordem };
         const w = direta ? 2.25 : 1.25;
         return (
@@ -273,8 +273,8 @@ function Linhas({ rotas, saindo }: { rotas: RotaDesenho[]; saindo: boolean }) {
         const ordem = { ["--ordem" as string]: a.ordem };
         return (
           <g key={r.id} className="arv-extra" data-saindo={sai} style={ordem}>
-            <rect x={selo.x - 9} y={selo.y - 6} width="18" height="12" rx="6" className="fill-card stroke-border" strokeWidth="1" />
-            <text x={selo.x} y={selo.y + 3} textAnchor="middle" className="fill-foreground font-sans text-[9px] font-semibold">{marca}</text>
+            <rect x={selo.x - 11} y={selo.y - 8} width="22" height="16" rx="8" className="fill-card stroke-border" strokeWidth="1" />
+            <text x={selo.x} y={selo.y + 4} textAnchor="middle" className="fill-foreground font-sans text-xs font-bold">{marca}</text>
           </g>
         );
       })}
@@ -291,7 +291,7 @@ const OPCOES: { rotulo: string; valor: "cursada" | "cursando" | null }[] = [
 
 const Resumo = ({ d }: { d: DisciplinaArvore }) => (
   <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-    <span className="font-mono tabular">{d.codigo}</span>
+    <span className="font-medium tabular-nums">{d.codigo}</span>
     <span>{d.creditosDesconhecidos ? "créditos desconhecidos" : `${d.creditos} créditos`}</span>
     <EstadoBadge estado={d.estado} />
   </span>
@@ -318,23 +318,23 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
 
   return (
     <>
-      <div className="flex items-start justify-between gap-2 p-4 pb-2">
+      <div className="flex items-start justify-between gap-2 p-6 pb-2">
         <div className="space-y-0.5">
-          <h3 className="font-heading text-base font-medium">{d.nome}</h3>
+          <h3 className="font-heading text-xl font-bold">{d.nome}</h3>
           <Resumo d={d} />
         </div>
         <Button variant="ghost" size="icon-sm" onClick={onFechar}><X aria-hidden /><span className="sr-only">Limpar destaque e fechar detalhe</span></Button>
       </div>
-      <div className="grid gap-x-8 gap-y-5 px-4 pb-6 text-sm lg:grid-cols-3">
+      <div className="grid gap-x-8 gap-y-5 px-6 pb-6 text-sm lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Relacoes d={d} g={g} rel={rel} porCodigo={porCodigo} externos={externos} onSelecionar={onSelecionar} />
         </div>
         <div className="space-y-5">
         <section aria-labelledby="h-estado" className="space-y-2">
-          <h4 id="h-estado" className="text-sm font-semibold">Marcar no seu histórico</h4>
+          <h4 id="h-estado" className="text-sm font-bold">Marcar no seu histórico</h4>
           <div role="group" aria-label="Estado da disciplina" className="flex flex-wrap gap-2">
             {OPCOES.map((o) => (
-              <Button key={o.rotulo} variant={marcaAtual === o.valor ? "default" : "outline"} aria-pressed={marcaAtual === o.valor} disabled={pendente} onClick={() => trocar(o.valor)}>
+              <Button key={o.rotulo} variant="outline" className={marcaAtual === o.valor ? "border-foreground bg-foreground text-background hover:bg-foreground/90" : undefined} aria-pressed={marcaAtual === o.valor} disabled={pendente} onClick={() => trocar(o.valor)}>
                 {o.rotulo}
               </Button>
             ))}
@@ -344,7 +344,7 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
         </section>
 
         <section aria-labelledby="h-prereq" className="space-y-2">
-          <h4 id="h-prereq" className="text-sm font-semibold">Pré-requisitos diretos, como no catálogo</h4>
+          <h4 id="h-prereq" className="text-sm font-bold">Pré-requisitos diretos, como no catálogo</h4>
           {d.prereqDesconhecido && <AvisoBadge nivel="naoverificado" rotulo="Pré-requisito não verificado" />}
           {det === undefined && <p className="text-muted-foreground">Carregando…</p>}
           {det === null && <p className="text-muted-foreground">Não consegui carregar o detalhe.</p>}
@@ -353,12 +353,12 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
             <ul className="space-y-1.5">
               {det.alternativas.map((alt, i) => (
                 <li key={i}>
-                  {i > 0 && <p className="mb-1 text-xs font-semibold text-muted-foreground">ou</p>}
+                  {i > 0 && <p className="mb-1 text-xs font-bold text-muted-foreground">ou</p>}
                   <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     {alt.map((r, j) => (
                       <span key={r.codigo} className="inline-flex items-center gap-1.5">
                         {j > 0 && <span className="text-xs text-muted-foreground">e</span>}
-                        <Link href={`/disciplina/${r.codigo}`} className={cn("rounded border px-1.5 py-0.5 font-mono text-xs tabular", r.marca === "cursada" ? "border-cursada-borda bg-cursada-bg text-cursada" : r.marca === "cursando" ? "border-cursando-borda bg-cursando-bg text-cursando" : "border-travada-borda bg-travada-bg text-travada")}>
+                        <Link href={`/disciplina/${r.codigo}`} className={cn("rounded-full border px-1.5 py-0.5 font-medium tabular-nums text-xs tabular-nums", r.marca === "cursada" ? "border-cursada-borda bg-cursada-bg text-cursada" : r.marca === "cursando" ? "border-cursando-borda bg-cursando-bg text-cursando" : "border-travada-borda bg-travada-bg text-travada")}>
                           {r.codigo}{r.parcial ? " (parcial)" : ""}
                           <span className="sr-only">{r.marca === "cursada" ? ", cursada" : r.marca === "cursando" ? ", cursando" : ", falta"}</span>
                         </Link>
@@ -376,17 +376,17 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
         {det && (
           <>
             <section aria-labelledby="h-destrava" className="space-y-2">
-              <h4 id="h-destrava" className="text-sm font-semibold">Destrava no catálogo todo</h4>
+              <h4 id="h-destrava" className="text-sm font-bold">Destrava no catálogo todo</h4>
               {det.destrava.length === 0 ? <p className="text-muted-foreground">Nenhuma disciplina do catálogo pede esta.</p> : (
                 <p className="flex flex-wrap gap-1.5">
-                  {det.destrava.map((c) => <Link key={c} href={`/disciplina/${c}`} className="rounded border px-1.5 py-0.5 font-mono text-xs tabular">{c}</Link>)}
+                  {det.destrava.map((c) => <Link key={c} href={`/disciplina/${c}`} className="rounded-full border px-1.5 py-0.5 font-medium tabular-nums text-xs tabular-nums">{c}</Link>)}
                 </p>
               )}
             </section>
             <section aria-labelledby="h-oferta" className="space-y-1">
-              <h4 id="h-oferta" className="text-sm font-semibold">Quando costuma ser oferecida</h4>
+              <h4 id="h-oferta" className="text-sm font-bold">Quando costuma ser oferecida</h4>
               {det.observado[1].length + det.observado[2].length === 0 ? <p className="text-muted-foreground">Sem oferecimento nos anos carregados.</p> : (
-                <ul className="tabular">
+                <ul className="tabular-nums">
                   {([1, 2] as const).map((p) => <li key={p}>{p}º semestre: {det.observado[p].length ? det.observado[p].join(", ") : "não apareceu"}</li>)}
                 </ul>
               )}
@@ -412,9 +412,9 @@ function Item({ c, prof, g, porCodigo, externos, onSelecionar }: { c: string; pr
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
       {dc ? (
-        <button type="button" onClick={() => onSelecionar(c)} className="rounded border px-1.5 py-0.5 font-mono text-xs tabular underline-offset-2 hover:bg-accent">{c}<span className="sr-only"> (destacar)</span></button>
+        <button type="button" onClick={() => onSelecionar(c)} className="rounded-full border px-1.5 py-0.5 font-medium tabular-nums text-xs tabular-nums underline-offset-2 hover:bg-accent">{c}<span className="sr-only"> (destacar)</span></button>
       ) : (
-        <Link href={`/disciplina/${c}`} className="rounded border border-dashed px-1.5 py-0.5 font-mono text-xs tabular">{c}</Link>
+        <Link href={`/disciplina/${c}`} className="rounded-full border border-dashed px-1.5 py-0.5 font-medium tabular-nums text-xs tabular-nums">{c}</Link>
       )}
       <span className="min-w-0 flex-1 basis-24">{nome ?? "nome desconhecido"}</span>
       <EstadoBadge estado={estado} />
@@ -451,11 +451,11 @@ function Relacoes({ d, g, rel, porCodigo, externos, onSelecionar }: Pick<PropsDe
   const falta = d.faltamPrereq.length;
   return (
     <section aria-labelledby="h-rel" className="space-y-3">
-      <h4 id="h-rel" className="text-sm font-semibold">Pré-requisitos e o que {d.codigo} libera</h4>
+      <h4 id="h-rel" className="text-sm font-bold">Pré-requisitos e o que {d.codigo} libera</h4>
       {nada && <p>Sem pré-requisitos e não libera outras disciplinas.</p>}
       {d.prereqDesconhecido && <AvisoBadge nivel="naoverificado" rotulo="Pré-requisito não verificado" />}
       {d.estado === "travada" && falta > 0 && (
-        <p className="rounded-lg border border-travada-borda bg-travada-bg p-2 font-medium text-travada">
+        <p className="rounded-xl border border-travada-borda bg-travada-bg p-4 font-medium text-travada">
           Faltam {falta} para poder cursar: {d.faltamPrereq.join(", ")}.
           {naCadeia > falta && <span className="block text-xs font-normal">Somando toda a cadeia (todas as alternativas), {plural(naCadeia, "disciplina ainda não feita", "disciplinas ainda não feitas")}.</span>}
         </p>

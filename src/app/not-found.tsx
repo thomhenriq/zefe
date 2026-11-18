@@ -14,7 +14,7 @@ export default function NaoAchou() {
         <div className="flex max-w-2xl flex-col items-start gap-6 py-8 sm:flex-row sm:items-center">
           <Mascote estado="pensando" tamanho={120} decorativo />
           <div className="space-y-4">
-            <h1 className="text-4xl font-semibold tracking-[-0.03em]">Essa página não existe</h1>
+            <h1 className="text-ds-h2">Essa página não existe</h1>
             <p className="max-w-[52ch] text-muted-foreground">
               O endereço pode ter mudado ou ter um erro de digitação. Volte ao início ou procure uma disciplina, professor ou sala.
             </p>

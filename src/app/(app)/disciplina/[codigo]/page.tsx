@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 const LinkCod = ({ c, parcial }: { c: string; parcial?: boolean }) => (
   <span className="whitespace-nowrap">
-    <Link href={`/disciplina/${c}`} className={`${mono} font-semibold underline underline-offset-4`}>{c}</Link>
+    <Link href={`/disciplina/${c}`} className={`${mono} font-bold underline underline-offset-4`}>{c}</Link>
     {parcial && <span className="text-xs text-muted-foreground"> (parcial)</span>}
   </span>
 );
@@ -27,14 +27,14 @@ function Turmas({ turmas, previsao }: { turmas: Turma[]; previsao?: boolean }) {
       {turmas.map((t) => (
         <li key={t.turma} className="space-y-1 px-4 py-3 text-sm">
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <span className={`${mono} font-semibold`}>Turma {t.turma}</span>
+            <span className={`${mono} font-bold`}>Turma {t.turma}</span>
             {!previsao && (
               <span className="text-muted-foreground">
                 {t.vagas != null ? `${t.matriculados ?? "?"}/${t.vagas} vagas ocupadas` : "vagas não informadas"}
               </span>
             )}
           </div>
-          <p className={`${mono} flex flex-wrap gap-x-3 text-xs`}>
+          <p className={`${mono} flex flex-wrap gap-x-3 text-sm`}>
             {t.horarios.length ? t.horarios.map((h, i) => (
               <span key={i} className="whitespace-nowrap">{h.dia} {h.inicio}–{h.fim}{h.sala && <> <Link href={`/sala/${encodeURIComponent(h.sala)}`} className="underline underline-offset-2">{h.sala}</Link></>}</span>
             )) : "sem horário informado"}
@@ -64,12 +64,12 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
   return (
     <Pagina>
       <header className="space-y-1">
-        <p className={`${mono} text-lg font-semibold text-primary`}>{d.codigo}</p>
-        <h1 className="text-4xl">{d.nome}</h1>
+        <p className={`${mono} text-xl font-bold text-link`}>{d.codigo}</p>
+        <h1 className="text-ds-h2">{d.nome}</h1>
         <p className="text-muted-foreground">{d.creditos != null ? `${d.creditos} créditos` : "créditos não informados"}</p>
       </header>
 
-      <section aria-labelledby="h-pre" className="space-y-2">
+      <section aria-labelledby="h-pre" className="space-y-3 rounded-xl border bg-card p-6">
         <h2 id="h-pre" className="text-xl">Pré-requisitos</h2>
         {d.catalogo == null ? (
           <p className="flex items-center gap-2 text-sm"><AvisoBadge nivel="naoverificado" rotulo="Sem dados do catálogo" /> Não sei os pré-requisitos desta disciplina.</p>
@@ -90,21 +90,21 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
                 </span>
               ))}
             </p>
-            <p className="text-xs text-muted-foreground">Basta cumprir um dos grupos. Catálogo {d.catalogo}.</p>
+            <p className="text-sm text-muted-foreground">Basta cumprir um dos grupos. Catálogo {d.catalogo}.</p>
           </div>
         )}
         {d.prereqTexto && d.alternativas.length > 0 && <p className="text-xs text-muted-foreground">Texto original: {d.prereqTexto}</p>}
       </section>
 
       {d.destrava.length > 0 && (
-        <section aria-labelledby="h-dest" className="space-y-2">
+        <section aria-labelledby="h-dest" className="space-y-3 rounded-xl border bg-card p-6">
           <h2 id="h-dest" className="text-xl">Destrava</h2>
           <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm">{d.destrava.map((c) => <LinkCod key={c} c={c} />)}</p>
         </section>
       )}
 
       {d.ementa && (
-        <section aria-labelledby="h-em" className="space-y-2">
+        <section aria-labelledby="h-em" className="space-y-3 rounded-xl border bg-card p-6">
           <h2 id="h-em" className="text-xl">Ementa</h2>
           <p className="max-w-[68ch] text-sm leading-relaxed">{d.ementa}</p>
         </section>
@@ -114,8 +114,8 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
         <h2 id="h-of" className="text-xl">Oferecimentos</h2>
         {oferta && (
           <article className="overflow-hidden rounded-xl border border-dashed border-previsao-borda bg-card">
-            <div className="flex flex-wrap items-center gap-2 border-b border-dashed border-previsao-borda px-4 py-2">
-              <h3 className="text-base font-semibold">{rotuloSemestre(prox.ano, prox.periodo)}</h3>
+            <div className="flex flex-wrap items-center gap-2 border-b border-dashed border-previsao-borda px-4 py-3">
+              <h3 className="text-base font-bold">{rotuloSemestre(prox.ano, prox.periodo)}</h3>
               <AvisoBadge nivel="previsao" />
               {oferta.encontrada && oferta.tipo === "previsao" && (
                 <span className="text-sm">confiança {oferta.confianca === "provavel" ? "provável" : "incerta"}; baseada em {oferta.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ")}</span>
@@ -130,8 +130,8 @@ export default async function PaginaDisciplina({ params }: { params: Promise<{ c
         {d.oferecimentos.length === 0 && <p className="text-sm text-muted-foreground">Sem oferecimentos nos cadernos coletados.</p>}
         {d.oferecimentos.map((o) => (
           <article key={`${o.ano}-${o.periodo}`} className="overflow-hidden rounded-xl border bg-card">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
-              <h3 className="text-base font-semibold">{rotuloSemestre(o.ano, o.periodo)}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+              <h3 className="text-base font-bold">{rotuloSemestre(o.ano, o.periodo)}</h3>
               <a href={o.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
                 Fonte na DAC <ExternalLink className="size-3" aria-hidden />
               </a>

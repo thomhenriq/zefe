@@ -55,7 +55,7 @@ function Resultado({ acao, v, saida, desfeitaInicial }: { acao: ReturnType<typeo
 
 function Partes({ m, desfeitas }: { m: UIMessage; desfeitas: number[] }) {
   if (m.role === "user") {
-    return <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-accent px-3 py-2 text-sm whitespace-pre-wrap">{m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}</p>;
+    return <p className="ml-auto max-w-[85%] rounded-xl rounded-br-sm bg-accent px-4 py-3 text-sm whitespace-pre-wrap">{m.parts.map((p) => (p.type === "text" ? p.text : "")).join("")}</p>;
   }
   return (
     <div className="flex flex-col gap-2">
@@ -98,15 +98,15 @@ export function Conversa({ zefe }: { zefe: ZefeChat }) {
   const vazia = messages.length === 0;
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center gap-2 border-b py-2 pr-12 pl-4">
+      <header className="flex items-center gap-2 border-b py-3 pr-14 pl-4">
         <Mascote estado={estado} tamanho={32} decorativo />
-        <h2 className="font-heading text-base font-semibold">Zefe</h2>
+        <h2 className="font-heading text-base font-bold">Zefe</h2>
         <Button variant="ghost" size="xs" className="ml-auto" onClick={novaConversa} disabled={vazia && !ocupado} aria-label="Nova conversa">
           <MessageSquarePlus aria-hidden /> Nova conversa
         </Button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3" role="log" aria-live="polite" aria-label="Conversa com o Zefe">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4" role="log" aria-live="polite" aria-label="Conversa com o Zefe">
         {vazia && carregada ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
             <Mascote estado={estado} tamanho={96} />
@@ -114,7 +114,7 @@ export function Conversa({ zefe }: { zefe: ZefeChat }) {
             <ul className="flex w-full flex-col gap-1.5">
               {sugestoes(caminho).map((s) => (
                 <li key={s}>
-                  <button type="button" onClick={() => enviar(s)} className="w-full rounded-lg border bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-muted">
+                  <button type="button" onClick={() => enviar(s)} className="w-full rounded-xl border bg-card px-4 py-3 text-left text-sm transition-colors hover:bg-muted">
                     {s}
                   </button>
                 </li>
@@ -125,7 +125,7 @@ export function Conversa({ zefe }: { zefe: ZefeChat }) {
           <div className="flex flex-col gap-3">
             {messages.map((m) => <Partes key={m.id} m={m} desfeitas={desfeitas} />)}
             {ocupado && messages.at(-1)?.role === "user" && <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status"><Loader2 className="size-3.5 motion-safe:animate-spin" aria-hidden />Pensando…</p>}
-            {error && <p role="alert" className="rounded-lg border border-aviso-borda bg-aviso-bg px-3 py-2 text-sm text-aviso">{FORA_DO_AR}</p>}
+            {error && <p role="alert" className="rounded-xl border border-aviso-borda bg-aviso-bg px-4 py-3 text-sm text-aviso">{FORA_DO_AR}</p>}
           </div>
         )}
         <div ref={fim} />
@@ -141,7 +141,7 @@ export function Conversa({ zefe }: { zefe: ZefeChat }) {
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(texto); } }}
           placeholder="Pergunte ao Zefe…"
-          className={cn("max-h-28 min-h-9 flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none", "placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50")}
+          className={cn("max-h-28 min-h-10 flex-1 resize-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none", "placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50")}
         />
         <Button type="submit" size="icon" disabled={ocupado || !texto.trim()} aria-label="Enviar">
           <ArrowUp aria-hidden />

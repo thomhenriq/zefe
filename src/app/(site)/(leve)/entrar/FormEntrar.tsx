@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/auth-client";
 
 export const campo =
-  "h-11 w-full rounded-lg border border-input bg-card px-3 text-base outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring";
+  "h-12 w-full rounded-lg border border-input bg-card px-4 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40";
 
 export function FormEntrar() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export function FormEntrar() {
           value={email} onChange={(e) => setEmail(e.target.value)} className={campo} placeholder="voce@exemplo.com" />
       </div>
       {erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}
-      <Button type="submit" disabled={ocupado} className="h-11 w-full text-base">Receber código</Button>
+      <Button type="submit" disabled={ocupado} className="w-full">Receber código</Button>
     </form>
   ) : (
     <form onSubmit={entrar} className="mt-8 space-y-4">
@@ -60,11 +60,11 @@ export function FormEntrar() {
         <input id="codigo" name="codigo" required autoComplete="one-time-code" inputMode="numeric"
           pattern="[0-9]{6}" maxLength={6} value={codigo}
           onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
-          className={`${campo} font-mono text-xl tracking-[0.4em] tabular`} />
+          className={`${campo} text-xl font-medium tabular-nums tracking-[0.4em]`} />
       </div>
       {erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}
-      <Button type="submit" disabled={ocupado || codigo.length !== 6} className="h-11 w-full text-base">Entrar</Button>
-      <Button type="button" variant="ghost" onClick={() => { setEtapa("email"); setCodigo(""); setErro(null); }}>
+      <Button type="submit" disabled={ocupado || codigo.length !== 6} className="w-full">Entrar</Button>
+      <Button type="button" variant="ghost" className="w-full" onClick={() => { setEtapa("email"); setCodigo(""); setErro(null); }}>
         Usar outro e-mail
       </Button>
     </form>

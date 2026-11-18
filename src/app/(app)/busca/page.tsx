@@ -11,7 +11,7 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
   const r = q ? await buscar(q) : null;
   return (
     <Pagina>
-      <h1 className="text-4xl">Busca</h1>
+      <h1 className="text-ds-h2">Busca</h1>
       <BuscaPagina q={q} inicial={r} />
     </Pagina>
   );
