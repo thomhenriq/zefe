@@ -271,3 +271,12 @@
   .arv-extra { opacity: 0; animation: arvore-surgir 0.2s ease-out calc(var(--ordem) * 90ms + 280ms) forwards; }
   .arv-extra[data-saindo] { opacity: 1; animation: arvore-sumir 0.15s ease-in forwards; }
 }
+
+/* Landing: bloco que entra na grade do demo (um momento só, ease-out exponencial) */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes zefe-bloco {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-4px); }
+    to { opacity: 1; clip-path: inset(0); transform: none; }
+  }
+  .anim-bloco { animation: zefe-bloco 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+}

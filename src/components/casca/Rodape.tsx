@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { authClient } from "@/auth-client";
+import { itensNav } from "./itens";
 
 export function Rodape() {
   const { data: sessao, isPending } = authClient.useSession();
@@ -13,7 +14,12 @@ export function Rodape() {
           sem vínculo com a Unicamp nem com a DAC. Os dados vêm de páginas públicas da DAC e podem ter diferenças em
           relação ao sistema oficial: confira sempre antes de se matricular.
         </p>
-        <nav aria-label="Rodapé" className="flex gap-4">
+        <nav aria-label="Rodapé" className="flex flex-wrap gap-x-4 gap-y-1">
+          {itensNav.map(({ href, rotulo }) => (
+            <Link key={href} href={href} className="-my-2 py-2 underline-offset-4 hover:text-foreground hover:underline">
+              {rotulo}
+            </Link>
+          ))}
           <Link href="/sobre" className="-my-2 py-2 underline-offset-4 hover:text-foreground hover:underline">
             Sobre
           </Link>

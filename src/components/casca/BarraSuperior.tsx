@@ -10,12 +10,12 @@ import { Busca } from "./Busca";
 import { Logo } from "./Logo";
 import { itemSobre, itensNav } from "./itens";
 
-/** `leve`: variante da apresentação (sem painel): campo de busca, Sobre + Entrar. */
+/** `leve`: variante da apresentação (sem painel): mesma navegação, CTA "Entrar com e-mail". */
 export function BarraSuperior({ leve = false }: { leve?: boolean }) {
   const caminho = usePathname();
   const router = useRouter();
   const { data: sessao, isPending } = authClient.useSession();
-  const itens = leve ? [itemSobre] : [...itensNav, itemSobre];
+  const itens = [...itensNav, itemSobre];
   return (
     <header className="sticky top-0 z-40 h-barra border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex h-full max-w-[90rem] items-center gap-4 px-4 lg:px-6">
@@ -62,7 +62,7 @@ export function BarraSuperior({ leve = false }: { leve?: boolean }) {
           ) : (
             !isPending && (
               <Button render={<Link href="/entrar" />} nativeButton={false} size="lg">
-                Entrar
+                {leve ? "Entrar com e-mail" : "Entrar"}
               </Button>
             )
           )}
