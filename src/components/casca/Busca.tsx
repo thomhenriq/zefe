@@ -50,7 +50,7 @@ export function Busca({ className }: { className?: string }) {
     <form action="/busca" role="search" className={`${className ?? ""} relative`} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) fechar(); }}>
       <label className="relative block">
         <span className="sr-only">Buscar disciplina, professor ou sala</span>
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <input
           ref={ref}
           name="q"
@@ -69,28 +69,28 @@ export function Busca({ className }: { className?: string }) {
           aria-activedescendant={ativoOk ? (ativoOk.id === "todos" ? verTodos : `${idBase}-${ativoOk.id}`) : undefined}
           placeholder="Buscar disciplina, professor…"
           aria-keyshortcuts="/ Control+K"
-          className="h-9 w-full rounded-lg border bg-card pr-9 pl-9 text-sm shadow-suave placeholder:text-muted-foreground focus-visible:border-ring"
+          className="h-10 w-full rounded-full border border-transparent bg-muted pr-9 pl-10 text-sm placeholder:text-muted-foreground focus-visible:border-ring"
         />
-        <kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded border px-1.5 font-mono text-[0.65rem] text-muted-foreground lg:block" aria-hidden>/</kbd>
+        <kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-full border px-2 text-xs text-muted-foreground lg:block" aria-hidden>/</kbd>
       </label>
       <p className="sr-only" aria-live="polite">{!mostrar || !q || carregando ? "" : erro ? "Não consegui buscar agora." : n === 0 ? "Nenhum resultado" : `${n} ${n === 1 ? "resultado" : "resultados"}`}</p>
       {mostrar && (
         // mouseDown não tira o foco do campo, para o clique no item não ser perdido pelo blur
         <div id={`${idBase}-lista`} role="listbox" aria-label="Sugestões" onMouseDown={(e) => e.preventDefault()} onClick={(e) => { if ((e.target as HTMLElement).closest("a")) fechar(); }}
-          className="absolute top-full right-0 left-0 z-50 mt-1 max-h-[70dvh] overflow-y-auto rounded-xl border bg-popover text-popover-foreground shadow-elevada">
+          className="absolute top-full right-0 left-0 z-50 mt-2 max-h-[70dvh] overflow-y-auto rounded-xl border bg-popover text-popover-foreground shadow-elevada">
           {n > 0 && (
             <>
               <div className={carregando ? "opacity-60 motion-safe:transition-opacity" : "motion-safe:transition-opacity"}>
                 <Resultados r={r!} q={qResultado} ativo={ativoOk?.id} idBase={idBase} compacto />
               </div>
               <Link href={`/busca?q=${encodeURIComponent(q)}`} id={verTodos} role="option" aria-selected={ativoOk?.id === "todos"} onClick={fechar}
-                className="block border-t px-3 py-2 text-sm font-medium text-primary hover:bg-muted aria-selected:bg-muted">
+                className="block border-t px-4 py-3 text-sm font-medium text-link hover:bg-muted aria-selected:bg-muted">
                 Ver todos os resultados
               </Link>
             </>
           )}
-          {n === 0 && !carregando && <p className="px-3 py-3 text-sm text-muted-foreground">{erro ? "Não consegui buscar agora." : <>Não encontrei nada para “{q}”. Tente menos letras.</>}</p>}
-          {n === 0 && carregando && <p className="px-3 py-3 text-sm text-muted-foreground">Buscando…</p>}
+          {n === 0 && !carregando && <p className="px-4 py-3 text-sm text-muted-foreground">{erro ? "Não consegui buscar agora." : <>Não encontrei nada para “{q}”. Tente menos letras.</>}</p>}
+          {n === 0 && carregando && <p className="px-4 py-3 text-sm text-muted-foreground">Buscando…</p>}
         </div>
       )}
     </form>

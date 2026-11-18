@@ -161,12 +161,12 @@ export function Montagem(p: MontagemProps) {
         requestAnimationFrame(() => { window.scrollTo({ top: inicio.current.win, behavior: "instant" }); if (lista.current && lista.current.offsetParent) lista.current.scrollTop = inicio.current.lista; });
       }}
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:items-start">
-        <div ref={lista} className="space-y-3 max-lg:order-2 lg:sticky lg:top-[calc(var(--spacing-barra,3.5rem)+0.75rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:pr-1">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
+        <div ref={lista} className="space-y-3 max-lg:order-2 lg:sticky lg:top-[calc(var(--spacing-barra,3.5rem)+0.75rem)] lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:pr-1">
           {escolha && <Escolha disc={escolha} encaixes={encaixes} naGrade={p.itens.find((i) => i.codigo === escolha.codigo)?.turma} rotuloSem={p.rotuloSem} previa={previa} setPrevia={setPrevia} onAdicionar={(t) => adicionar(escolha.codigo, t)} onFechar={fechar} />}
           <div className={cn(escolha && "lg:hidden", "space-y-3")}>
             {p.semArvore
-              ? <p className="rounded-xl border bg-card p-3 text-sm text-muted-foreground">Sem currículo carregado para o seu perfil, não há proposta para mostrar. Use a busca abaixo.</p>
+              ? <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Sem currículo carregado para o seu perfil, não há proposta para mostrar. Use a busca abaixo.</p>
               : <Candidatos grupos={p.grupos} itens={p.itens} rotuloSem={p.rotuloSem} publicado={p.publicado} onAdicionar={(c, el) => c.oferta && abrir(c.oferta, el)} />}
             <Busca ano={p.ano} periodo={p.periodo} rotuloSem={p.rotuloSem} onEscolher={(d, el) => abrir(d, el)} />
           </div>
@@ -178,7 +178,7 @@ export function Montagem(p: MontagemProps) {
           </AlvoGrade>
           <p role="status" aria-live="polite" className="min-h-5 text-sm text-muted-foreground">{pendente ? "Atualizando a grade…" : aviso}</p>
           {erro && <p role="alert" className="text-sm text-conflito">{erro}</p>}
-          <p className="text-xs text-muted-foreground">Arraste uma disciplina para a grade e solte numa turma. Para tirar, arraste o bloco da grade e solte fora dela (ou na faixa que aparece), ou use Remover. No celular, segure o dedo no cartão por um instante, ou use Adicionar.</p>
+          <p className="text-sm text-muted-foreground">Arraste uma disciplina para a grade e solte numa turma. Para tirar, arraste o bloco da grade e solte fora dela (ou na faixa que aparece), ou use Remover. No celular, segure o dedo no cartão por um instante, ou use Adicionar.</p>
         </div>
       </div>
     </DragDropProvider>
@@ -207,11 +207,11 @@ function BlocoFantasma({ it, base, turmas, estado, apagado }: { it: ItemSemanal;
     <div ref={ref} role="group" aria-label={`Pré-visualização: ${it.codigo} turma${turmas.length > 1 ? "s" : ""} ${turmas.join(", ")}, ${it.inicio} às ${it.fim}, ${estado}`} title={`${it.codigo} turma${turmas.length > 1 ? "s" : ""} ${turmas.join(", ")} · ${estado}`}
       className={cn(base.cls, "z-10 border-2", conflita ? "border-solid" : "border-dashed", apagado && "opacity-45", isDropTarget && "ring-3 ring-ring")}
       style={{ ...base.estilo, background: "color-mix(in oklch, currentColor 12%, var(--card))" }}>
-      <span className="flex items-center gap-0.5 font-mono font-semibold">
+      <span className="flex items-center gap-0.5 font-medium tabular-nums">
         {conflita ? <OctagonX className="size-3 shrink-0" aria-hidden /> : <Plus className="size-3 shrink-0" aria-hidden />}
         <span className="min-w-0 break-words">{nomeDoItem(it)}</span>
       </span>
-      <span className="tabular block opacity-90">{it.inicio}–{it.fim}</span>
+      <span className="tabular-nums block opacity-90">{it.inicio}–{it.fim}</span>
     </div>
   );
 }
@@ -221,8 +221,8 @@ function BlocoItem({ it, base }: { it: ItemSemanal; base: BaseBloco }) {
   const { ref } = useDraggable({ id: it.id!, data: { tipo: "item", codigo: it.codigo, rotulo: nomeDoItem(it) } });
   return (
     <div ref={ref} aria-label={`${base.aria}. Pegue com Espaço e solte fora da grade para remover.`} title={base.aria} className={cn(base.cls, "cursor-grab touch-manipulation")} style={base.estilo}>
-      <Link href={it.href ?? "#"} draggable={false} className="block font-mono font-semibold underline-offset-2 hover:underline">{it.rotulo}</Link>
-      <span className="tabular block opacity-90">{it.inicio}–{it.fim}</span>
+      <Link href={it.href ?? "#"} draggable={false} className="block font-medium tabular-nums underline-offset-2 hover:underline">{it.rotulo}</Link>
+      <span className="tabular-nums block opacity-90">{it.inicio}–{it.fim}</span>
     </div>
   );
 }
@@ -230,23 +230,23 @@ function BlocoItem({ it, base }: { it: ItemSemanal; base: BaseBloco }) {
 type Abrir = (c: CartaoComSituacao, el: HTMLElement) => void;
 
 function Candidatos({ grupos, itens, rotuloSem, publicado, onAdicionar }: { grupos: Grupo[]; itens: ItemGrade[]; rotuloSem: string; publicado: boolean; onAdicionar: Abrir }) {
-  if (grupos.length === 0) return <p className="rounded-xl border bg-card p-3 text-sm text-muted-foreground">Nada faltando na sua árvore.</p>;
+  if (grupos.length === 0) return <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Nada faltando na sua árvore.</p>;
   return (
     <section aria-labelledby="h-prop" className="space-y-3">
-      <h2 id="h-prop" className="font-heading text-lg font-semibold">Disciplinas para {rotuloSem}</h2>
+      <h2 id="h-prop" className="font-heading text-xl font-bold">Disciplinas para {rotuloSem}</h2>
       {grupos.map((g) => {
         const livres = g.cartoes.filter((c) => c.situacao.tipo === "livre"), inertes = g.cartoes.filter((c) => c.situacao.tipo !== "livre");
         const semOferta = inertes.filter((c) => c.situacao.tipo === "sem-oferta").length, travadas = inertes.length - semOferta;
         return (
           <div key={String(g.semestre)} className="space-y-1.5">
-            <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">{ordinal(g.semestre)}</h3>
+            <h3 className="sticky top-0 z-10 bg-background py-1 text-xs font-bold text-muted-foreground">{ordinal(g.semestre)}</h3>
             {livres.length > 0 && <ul className="space-y-1.5">{livres.map((c) => <li key={c.codigo}><CartaoLivre c={c} naGrade={itens.find((i) => i.codigo === c.codigo)} onAdicionar={onAdicionar} /></li>)}</ul>}
             {inertes.length > 0 && (
-              <details className="rounded-lg border border-dashed text-sm">
-                <summary className="cursor-pointer px-2 py-1.5 text-xs text-muted-foreground">
+              <details className="rounded-xl border border-dashed text-sm">
+                <summary className="cursor-pointer px-4 py-3 text-sm text-muted-foreground">
                   {[semOferta > 0 && `${semOferta} ${publicado ? `sem oferta em ${rotuloSem}` : `sem oferta prevista em ${rotuloSem}`}`, travadas > 0 && `${travadas} ${travadas === 1 ? "travada" : "travadas"} por pré-requisito`].filter(Boolean).join(" · ")}
                 </summary>
-                <ul className="space-y-1.5 p-1.5">{inertes.map((c) => <li key={c.codigo}><CartaoInerte c={c} rotuloSem={rotuloSem} publicado={publicado} /></li>)}</ul>
+                <ul className="space-y-1.5 p-2">{inertes.map((c) => <li key={c.codigo}><CartaoInerte c={c} rotuloSem={rotuloSem} publicado={publicado} /></li>)}</ul>
               </details>
             )}
           </div>
@@ -258,8 +258,8 @@ function Candidatos({ grupos, itens, rotuloSem, publicado, onAdicionar }: { grup
 
 function CartaoInerte({ c, rotuloSem, publicado }: { c: CartaoComSituacao; rotuloSem: string; publicado: boolean }) {
   return (
-    <div className="space-y-1 rounded-lg border bg-muted/40 p-2 text-sm text-muted-foreground" aria-disabled="true">
-      <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-mono font-semibold">{c.codigo}</span><span className="tabular text-xs">{c.creditos} cr.</span></p>
+    <div className="space-y-1 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground" aria-disabled="true">
+      <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-medium tabular-nums">{c.codigo}</span><span className="tabular-nums text-xs">{c.creditos} cr.</span></p>
       <p className="leading-snug [overflow-wrap:anywhere]">{c.nome}</p>
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         {(c.estado === "cursando" || c.estado === "cursada") && <EstadoBadge estado={c.estado} />}
@@ -275,10 +275,10 @@ function CartaoInerte({ c, rotuloSem, publicado }: { c: CartaoComSituacao; rotul
 function CartaoLivre({ c, naGrade, onAdicionar }: { c: CartaoComSituacao; naGrade?: ItemGrade; onAdicionar: Abrir }) {
   const { ref, handleRef, isDragSource } = useDraggable({ id: `cartao:${c.codigo}`, data: { tipo: "cartao", codigo: c.codigo, rotulo: c.codigo } });
   return (
-    <div ref={ref} className={cn("flex touch-manipulation items-start gap-1.5 rounded-lg border bg-card p-2 text-sm", isDragSource && "opacity-60")}>
-      <button ref={handleRef} type="button" className="mt-0.5 cursor-grab rounded p-0.5 text-muted-foreground hover:bg-muted active:cursor-grabbing" aria-label={`Arrastar ${c.codigo} ${c.nome} para a grade`}><GripVertical className="size-4" aria-hidden /></button>
+    <div ref={ref} className={cn("flex touch-manipulation items-start gap-2 rounded-xl border bg-card p-4 text-sm", isDragSource && "opacity-60")}>
+      <button ref={handleRef} type="button" className="-ml-1 cursor-grab rounded-lg p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing" aria-label={`Arrastar ${c.codigo} ${c.nome} para a grade`}><GripVertical className="size-4" aria-hidden /></button>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-mono font-semibold">{c.codigo}</span><span className="tabular text-xs text-muted-foreground">{c.creditos} cr.</span></p>
+        <p className="flex flex-wrap items-baseline gap-x-2"><span className="font-medium tabular-nums">{c.codigo}</span><span className="tabular-nums text-xs text-muted-foreground">{c.creditos} cr.</span></p>
         <p className="leading-snug [overflow-wrap:anywhere]">{c.nome}</p>
         <div className="flex flex-wrap items-center gap-1.5">
           {(c.estado === "cursando" || c.estado === "cursada") && <EstadoBadge estado={c.estado} />}
@@ -286,8 +286,8 @@ function CartaoLivre({ c, naGrade, onAdicionar }: { c: CartaoComSituacao; naGrad
           {c.oferta?.tipo === "previsao" && <AvisoBadge nivel="previsao" />}
           {c.prereqDesconhecido && <AvisoBadge nivel="naoverificado" rotulo="pré-requisito não verificado" />}
         </div>
+        <Button type="button" size="sm" variant="outline" className="mt-1" onClick={(e) => onAdicionar(c, e.currentTarget)} aria-label={`${naGrade ? "Trocar turma de" : "Adicionar"} ${c.codigo}`}>{naGrade ? "Trocar" : "Adicionar"}</Button>
       </div>
-      <Button type="button" size="sm" variant="outline" onClick={(e) => onAdicionar(c, e.currentTarget)} aria-label={`${naGrade ? "Trocar turma de" : "Adicionar"} ${c.codigo}`}>{naGrade ? "Trocar" : "Adicionar"}</Button>
     </div>
   );
 }
@@ -297,12 +297,12 @@ function Escolha({ disc, encaixes, naGrade, rotuloSem, previa, setPrevia, onAdic
   useEffect(() => titulo.current?.focus({ preventScroll: true }), [disc.codigo]);
   return (
     <section aria-labelledby="h-escolha" onKeyDown={(e) => e.key === "Escape" && onFechar()}
-      className="space-y-2 rounded-xl border bg-card p-3 text-sm max-lg:fixed max-lg:inset-x-2 max-lg:bottom-[4.5rem] max-lg:z-40 max-lg:max-h-[55dvh] max-lg:overflow-y-auto max-lg:shadow-elevada">
+      className="space-y-3 rounded-xl border bg-card p-4 text-sm max-lg:fixed max-lg:inset-x-3 max-lg:bottom-24 max-lg:z-40 max-lg:max-h-[55dvh] max-lg:overflow-y-auto max-lg:shadow-elevada">
       <div className="flex items-start gap-2">
-        <h2 id="h-escolha" ref={titulo} tabIndex={-1} className="min-w-0 flex-1 text-base font-semibold outline-none"><span className="font-mono">{disc.codigo}</span> {disc.nome}</h2>
+        <h2 id="h-escolha" ref={titulo} tabIndex={-1} className="min-w-0 flex-1 text-base font-bold outline-none"><span className="font-medium tabular-nums">{disc.codigo}</span> {disc.nome}</h2>
         <Button type="button" size="icon-sm" variant="ghost" onClick={onFechar}><X aria-hidden /><span className="sr-only">Fechar escolha de turma</span></Button>
       </div>
-      {disc.tipo === "previsao" && <p className="flex flex-wrap items-center gap-1.5 text-xs"><AvisoBadge nivel="previsao" /><span>horários de {rotuloSem} previstos a partir de {disc.evidencias}</span></p>}
+      {disc.tipo === "previsao" && <p className="flex flex-wrap items-center gap-1.5 text-sm"><AvisoBadge nivel="previsao" /><span>horários de {rotuloSem} previstos a partir de {disc.evidencias}</span></p>}
       {disc.turmas.length === 0 && <p className="text-muted-foreground">Nenhuma turma em {rotuloSem}.</p>}
       <ul className="space-y-1.5">
         {disc.turmas.map((t) => {
@@ -310,7 +310,7 @@ function Escolha({ disc, encaixes, naGrade, rotuloSem, previa, setPrevia, onAdic
           const atual = naGrade === t.turma;
           return (
             <li key={t.turma} onMouseEnter={() => setPrevia(t.turma)} onMouseLeave={() => setPrevia(null)} onFocus={() => setPrevia(t.turma)} onBlur={() => setPrevia(null)}
-              className={cn("space-y-1 rounded-lg border p-2", previa === t.turma && "border-foreground/40 bg-accent")}>
+              className={cn("space-y-1 rounded-lg border p-3", previa === t.turma && "border-foreground/40 bg-accent")}>
               <div className="flex flex-wrap items-center gap-2">
                 <strong>Turma {t.turma}</strong>
                 {e?.cabe ? <span className="inline-flex items-center gap-1 text-xs text-cursada"><CheckCircle2 className="size-3.5" aria-hidden />cabe</span> : <AvisoBadge nivel="conflito" rotulo="conflita" />}
@@ -318,10 +318,10 @@ function Escolha({ disc, encaixes, naGrade, rotuloSem, previa, setPrevia, onAdic
                 {t.horarioIncompleto && <AvisoBadge nivel="naoverificado" rotulo="horário incompleto" />}
                 <Button type="button" size="sm" variant={e?.cabe ? "default" : "outline"} className="ml-auto" disabled={atual} onClick={() => onAdicionar(t.turma)}>{atual ? "Na grade" : naGrade ? "Trocar para esta" : "Adicionar"}<span className="sr-only"> turma {t.turma}</span></Button>
               </div>
-              <p className="tabular text-xs text-muted-foreground">{resumoHorarios(t.horarios)}</p>
-              {t.docentes.length > 0 && <p className="text-xs text-muted-foreground">{t.docentes.join(", ")}</p>}
-              {e?.conflitos.map((m, i) => <p key={i} className="text-xs text-conflito">{m}</p>)}
-              {e?.avisos.map((m, i) => <p key={i} className="text-xs text-aviso">{m}</p>)}
+              <p className="text-sm tabular-nums text-muted-foreground">{resumoHorarios(t.horarios)}</p>
+              {t.docentes.length > 0 && <p className="text-sm text-muted-foreground">{t.docentes.join(", ")}</p>}
+              {e?.conflitos.map((m, i) => <p key={i} className="text-sm text-conflito">{m}</p>)}
+              {e?.avisos.map((m, i) => <p key={i} className="text-sm text-aviso">{m}</p>)}
             </li>
           );
         })}
@@ -352,12 +352,12 @@ function Busca({ ano, periodo, rotuloSem, onEscolher }: { ano: number; periodo: 
     else onEscolher(r.oferta, el);
   }
   return (
-    <details className="group rounded-xl border bg-card p-3 text-sm">
+    <details className="group rounded-xl border bg-card p-4 text-sm">
       <summary className="flex cursor-pointer items-center gap-2 font-medium"><Search className="size-4" aria-hidden />Adicionar disciplina fora da proposta<ChevronDown className="ml-auto size-4 transition-transform group-open:rotate-180" aria-hidden /></summary>
       <div className="mt-3 space-y-2">
         <label className="block"><span className="sr-only">Código ou nome da disciplina</span>
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Código ou nome (MC102, cálculo)" autoComplete="off" onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
-            className="h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50" /></label>
+            className="h-10 w-full rounded-lg border border-input bg-card px-4 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50" /></label>
         <div role="status" aria-live="polite">
           {res && "erro" in res && <p className="text-conflito">{res.erro}</p>}
           {res && "disciplinas" in res && res.disciplinas.length === 0 && <p className="text-muted-foreground">Nada encontrado para “{q.trim()}”.</p>}
@@ -367,7 +367,7 @@ function Busca({ ano, periodo, rotuloSem, onEscolher }: { ano: number; periodo: 
           <ul className="divide-y">
             {res.disciplinas.map((d) => (
               <li key={d.codigo} className="flex items-center gap-2 py-1.5">
-                <span className="min-w-0 flex-1"><span className="font-mono font-semibold">{d.codigo}</span> <span className="[overflow-wrap:anywhere]">{d.nome}</span></span>
+                <span className="min-w-0 flex-1"><span className="font-medium tabular-nums">{d.codigo}</span> <span className="[overflow-wrap:anywhere]">{d.nome}</span></span>
                 <Button type="button" size="sm" variant="outline" onClick={(e) => escolher(d.codigo, e.currentTarget)}>Turmas em {rotuloSem}<span className="sr-only"> de {d.codigo}</span></Button>
               </li>
             ))}

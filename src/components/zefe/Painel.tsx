@@ -13,7 +13,7 @@ function Aviso({ titulo, texto, acao }: { titulo: string; texto: string; acao?: 
     <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
       <Mascote estado="parado" tamanho={160} />
       <div className="space-y-1.5">
-        <h2 className="text-xl font-semibold">{titulo}</h2>
+        <h2 className="text-xl font-bold">{titulo}</h2>
         <p className="mx-auto max-w-[28ch] text-sm text-muted-foreground">{texto}</p>
       </div>
       {acao}
@@ -37,7 +37,7 @@ export function Painel({ acesso, zefe }: { acesso: AcessoZefe; zefe: ZefeChat })
     <Aviso
       titulo="Zefe"
       texto="O assistente chega em breve. Enquanto isso, todas as telas já funcionam sem ele."
-      acao={<span className="rounded-full border border-previsao-borda bg-previsao-bg px-3 py-1 text-xs font-medium text-previsao">Em breve</span>}
+      acao={<span className="rounded-full border border-dashed border-previsao-borda bg-previsao-bg px-3 py-1 text-xs font-medium text-previsao">Em breve</span>}
     />
   );
 }

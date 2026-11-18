@@ -53,8 +53,9 @@ function Selo({ chave, meta, className, rotulo, compacto }: Props & { chave: key
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        meta.tracejado && "border-dashed",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs leading-none font-medium whitespace-nowrap",
+        // chip v2 sem contorno; só a informação incerta ganha borda tracejada
+        meta.tracejado ? "border-dashed" : "border-transparent!",
         cores[chave],
         className,
       )}

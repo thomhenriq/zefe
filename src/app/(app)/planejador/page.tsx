@@ -23,10 +23,10 @@ export const dynamic = "force-dynamic";
 
 type Params = Record<string, string | string[] | undefined>;
 const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
-const CAMPO = "h-8 rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
-const H2 = "font-heading text-lg font-semibold";
+const CAMPO = "h-10 rounded-lg border border-input bg-card px-4 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+const H2 = "font-heading text-xl font-bold";
 const rotulosEvidencias = (evs: { ano: number; periodo: number }[]) => evs.map((e) => rotuloSemestre(e.ano, e.periodo)).join(", ");
-const SECAO = "space-y-3 rounded-xl border bg-card p-4";
+const SECAO = "space-y-4 rounded-xl border bg-card p-6";
 const DIAS = [["seg", "Segunda"], ["ter", "Terça"], ["qua", "Quarta"], ["qui", "Quinta"], ["sex", "Sexta"], ["sab", "Sábado"]] as const;
 
 export default async function Planejador({ searchParams }: { searchParams: Promise<Params> }) {
@@ -64,24 +64,24 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   const sem_h = grade ? semHorario(grade.itens) : [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 lg:px-6">
       <header className="space-y-3">
-        <h1 className="text-4xl">Planejador</h1>
-        <nav aria-label="Semestre" className="flex flex-wrap gap-1.5">
+        <h1 className="text-ds-h2">Planejador</h1>
+        <nav aria-label="Semestre" className="flex flex-wrap gap-2">
           {opcoes.map((s) => {
             const atual = s.ano === ano && s.periodo === periodo;
             return <Link key={`${s.ano}${s.periodo}`} href={href({ ano: s.ano, periodo: s.periodo })} aria-current={atual ? "page" : undefined}
-              className={cn("tabular rounded-full border px-3 py-1 text-sm", atual ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted")}>{rotuloSemestre(s.ano, s.periodo)}</Link>;
+              className={cn("inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium tabular-nums transition-colors", atual ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{rotuloSemestre(s.ano, s.periodo)}</Link>;
           })}
         </nav>
-        <nav aria-label="Opções de grade" className="flex flex-wrap items-center gap-1.5">
+        <nav aria-label="Opções de grade" className="flex flex-wrap items-center gap-2">
           {grades.map((g) => (
             <Link key={g.id} href={href({ grade: g.id })} aria-current={g.id === grade?.id ? "page" : undefined}
-              className={cn("inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm", g.id === grade?.id ? "border-foreground/40 bg-accent font-medium" : "bg-card hover:bg-muted")}>
-              {g.nome}{g.principal && <span className="inline-flex items-center gap-0.5 text-xs text-primary"><Star className="size-3" aria-hidden />principal</span>}
+              className={cn("inline-flex h-10 items-center gap-1.5 rounded-full border px-4 text-sm transition-colors", g.id === grade?.id ? "border-link bg-accent font-medium" : "bg-card hover:bg-muted")}>
+              {g.nome}{g.principal && <span className="inline-flex items-center gap-0.5 text-xs text-link"><Star className="size-3" aria-hidden />principal</span>}
             </Link>
           ))}
-          <FormAcao acao={criarGradeAcao} className="flex flex-wrap items-center gap-1.5">
+          <FormAcao acao={criarGradeAcao} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="ano" value={ano} /><input type="hidden" name="periodo" value={periodo} />
             <label className="sr-only" htmlFor="nova-grade">Nome da nova opção</label>
             <input id="nova-grade" name="nome" required maxLength={60} placeholder={grades.length ? "Nova opção" : "Nome da grade"} defaultValue={grades.length ? "" : "Minha grade"} className={cn(CAMPO, "w-36")} />
@@ -94,13 +94,13 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
                 </select>
               </>
             )}
-            <Button type="submit" variant="outline">Criar</Button>
+            <Button type="submit" variant="outline" size="sm">Criar</Button>
           </FormAcao>
         </nav>
       </header>
 
       {!publicado && (
-        <p className="rounded-xl border border-dashed border-previsao-borda bg-previsao-bg p-3 text-sm text-previsao" role="note">
+        <p className="rounded-xl border border-dashed border-previsao-borda bg-previsao-bg p-4 text-sm text-previsao" role="note">
           <AvisoBadge nivel="previsao" className="mr-2" />
           {rotuloSemestre(ano, periodo)} ainda não tem caderno publicado: horários e turmas são previsão
           {evidencias.length ? <> baseada em <strong>{evidencias.join(", ")}</strong></> : <> (as evidências aparecem quando há disciplinas na grade)</>}. Confira quando a DAC publicar.
@@ -108,18 +108,18 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
       )}
 
       {!grade ? (
-        <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Nenhuma grade em {rotuloSemestre(ano, periodo)}. Dê um nome acima e crie a primeira opção.</p>
+        <p className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Nenhuma grade em {rotuloSemestre(ano, periodo)}. Dê um nome acima e crie a primeira opção.</p>
       ) : (
         <>
           <section className="space-y-3" aria-labelledby="h-grade">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="h-grade" className={H2}>{grade.nome}</h2>
-              {grade.principal ? <span className="inline-flex items-center gap-1 text-sm text-primary"><Star className="size-3.5" aria-hidden />principal</span> : (
+              {grade.principal ? <span className="inline-flex items-center gap-1 text-sm text-link"><Star className="size-3.5" aria-hidden />principal</span> : (
                 <FormAcao acao={principalAcao} className="flex"><input type="hidden" name="grade" value={grade.id} /><Button type="submit" size="sm" variant="outline">Tornar principal</Button></FormAcao>
               )}
               <details className="ml-auto">
-                <summary className="cursor-pointer rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted">Excluir esta opção</summary>
-                <FormAcao acao={excluirGradeAcao} className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border p-2 text-sm">
+                <summary className="cursor-pointer rounded-full px-4 py-2 text-sm text-muted-foreground hover:bg-muted">Excluir esta opção</summary>
+                <FormAcao acao={excluirGradeAcao} className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border p-3 text-sm">
                   <input type="hidden" name="grade" value={grade.id} /><input type="hidden" name="ano" value={ano} /><input type="hidden" name="periodo" value={periodo} />
                   Excluir “{grade.nome}” e suas turmas?<Button type="submit" size="sm" variant="destructive"><Trash2 aria-hidden />Excluir</Button>
                 </FormAcao>
@@ -131,7 +131,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
 
           <section className={SECAO} aria-labelledby="h-resumo">
             <h2 id="h-resumo" className={H2}>Resumo</h2>
-            <p className="text-sm"><strong className="tabular text-base">{grade.checagem.creditos}</strong> créditos em {grade.itens.length} {grade.itens.length === 1 ? "disciplina" : "disciplinas"}
+            <p className="text-sm"><strong className="text-base tabular-nums">{grade.checagem.creditos}</strong> créditos em {grade.itens.length} {grade.itens.length === 1 ? "disciplina" : "disciplinas"}
               {grade.checagem.ok && grade.checagem.achados.length === 0 && grade.itens.length > 0 ? <span className="text-muted-foreground"> · sem conflitos nem avisos</span> : null}</p>
             {!grade.checagem.verificado && <p className="flex items-start gap-2 text-sm"><AvisoBadge nivel="naoverificado" />Há horário ou crédito não lido por inteiro: a conferência não garante que a grade cabe.</p>}
             {achados && (["conflito", "aviso"] as const).map((n) => achados[n].length > 0 && (
@@ -153,21 +153,21 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
                   return (
                     <li key={i.codigo} className="space-y-1.5 py-3 text-sm first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <Link href={`/disciplina/${i.codigo}`} className="font-mono font-semibold hover:underline">{i.codigo}</Link>
+                        <Link href={`/disciplina/${i.codigo}`} className="font-medium tabular-nums hover:underline">{i.codigo}</Link>
                         <span className="min-w-0 flex-1">{i.nome}</span>
                         {i.tipo === "previsao" && <AvisoBadge nivel="previsao" />}
                         {(i.horarios.length === 0 || i.horarioIncompleto) && <AvisoBadge nivel="naoverificado" rotulo={i.horarioIncompleto ? "horário incompleto" : "sem horário"} />}
                       </div>
-                      <p className="text-muted-foreground">Turma <strong className="text-foreground">{i.turma}</strong> · {i.creditos ?? "?"} cr. · {i.campus} · <span className="tabular">{resumoHorarios(i.horarios)}</span>{ev && <> · previsão baseada em {ev}</>}</p>
+                      <p className="text-muted-foreground">Turma <strong className="text-foreground">{i.turma}</strong> · {i.creditos ?? "?"} cr. · {i.campus} · <span className="tabular-nums">{resumoHorarios(i.horarios)}</span>{ev && <> · previsão baseada em {ev}</>}</p>
                       <div className="flex flex-wrap items-start gap-2">
                         {turmas.length > 0 && (
                           <details className="min-w-0">
-                            <summary className="cursor-pointer rounded-lg border px-2.5 py-1 text-[0.8rem] hover:bg-muted">Trocar turma ({turmas.length})</summary>
+                            <summary className="inline-flex h-10 cursor-pointer items-center rounded-full border px-4 text-sm hover:bg-muted">Trocar turma ({turmas.length})</summary>
                             <ul className="mt-2 space-y-1">
                               {turmas.map((t) => (
                                 <li key={t.turma}><FormAcao acao={adicionarAcao} className="flex flex-wrap items-center gap-2">
                                   <input type="hidden" name="grade" value={grade.id} /><input type="hidden" name="codigo" value={i.codigo} /><input type="hidden" name="turma" value={t.turma} />
-                                  <Button type="submit" size="sm" variant="outline">Turma {t.turma}</Button><span className="tabular text-muted-foreground">{resumoHorarios(t.horarios)}</span>
+                                  <Button type="submit" size="sm" variant="outline">Turma {t.turma}</Button><span className="tabular-nums text-muted-foreground">{resumoHorarios(t.horarios)}</span>
                                 </FormAcao></li>
                               ))}
                             </ul>
@@ -183,7 +183,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
             )}
             {sem_h.length > 0 && (
               <div className="space-y-1 border-t pt-3">
-                <h3 className="text-sm font-semibold">Sem horário</h3>
+                <h3 className="text-sm font-bold">Sem horário</h3>
                 <p className="text-sm text-muted-foreground">Não aparecem na grade semanal, mas contam nos créditos: {sem_h.map((i) => `${i.codigo} ${i.turma}${i.horarioIncompleto ? " (horário incompleto)" : ""}`).join(", ")}.</p>
               </div>
             )}
@@ -195,8 +195,8 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
             {grade.bloqueios.length > 0 && (
               <ul className="divide-y text-sm">
                 {grade.bloqueios.map((b) => (
-                  <li key={b.id} className="flex flex-wrap items-center gap-2 py-1.5">
-                    <span className="font-medium">{b.nome}</span><span className="tabular text-muted-foreground">{DIAS.find(([k]) => k === b.dia)![1]} {b.inicio}–{b.fim}</span>
+                  <li key={b.id} className="flex flex-wrap items-center gap-2 py-2">
+                    <span className="font-medium">{b.nome}</span><span className="tabular-nums text-muted-foreground">{DIAS.find(([k]) => k === b.dia)![1]} {b.inicio}–{b.fim}</span>
                     <FormAcao acao={excluirBloqueioAcao} className="ml-auto flex"><input type="hidden" name="id" value={b.id} /><Button type="submit" size="sm" variant="ghost"><Trash2 aria-hidden />Excluir<span className="sr-only"> {b.nome}</span></Button></FormAcao>
                   </li>
                 ))}
@@ -206,9 +206,9 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
               <input type="hidden" name="grade" value={grade.id} />
               <label className="space-y-1"><span className="block font-medium">Nome</span><input name="nome" required maxLength={60} placeholder="Estágio" className={cn(CAMPO, "w-36")} /></label>
               <label className="space-y-1"><span className="block font-medium">Dia</span><select name="dia" className={CAMPO}>{DIAS.map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select></label>
-              <label className="space-y-1"><span className="block font-medium">Início</span><input name="inicio" type="time" required defaultValue="13:30" className={cn(CAMPO, "tabular")} /></label>
-              <label className="space-y-1"><span className="block font-medium">Fim</span><input name="fim" type="time" required defaultValue="17:30" className={cn(CAMPO, "tabular")} /></label>
-              <Button type="submit" size="lg">Bloquear</Button>
+              <label className="space-y-1"><span className="block font-medium">Início</span><input name="inicio" type="time" required defaultValue="13:30" className={cn(CAMPO, "tabular-nums")} /></label>
+              <label className="space-y-1"><span className="block font-medium">Fim</span><input name="fim" type="time" required defaultValue="17:30" className={cn(CAMPO, "tabular-nums")} /></label>
+              <Button type="submit" size="sm">Bloquear</Button>
             </FormAcao>
           </section>
 

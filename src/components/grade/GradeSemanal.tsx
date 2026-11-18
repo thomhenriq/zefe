@@ -38,12 +38,12 @@ export function GradeSemanal({ itens, className, bloco }: { itens: ItemGrade[]; 
   const oculta = (d: Dia) => (d === sel ? "" : "max-sm:hidden");
   return (
     <div className={cn("overflow-x-auto rounded-xl border bg-card", className)} role="group" aria-label="Grade semanal">
-      <div role="tablist" aria-label="Dia da semana" className="grid grid-cols-6 border-b sm:hidden">
+      <div role="tablist" aria-label="Dia da semana" className="grid grid-cols-6 gap-1 border-b p-2 sm:hidden">
         {DIAS.map((d) => (
           <button key={d.dia} type="button" role="tab" aria-selected={d.dia === sel} onClick={() => setSel(d.dia)}
-            className={cn("relative py-2.5 text-sm font-medium text-muted-foreground", d.dia === sel && "bg-accent text-accent-foreground")}>
+            className={cn("relative rounded-full py-2 text-sm font-medium text-muted-foreground", d.dia === sel && "bg-accent text-accent-foreground")}>
             {d.curto}
-            {itens.some((i) => i.dia === d.dia) && <span aria-hidden className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />}
+            {itens.some((i) => i.dia === d.dia) && <span aria-hidden className="absolute top-1 right-2 size-1.5 rounded-full bg-link" />}
           </button>
         ))}
       </div>
@@ -55,7 +55,7 @@ export function GradeSemanal({ itens, className, bloco }: { itens: ItemGrade[]; 
         <div className={cn("grid", colunas)} style={{ height: horas.length * PX_H }}>
           <div className="relative">
             {horas.map((h) => (
-              <span key={h} className="tabular absolute right-1.5 -translate-y-1/2 text-[0.7rem] text-muted-foreground" style={{ top: (h - H0) * PX_H, display: h === H0 ? "none" : undefined }}>
+              <span key={h} className="absolute tabular-nums right-1.5 -translate-y-1/2 text-xs text-muted-foreground" style={{ top: (h - H0) * PX_H, display: h === H0 ? "none" : undefined }}>
                 {String(h).padStart(2, "0")}h
               </span>
             ))}
@@ -71,10 +71,10 @@ export function GradeSemanal({ itens, className, bloco }: { itens: ItemGrade[]; 
                   const topo = Math.max(0, (minutos(it.inicio) - H0 * 60) / 60) * PX_H;
                   const alto = Math.max(18, ((Math.min(minutos(it.fim), H1 * 60) - Math.max(minutos(it.inicio), H0 * 60)) / 60) * PX_H - 2);
                   const { col, cols } = pos[i]!;
-                  const cls = cn("absolute overflow-hidden rounded-md border leading-tight", cols > 1 ? "px-0.5 py-0.5 text-[0.62rem] [overflow-wrap:anywhere]" : "px-1 py-0.5 text-[0.7rem]", cor(it.tom), it.href && "hover:brightness-95 dark:hover:brightness-110");
+                  const cls = cn("absolute overflow-hidden rounded-lg border leading-tight", cols > 1 ? "px-0.5 py-0.5 text-xs [overflow-wrap:anywhere]" : "px-1 py-0.5 text-xs", cor(it.tom), it.href && "hover:brightness-95 dark:hover:brightness-110");
                   const estilo = { top: topo + 1, height: alto, left: `calc(${(col / cols) * 100}% + 1px)`, width: `calc(${100 / cols}% - 2px)` };
                   const rotuloAria = `${it.rotulo}, ${nome}, ${it.inicio} às ${it.fim}`;
-                  const conteudo = (<><span className={cn("block font-mono font-semibold", cols === 1 && "max-sm:break-words sm:truncate")}>{it.rotulo}</span><span className={cn("tabular block opacity-90", cols === 1 && "sm:truncate")}>{it.inicio}–{it.fim}</span></>);
+                  const conteudo = (<><span className={cn("block font-medium tabular-nums", cols === 1 && "max-sm:break-words sm:truncate")}>{it.rotulo}</span><span className={cn("block tabular-nums opacity-90", cols === 1 && "sm:truncate")}>{it.inicio}–{it.fim}</span></>);
                   if (bloco && it.id) return <span key={it.id + i} className="contents">{bloco(it, { cls, estilo, aria: rotuloAria, conteudo, colunas: cols })}</span>;
                   return it.href
                     ? <Link key={i} href={it.href} aria-label={rotuloAria} title={rotuloAria} className={cls} style={estilo}>{conteudo}</Link>
