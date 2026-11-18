@@ -9,6 +9,7 @@ import { proximoSemestre } from '@/dominio/oferta';
 import { criarFerramentas } from './ferramentas';
 import { modelo as modeloBedrock } from './modelo';
 import { AVISO_ACAO_FANTASMA, acaoFantasma } from './fantasma';
+import { perguntaDeGrade } from './forcar';
 import { criarRemovedor } from './pensamento';
 import { montarPrompt } from './prompt';
 
@@ -32,8 +33,11 @@ export interface EntradaResposta {
   agora?: Date;
   /** Grava a resposta do assistente em `mensagem` ao terminar. Padrão: true. */
   salvar?: boolean;
+  /** Tokens gastos na resposta (para o script de avaliação). */
+  onUso?: (u: { inputTokens?: number | undefined; outputTokens?: number | undefined }) => void;
 }
 
+const textoDoUsuario = (ms: UIMessage[]) => ms.findLast((m) => m.role === 'user')?.parts.map((p) => (p.type === 'text' ? p.text : '')).join(' ') ?? '';
 const sanear = (s: string) => s.replace(/[^\w\-\/.]/g, '').slice(0, 80);
 
 async function descreverTela(userId: string, tela: Tela): Promise<{ texto: string; gradeId: string | null }> {
@@ -121,6 +125,8 @@ export async function responder(e: EntradaResposta): Promise<ReadableStream<UIMe
     tools,
     stopWhen: isStepCount(MAX_PASSOS),
     temperature: TEMPERATURA,
+    prepareStep: ({ stepNumber }) => (stepNumber === 0 && perguntaDeGrade(textoDoUsuario(e.mensagens)) ? { toolChoice: { type: 'tool' as const, toolName: 'ver_grade' as const } } : undefined),
+    onFinish: ({ totalUsage }) => e.onUso?.(totalUsage),
     onError: ({ error }) => console.error('[zefe] erro do modelo:', error instanceof Error ? `${error.name}: ${error.message}` : error),
   });
 

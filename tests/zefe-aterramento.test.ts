@@ -14,6 +14,10 @@ test('inventado é pego', () => {
   expect(orfaos(['É na sala PA07.'], [fonte])).toEqual(['PA07']);
   expect(orfaos(['Veja SI 703 e SI-705A.'], [fonte])).toEqual(['SI703', 'SI705']);
 });
+test('"de 100 turmas" não é código, mas DE100 colado é', () => {
+  expect(orfaos(['São mais de 100 turmas, só 108 vagas.'], [fonte])).toEqual([]);
+  expect(orfaos(['Veja DE100.'], [fonte])).toEqual(['DE100']);
+});
 test('texto vazio não conta como aterrado', () => {
   expect(orfaos([''], [fonte])).toEqual(['(texto vazio)']);
   expect(orfaos(['ok', '  '], [fonte])).toEqual(['(texto vazio)']);

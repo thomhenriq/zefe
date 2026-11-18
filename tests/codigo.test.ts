@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { normalizarCodigo } from '@/dominio/codigo';
 
 test('espaços, caixa e turma colada', () => {
+  expect(normalizarCodigo('si-702A')).toEqual({ codigo: 'SI702', turma: 'A' });
   expect(normalizarCodigo(' si 702 ')).toEqual({ codigo: 'SI702', turma: null });
   expect(normalizarCodigo('si702')).toEqual({ codigo: 'SI702', turma: null });
   expect(normalizarCodigo('SI702A')).toEqual({ codigo: 'SI702', turma: 'A' });

@@ -2,12 +2,14 @@
 const HORA = /\b(\d{1,2}):(\d{2})\b|\b(\d{1,2})h(\d{2})?\b/g; // 19:00, 19h, 14h30
 const CODIGO = /\b[A-Z]{1,3}(?:\d{2,3}|[ -]\d{3})[A-Z]?(?![\w])/g; // PA06, SI702, "SI 702", "SI-702", SI702A
 
+// Palavra solta + número ("de 100 turmas", "o 108") não é código; só na grafia com espaço/hífen (colado, "DE100", continua sendo).
+const PALAVRA = /^(A|E|O|AS|OS|DE|DO|DA|EM|NO|NA|AO|UM|OU|SE|AT)[ -]\d{3}$/;
 const hora = (m: RegExpMatchArray) => `${(m[1] ?? m[3])!.padStart(2, '0')}:${m[2] ?? m[4] ?? '00'}`;
 const codigo = (s: string) => s.replace(/[ -]/g, '').replace(/^([A-Z]{1,3}\d{3})[A-Z]$/, '$1');
 
 export const extrair = (texto: string) => ({
   horas: [...texto.matchAll(HORA)].map(hora),
-  codigos: (texto.toUpperCase().match(CODIGO) ?? []).map(codigo),
+  codigos: (texto.toUpperCase().match(CODIGO) ?? []).filter((c) => !PALAVRA.test(c)).map(codigo),
 });
 
 /** Itens do texto que não aparecem em nenhuma fonte. Texto vazio conta como não aterrado. */
