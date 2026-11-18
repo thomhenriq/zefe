@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { authClient } from "@/auth-client";
 
 export const campo =
@@ -26,13 +28,15 @@ export function FormEntrar() {
     setEtapa("codigo");
   }
 
-  async function entrar(e: React.FormEvent) {
-    e.preventDefault();
+  async function entrar(e?: React.FormEvent, valor = codigo) {
+    e?.preventDefault();
+    if (valor.length !== 6) return;
     setOcupado(true);
     setErro(null);
-    const { error } = await authClient.signIn.emailOtp({ email, otp: codigo });
+    const { error } = await authClient.signIn.emailOtp({ email, otp: valor });
     if (error) {
       setOcupado(false);
+      setCodigo("");
       return setErro("Código incorreto ou expirado. Confira os 6 dígitos ou peça outro.");
     }
     router.push("/planejador");
@@ -55,12 +59,23 @@ export function FormEntrar() {
         Código enviado para <strong className="text-foreground">{email}</strong>. Rodando local, ele aparece no
         terminal do servidor.
       </p>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <label htmlFor="codigo" className="text-sm font-medium">Código de 6 dígitos</label>
-        <input id="codigo" name="codigo" required autoComplete="one-time-code" inputMode="numeric"
-          pattern="[0-9]{6}" maxLength={6} value={codigo}
-          onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
-          className={`${campo} text-xl font-medium tabular-nums tracking-[0.4em]`} />
+        <InputOTP id="codigo" name="codigo" maxLength={6} pattern={REGEXP_ONLY_DIGITS} inputMode="numeric" autoComplete="one-time-code"
+          autoFocus value={codigo} disabled={ocupado} aria-invalid={erro ? true : undefined}
+          onChange={setCodigo} onComplete={(v) => entrar(undefined, v)}>
+          <InputOTPGroup>
+            <InputOTPSlot index={0} aria-invalid={erro ? true : undefined} />
+            <InputOTPSlot index={1} aria-invalid={erro ? true : undefined} />
+            <InputOTPSlot index={2} aria-invalid={erro ? true : undefined} />
+          </InputOTPGroup>
+          <InputOTPSeparator className="mx-2" />
+          <InputOTPGroup>
+            <InputOTPSlot index={3} aria-invalid={erro ? true : undefined} />
+            <InputOTPSlot index={4} aria-invalid={erro ? true : undefined} />
+            <InputOTPSlot index={5} aria-invalid={erro ? true : undefined} />
+          </InputOTPGroup>
+        </InputOTP>
       </div>
       {erro && <p role="alert" className="text-sm text-destructive">{erro}</p>}
       <Button type="submit" disabled={ocupado || codigo.length !== 6} className="w-full">Entrar</Button>

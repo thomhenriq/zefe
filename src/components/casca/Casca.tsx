@@ -18,11 +18,16 @@ import { Rodape } from "./Rodape";
  * Casca completa: barra superior, conteúdo, rodapé, painel do Zefe fixo à
  * direita (lg+, recolhível) e navegação inferior com gaveta do Zefe no celular.
  */
-export function Casca({ children, acesso }: { children: React.ReactNode; acesso: AcessoZefe }) {
+export function Casca({ children, acesso, painelInicial = null }: { children: React.ReactNode; acesso: AcessoZefe; painelInicial?: boolean | null }) {
   const zefe = useZefe(acesso === "liberado");
   // null = ainda não escolheu: aberto só a partir de xl (80rem), recolhido entre lg e xl, decidido por CSS (sem piscar).
-  // shortcut: a escolha não persiste entre visitas, quando houver conta guardar no perfil.
-  const [escolha, setAberto] = useState<boolean | null>(null);
+  // A escolha vem do cookie `zefe-painel` (lido no servidor, sem piscar no reload) e é gravada a cada clique.
+  // shortcut: guardada por navegador, não por conta; quando houver preferências no perfil, mover para lá.
+  const [escolha, setEscolha] = useState<boolean | null>(painelInicial);
+  const setAberto = (aberto: boolean) => {
+    setEscolha(aberto);
+    document.cookie = `zefe-painel=${aberto ? "aberto" : "fechado"}; path=/; max-age=31536000; samesite=lax`;
+  };
   const [gaveta, setGaveta] = useState(false);
   const caminho = usePathname();
 
