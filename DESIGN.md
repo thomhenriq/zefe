@@ -64,6 +64,8 @@ Esparso. Um momento por tela: entrada `anim-subir` (12px, 0.6s, ease-out exponen
 - Nas telas densas do app nada disso se aplica: cartões planos, raio menor, sem gradiente.
 
 ## Mascote
+**Fornecido pelo aluno (commit 02a7c8e, 2026-11-18): `public/mascote-zefe.png`, `public/mascotes-zefe-adesivos.png`, `public/favicon.png` e `src/app/icon.png`, usados por `src/components/zefe/Mascote.tsx`. Não reverter, redesenhar nem trocar de volta para o SVG.** O texto abaixo descreve o SVG anterior e fica só como histórico.
+
 Capivara de perfil, olhando para a direita, desenhada em `path`: cabeça grande e rombuda ligada a um corpo de barril numa silhueta só, narina no alto da ponta do focinho, focinho claro, orelha pequena e alta atrás, olho pequeno e alto, patas curtas (as de lá mais escuras). Boca só como traço ao longo do focinho (nunca de frente). Legível de 24 a 160 px; o ícone do site (`src/app/icon.svg`) é a cabeça sobre o verde da marca, com cores literais porque o SVG é independente. Só tokens `--capi`, `--capi-claro`, `--capi-escuro`, `--capi-tinta`, `--capi-brilho`, `--capi-bochecha`. Estados: parado, pensando (olha para cima, sobrancelha, reticências), feliz (olho fechado sorrindo, bochecha).
 
 ## Evitar

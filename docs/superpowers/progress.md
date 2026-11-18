@@ -153,6 +153,13 @@ Parados no limite: T16 (avaliação), T17a (shots.ts + README), T17b (polimento 
 
 Ruling 9: o mascote continua o SVG desenhado no código — o plano exige "SVG no código (sem imagem gerada)" e a PNG em `public/` traz o emblema da Unicamp no lenço, contra o anti-objetivo 2 — custo se errado: o aluno queria a PNG; ela continua em `public/` (não apagada, não commitada) para ele decidir.
 
+## Mudanças do aluno (18/11 00:00)
+
+A. Mascote e favicon: o aluno trocou ele mesmo (com o Codex) e disse "não mude de volta"; commit 02a7c8e (Mascote.tsx usa as PNGs; `public/mascote-zefe.png`, `public/mascotes-zefe-adesivos.png`, `public/favicon.png`, `src/app/icon.png`; `icon.svg` removido). **O Ruling 9 está SUPERADO**: vale a versão do aluno; nenhum executor pode reverter, regenerar, redesenhar ou restaurar o SVG. Linha acrescentada no DESIGN.md. Só sinalizar no relatório: a `mascote-zefe.png` mostra o emblema da Unicamp no lenço, e o design diz que nada deve parecer oficial — decisão dele.
+B. Nova Task 18: refazer o planejador como o GDE original (cartões arrastáveis das disciplinas que faltam, vindos da integralização, soltos na grade semanal com prévia das turmas; busca de texto secundária e recolhida, sem recarregar nem voltar ao topo). Sonnet + revisão Sonnet + um revisor Opus novo só sobre esta mudança.
+
+Carga 2020–2023 (T17c) terminou antes do limite: 8 semestres, todos exit 0 e 0 erros (2020/1 2155, 2020/2 2059, 2021/1 2151, 2021/2 2097, 2022/1 2131, 2022/2 2119, 2023/1 2174, 2023/2 2216 disciplinas). O executor Haiku caiu no limite antes de escrever o relatório; os números acima são do orquestrador.
+
 ## Mudança do aluno (17/11 14:31)
 
 Commit 3801842 (do aluno): tema claro é o padrão; o app não segue mais o tema do sistema. Escuro só com `<html data-theme="dark">`. Consequência: capturas de escuro (`scripts/shots.ts`, briefs de CQ) põem `data-theme="dark"` no `<html>` em vez de emular `prefers-color-scheme`; o claro é o tema principal a julgar; botão de tema é opcional. Não reverter.
@@ -181,7 +188,7 @@ Ruling 11: a pasta `.superpowers/sdd/2026-11-16-zefe/` (ignorada pelo git) fica 
 - (T3) Grupo de eletivas só é "verificado" quando todas as linhas são códigos concretos. Padrões como `EX---` ficam "não verificado" com o texto original.
 - (T3) Códigos guardados sem espaço (`F 128` → `F128`). Páginas de disciplina do catálogo sincronizadas só para os prefixos que aparecem nos currículos.
 - (Ruling 8) "Qualquer disciplina oferecida pela Unicamp" conta como grupo aberto verificado: toda disciplina cursada fora das obrigatórias soma nas eletivas.
-- (Ruling 9) Mascote: mantido o SVG do código. Há duas PNGs em `public/` (origem não registrada); a `mascote-zefe.png` tem o emblema da Unicamp no lenço — se for usar, tirar o emblema.
+- (Ruling 9, SUPERADO pelo aluno em 02a7c8e — vale a PNG dele) Mascote: mantido o SVG do código. Há duas PNGs em `public/` (origem não registrada); a `mascote-zefe.png` tem o emblema da Unicamp no lenço — se for usar, tirar o emblema.
 - (T4) Catálogo 2020: cursos, currículos e propostas carregam (correção 4ac47ab), mas as páginas de disciplina de 2020 têm outro endereço/formato e não foram lidas — para catálogo 2020 a árvore mostra pré-requisitos como "não verificado" e créditos podem faltar.
 - (T3) Cursos 36 e 87 aparecem no índice do catálogo 2026 mas `curriculo.html` dá 404 — ficam de fora.
 
