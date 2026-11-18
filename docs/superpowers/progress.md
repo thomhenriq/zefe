@@ -201,3 +201,8 @@ Ruling 11: a pasta `.superpowers/sdd/2026-11-16-zefe/` (ignorada pelo git) fica 
 
 ## Bloqueios
 - Catálogo 2020, disciplinas (fecha a pendência da T4): em 2020 ficam em `coordenadorias/NNNN/NNNN.html` (uma página por coordenadoria, 54 no índice `coordenadorias.html`; 6 vazias legítimas). `parseCatalogo2020` lê créditos (`C:nnn`), pré-requisito (`/` = ou, espaço = e, `*` = parcial; espaço liga mais forte) e ementa. Sync real: 6975 disciplinas (todas com crédito, 4934 com pré-requisito), 64/66 cursos (só os 404 de sempre: 36 e 87), 0 coordenadorias com erro; outros anos intactos. Crédito desconhecido agora aparece como "créditos desconhecidos" na árvore (`creditosDesconhecidos`, `semCredito`).
+
+## Árvore v2 (18/11, pedido do aluno: "ela na horizontal tá cortada ... deve ser totalmente visível")
+- Quadro de 8 colunas em CSS grid sem rolagem lateral (contêiner >= 52rem), lista vertical abaixo disso; painel de detalhe em largura total sob o quadro; linhas ortogonais roteadas em calhas/canais (`src/dominio/rotas-arvore.ts`, `tests/rotas-arvore.test.ts`). Detalhes em DESIGN.md.
+- Verificado em dev (porta 4102, cópia fora do repo): 1280/1440/1920/768/390 sem overflow; seleção SI100/SI600/SI702/SI912; teclado, Esc, clique no vazio, Limpar; claro e escuro; reduced motion. O servidor de produção (4100) precisa de rebuild para mostrar a mudança.
+- Fraquezas: com SI100 (20 descendentes) o canal acima da 2ª linha junta ~6 faixas de 3-4 px; selos "ou" em calhas de 24 px podem encostar no cartão vizinho; cartões <= 88 px cortam nomes longos (title/painel têm o completo); leitor de tela e celular real não conferidos.

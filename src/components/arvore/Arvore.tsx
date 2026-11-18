@@ -5,9 +5,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, ExternalLink, Target, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AvisoBadge, EstadoBadge, type EstadoDisciplina } from "@/components/ui/estado";
-import { CartaoDisciplina } from "@/components/arvore/CartaoDisciplina";
+import { CartaoCompacto } from "@/components/arvore/CartaoDisciplina";
 import { agruparPorSemestre } from "@/dominio/arvore";
 import { construirGrafo, relacionadas, type Grafo, type Relacionadas } from "@/dominio/grafo";
+import { caminhoArredondado, pontoDoSelo, rotear, type Retangulo } from "@/dominio/rotas-arvore";
 import { detalhar, marcarEstado, type Detalhe } from "@/app/(app)/arvore/acoes";
 import type { DadosGrafo } from "@/dados/aluno";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,6 @@ const nota = (d: DisciplinaArvore) =>
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 const reduzido = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-type Caixa = { x: number; y: number; w: number; h: number };
 type Papel = "sel" | "antes" | "depois";
 
 const PAPEL: Record<Papel, { rotulo: string; Icone: typeof Target; anel: string }> = {
@@ -38,28 +38,25 @@ const PAPEL: Record<Papel, { rotulo: string; Icone: typeof Target; anel: string 
   depois: { rotulo: "Depois", Icone: ArrowRight, anel: "ring-2 ring-primary/70" },
 };
 
-/** Curva da borda direita do pré-requisito até a borda esquerda de quem o exige; sem espaço à frente, contorna pela esquerda. */
-function caminho(a: Caixa, b: Caixa) {
-  const y1 = a.y + a.h / 2, y2 = b.y + b.h / 2, x2 = b.x;
-  const frente = b.x - (a.x + a.w) >= 16;
-  const x1 = frente ? a.x + a.w : a.x;
-  const dx = frente ? Math.max(28, (x2 - x1) / 2) : -36;
-  const c1x = x1 + dx, c2x = frente ? x2 - dx : x2 - 36;
-  return { d: `M${x1} ${y1} C${c1x} ${y1} ${c2x} ${y2} ${x2} ${y2}`, mx: (x1 + 3 * c1x + 3 * c2x + x2) / 8, my: (y1 + y2) / 2, x2, y2 };
-}
+/*
+ * Quadro x lista: o contêiner (`@container`) decide pela PRÓPRIA largura, não pela da janela, porque o painel do
+ * Zefe tira 22.5rem do `main` em xl. A partir de 52rem (832 px) cabem 8 colunas de ~88 px + calhas de 24 px,
+ * ainda legíveis (código mono 11 px, nome em 2 linhas); abaixo disso, semestres empilhados e sem linhas.
+ * As classes `@min-[52rem]:` abaixo são esse limite; mudar um exige mudar todos.
+ */
 
 export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaArvore[]; grafo: DadosGrafo }) {
   const [sel, setSel] = useState<string | null>(null);
   const [exibida, setExibida] = useState<string | null>(null); // as linhas ficam até a animação de saída acabar
   const [hover, setHover] = useState<string | null>(null);
-  const [caixas, setCaixas] = useState<Map<string, Caixa>>(new Map());
+  const [caixas, setCaixas] = useState<Map<string, Retangulo>>(new Map());
   const roteiro = useRef<HTMLDivElement>(null);
-  const trilho = useRef<HTMLDivElement>(null);
   const painel = useRef<HTMLElement>(null);
   const cartoes = useRef(new Map<string, HTMLButtonElement>());
   const assinatura = useRef("");
 
   const colunas = agruparPorSemestre(disciplinas);
+  const posicao = useMemo(() => new Map(colunas.flatMap((c, col) => c.itens.map((d, row) => [d.codigo, { col, row }] as const))), [colunas]);
   const porCodigo = useMemo(() => new Map(disciplinas.map((d) => [d.codigo, d])), [disciplinas]);
   const g = useMemo(() => construirGrafo(disciplinas.map((d) => d.codigo), (c) => dados.prereqs[c] ?? null), [disciplinas, dados]);
   const rel = useMemo(() => (sel ? relacionadas(g, sel) : null), [g, sel]);
@@ -81,26 +78,36 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
     return () => window.removeEventListener("keydown", f);
   }, [sel, limpar]);
 
+  // Mede os cartões (só no quadro: na lista as linhas nem existem). Refaz ao redimensionar, ao mudar de fonte e ao mudar a lista.
   const medir = useCallback(() => {
-    const m = new Map<string, Caixa>();
-    for (const [c, el] of cartoes.current) m.set(c, { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
-    const sig = [...m].map(([c, b]) => `${c}${b.x},${b.y},${b.w},${b.h}`).join("|");
+    const m = new Map<string, Retangulo>();
+    const raiz = roteiro.current;
+    if (raiz && getComputedStyle(raiz).gridTemplateColumns.split(" ").length > 1) {
+      for (const [c, el] of cartoes.current) {
+        const p = posicao.get(c);
+        if (p) m.set(c, { id: c, ...p, x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+      }
+    }
+    const sig = [...m.values()].map((b) => `${b.id}${b.x},${b.y},${b.w},${b.h}`).join("|");
     if (sig !== assinatura.current) { assinatura.current = sig; setCaixas(m); }
-  }, []);
+  }, [posicao]);
   useLayoutEffect(() => {
     medir();
     const ro = new ResizeObserver(medir);
     if (roteiro.current) ro.observe(roteiro.current);
     cartoes.current.forEach((el) => ro.observe(el));
+    document.fonts?.ready.then(medir);
     return () => ro.disconnect();
   }, [medir, disciplinas]);
 
-  // rola só o trilho horizontal (nunca a página) para o cartão escolhido ficar à vista
-  useEffect(() => {
-    const el = sel ? cartoes.current.get(sel) : null, t = trilho.current;
-    if (!el || !t || (el.offsetLeft >= t.scrollLeft && el.offsetLeft + el.offsetWidth <= t.scrollLeft + t.clientWidth)) return;
-    t.scrollTo({ left: Math.max(0, el.offsetLeft - (t.clientWidth - el.offsetWidth) / 2), behavior: reduzido() ? "auto" : "smooth" });
-  }, [sel]);
+  const rotas = useMemo(() => {
+    if (!relLinhas || caixas.size === 0) return [];
+    const arestas = relLinhas.arestas.filter((a) => caixas.has(a.de) && caixas.has(a.para));
+    const rs = rotear([...caixas.values()], arestas.map((a) => ({ id: `${a.de}>${a.para}`, de: a.de, para: a.para })));
+    const por = new Map(arestas.map((a) => [`${a.de}>${a.para}`, a]));
+    // indiretas primeiro: as diretas ficam por cima
+    return rs.map((r) => ({ r, a: por.get(r.id)!, direta: r.de === exibida || r.para === exibida })).sort((x, y) => Number(x.direta) - Number(y.direta));
+  }, [relLinhas, caixas, exibida]);
 
   const papelDe = (c: string): Papel | null => (c === sel ? "sel" : rel?.ancestrais.has(c) ? "antes" : rel?.descendentes.has(c) ? "depois" : null);
   const previa = new Set(sel || !hover ? [] : [...(g.pais.get(hover) ?? []), ...(g.filhos.get(hover) ?? [])]);
@@ -113,127 +120,166 @@ export function Arvore({ disciplinas, grafo: dados }: { disciplinas: DisciplinaA
 
   const nAnc = rel?.ancestrais.size ?? 0, nDesc = rel?.descendentes.size ?? 0;
   const aviso = sel ? `${sel}: ${plural(nAnc, "pré-requisito", "pré-requisitos")}, libera ${plural(nDesc, "disciplina", "disciplinas")}` : "";
+  const nLinhas = Math.max(1, ...colunas.map((c) => c.itens.length));
 
   return (
-    <div className="space-y-3">
+    <div className="@container space-y-3">
       <p role="status" aria-live="polite" className="sr-only">{aviso}</p>
-      <div className="flex min-h-10 flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-        {!sel ? (
+      <div className={cn("flex min-h-10 flex-wrap items-center gap-x-4 gap-y-2 text-xs", sel && "@min-[52rem]:sticky @min-[52rem]:top-barra @min-[52rem]:z-30 @min-[52rem]:-mx-2 @min-[52rem]:bg-background/95 @min-[52rem]:px-2 @min-[52rem]:py-2 @min-[52rem]:backdrop-blur")}>
+        {!sel || !atual ? (
           <p className="text-muted-foreground">Toque ou clique numa disciplina para ver o que ela exige e o que ela libera. Esc limpa o destaque.</p>
         ) : (
           <>
+            <p className="min-w-0 max-w-full truncate text-sm"><strong className="font-mono">{atual.codigo}</strong> <span className="text-muted-foreground">{atual.nome}</span></p>
             <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5" aria-label="Legenda do destaque">
-              {(["sel", "antes", "depois"] as const).map((p) => {
-                const { Icone, rotulo, anel } = PAPEL[p];
-                const n = p === "antes" ? nAnc : p === "depois" ? nDesc : null;
+              {(["antes", "depois"] as const).map((p) => {
+                const { Icone, anel } = PAPEL[p];
+                const n = p === "antes" ? nAnc : nDesc;
                 return (
                   <li key={p} className="flex items-center gap-1.5">
-                    <span className={cn("grid size-5 place-items-center rounded bg-card", anel.replace("ring-[3px]", "ring-2"))}><Icone className="size-3" aria-hidden /></span>
-                    <span>{p === "antes" ? "Precisam vir antes" : p === "depois" ? "Liberadas por ela" : rotulo}{n !== null && ` (${n})`}</span>
+                    <span className={cn("grid size-5 place-items-center rounded bg-card", anel)}><Icone className="size-3" aria-hidden /></span>
+                    <span>{p === "antes" ? "Precisam vir antes" : "Liberadas por ela"} ({n})</span>
                   </li>
                 );
               })}
-              <li className="flex items-center gap-1.5" aria-hidden><svg width="26" height="6"><line x1="1" x2="25" y1="3" y2="3" className="stroke-foreground" strokeWidth="2" /></svg>e: todas</li>
-              <li className="flex items-center gap-1.5" aria-hidden><svg width="26" height="6"><line x1="1" x2="25" y1="3" y2="3" className="stroke-foreground" strokeWidth="2" strokeDasharray="5 4" /></svg>ou: uma das alternativas</li>
+              <li className="hidden items-center gap-1.5 @min-[52rem]:flex" aria-hidden><svg width="26" height="6"><line x1="1" x2="25" y1="3" y2="3" className="stroke-foreground" strokeWidth="2.5" /></svg>e: todas</li>
+              <li className="hidden items-center gap-1.5 @min-[52rem]:flex" aria-hidden><svg width="26" height="6"><line x1="1" x2="25" y1="3" y2="3" className="stroke-foreground" strokeWidth="2.5" strokeDasharray="5 4" /></svg>ou: uma das alternativas</li>
+              <li className="hidden items-center gap-1.5 @min-[52rem]:flex" aria-hidden><svg width="26" height="6"><line x1="1" x2="25" y1="3" y2="3" className="stroke-foreground/50" strokeWidth="1.25" /></svg>indireta</li>
             </ul>
             <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" size="sm" className="lg:hidden" onClick={() => painel.current?.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" })}>Ver detalhes</Button>
+              <Button variant="outline" size="sm" onClick={() => painel.current?.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" })}>Ver detalhes</Button>
               <Button variant="outline" size="sm" onClick={limpar}><X aria-hidden /> Limpar destaque</Button>
             </div>
           </>
         )}
       </div>
 
-      <div className="flex flex-col items-start gap-4 lg:flex-row">
-        <div ref={trilho} className="-mx-4 min-w-0 self-stretch overflow-x-auto px-4 pb-3 pt-2 lg:mx-0 lg:flex-1 lg:px-0" tabIndex={0} role="region" aria-label="Árvore de integralização, rola na horizontal"
-          onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a")) limpar(); }}>
-          <div ref={roteiro} className="relative flex w-max gap-3">
-            {colunas.map((c) => (
-              <section key={c.semestre ?? "fora"} className="w-44 shrink-0 space-y-2" aria-label={c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}>
-                <h3 className="font-sans text-xs font-semibold text-muted-foreground">{c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}</h3>
-                {c.itens.length === 0 && <p className="text-xs text-muted-foreground">Sem disciplinas</p>}
-                {c.itens.map((d) => {
-                  const p = papelDe(d.codigo);
-                  const apagada = !!sel && !p;
-                  const externas = (g.pais.get(d.codigo) ?? []).filter((x) => !g.noCurriculo.has(x));
-                  const Papel = p ? PAPEL[p] : null;
-                  return (
-                    <button key={d.codigo} type="button" ref={(el) => { if (el) cartoes.current.set(d.codigo, el); else cartoes.current.delete(d.codigo); }}
+      <div ref={roteiro} role="group" aria-label="Árvore de integralização"
+        onClick={(e) => { if (!(e.target as HTMLElement).closest("button, a")) limpar(); }}
+        style={{ ["--n" as string]: colunas.length, ["--lin" as string]: nLinhas }}
+        className="relative grid grid-cols-1 gap-y-5 @min-[52rem]:[grid-template-columns:repeat(var(--n),minmax(0,1fr))] @min-[52rem]:[grid-template-rows:auto_repeat(var(--lin),4.75rem)] @min-[52rem]:gap-x-6 @min-[52rem]:gap-y-6 @min-[52rem]:pb-3">
+        {colunas.map((c, i) => (
+          <section key={c.semestre ?? "fora"} style={{ ["--c" as string]: i + 1 }} className="space-y-2 @min-[52rem]:contents" aria-label={c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}>
+            <h3 className="font-sans text-xs font-semibold text-muted-foreground @min-[52rem]:col-(--c) @min-[52rem]:row-1">{c.semestre ? `${c.semestre}º semestre` : "Fora da proposta"}</h3>
+            {c.itens.length === 0 && <p className="text-xs text-muted-foreground @min-[52rem]:col-(--c) @min-[52rem]:row-2">Sem disciplinas</p>}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 @min-[52rem]:contents">
+              {c.itens.map((d, r) => {
+                const p = papelDe(d.codigo);
+                const apagada = !!sel && !p;
+                const externas = (g.pais.get(d.codigo) ?? []).filter((x) => !g.noCurriculo.has(x));
+                const Papel = p ? PAPEL[p] : null;
+                const aviso = nota(d);
+                const direto = (l: string[] | undefined) => (l ?? []).join(", ");
+                return (
+                  <div key={d.codigo} className="flex flex-col gap-1 @min-[52rem]:contents">
+                    <button type="button" ref={(el) => { if (el) cartoes.current.set(d.codigo, el); else cartoes.current.delete(d.codigo); }}
+                      style={{ ["--r" as string]: r + 2 }}
                       data-codigo={d.codigo} data-papel={p ?? undefined} data-apagada={apagada || undefined}
+                      title={`${d.codigo} ${d.nome}, ${d.creditosDesconhecidos ? "créditos desconhecidos" : `${d.creditos} créditos`}${aviso ? `. ${aviso}` : ""}${externas.length ? `. Pede, fora do seu currículo: ${externas.join(", ")}` : ""}`}
                       onClick={() => setSel(sel === d.codigo ? null : d.codigo)}
                       onPointerEnter={(e) => e.pointerType === "mouse" && setHover(d.codigo)} onPointerLeave={() => setHover(null)}
                       onKeyDown={(e) => andar(e, d.codigo)}
                       aria-pressed={sel === d.codigo} aria-current={sel === d.codigo ? "true" : undefined}
-                      className={cn("relative block rounded-lg text-left outline-offset-2 motion-safe:transition-[opacity,transform,filter,box-shadow] motion-safe:duration-300",
-                        apagada ? "opacity-30 saturate-50" : "hover:brightness-95 dark:hover:brightness-110",
-                        Papel?.anel, p === "sel" && "motion-safe:scale-[1.04]", previa.has(d.codigo) && "ring-1 ring-foreground/40")}>
+                      className={cn("relative block flex-1 rounded-md text-left outline-offset-2 @min-[52rem]:col-(--c) @min-[52rem]:row-(--r) motion-safe:transition-[opacity,transform,filter,box-shadow] motion-safe:duration-300",
+                        apagada ? "z-0 opacity-30 saturate-50" : "hover:brightness-95 dark:hover:brightness-110", p && "z-20",
+                        Papel?.anel, previa.has(d.codigo) && "ring-1 ring-foreground/40")}>
                       {Papel && (
-                        <span className="absolute -top-2 right-2 z-10 flex items-center gap-1 rounded-full border bg-card px-1.5 py-px text-[10px] font-semibold text-foreground">
-                          <Papel.Icone className="size-3" aria-hidden />{Papel.rotulo}
+                        <span className="absolute -top-2 right-1 z-10 grid size-5 place-items-center rounded-full border bg-card text-foreground" aria-hidden title={Papel.rotulo}>
+                          <Papel.Icone className="size-3" />
                         </span>
                       )}
-                      <CartaoDisciplina nome={d.nome} estado={d.estado} codigo={d.codigo} nota={nota(d)} externas={externas} />
+                      <CartaoCompacto nome={d.nome} estado={d.estado} codigo={d.codigo} creditos={d.creditos} creditosDesconhecidos={d.creditosDesconhecidos} nota={aviso} externas={externas} />
+                      {p === "sel" && <span className="sr-only">Selecionada</span>}
                       {p === "antes" && <span className="sr-only">Precisa vir antes de {sel}</span>}
                       {p === "depois" && <span className="sr-only">Liberada por {sel}</span>}
                     </button>
-                  );
-                })}
-              </section>
-            ))}
-            {relLinhas && <Linhas rel={relLinhas} caixas={caixas} saindo={!sel} />}
-          </div>
-        </div>
-        {atual && rel && (
-          <aside ref={painel} aria-label={`Detalhe de ${atual.nome}`} className="w-full shrink-0 rounded-xl border bg-card lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:w-80 lg:overflow-y-auto">
-            <DetalheDisciplina key={atual.codigo} d={atual} g={g} rel={rel} porCodigo={porCodigo} externos={dados.externos} onSelecionar={setSel} onFechar={limpar} />
-          </aside>
-        )}
+                    {sel === d.codigo && (
+                      <div className="space-y-1 text-[11px] leading-snug text-muted-foreground @min-[52rem]:hidden">
+                        {(g.pais.get(d.codigo)?.length ?? 0) > 0 && <p><span aria-hidden>←</span> <span className="sr-only">Pede </span>{direto(g.pais.get(d.codigo))}</p>}
+                        {(g.filhos.get(d.codigo)?.length ?? 0) > 0 && <p><span aria-hidden>→</span> <span className="sr-only">Libera </span>{direto(g.filhos.get(d.codigo))}</p>}
+                        <p className="flex gap-1.5">
+                          <Button variant="outline" size="xs" onClick={() => painel.current?.scrollIntoView({ behavior: reduzido() ? "auto" : "smooth", block: "start" })}>Detalhes</Button>
+                          <Button variant="outline" size="xs" onClick={limpar}><X aria-hidden /> Limpar</Button>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        {relLinhas && rotas.length > 0 && <Linhas rotas={rotas} saindo={!sel} />}
       </div>
+
+      {atual && rel && (
+        <aside ref={painel} aria-label={`Detalhe de ${atual.nome}`} className="scroll-mt-28 rounded-xl border bg-card">
+          <DetalheDisciplina key={atual.codigo} d={atual} g={g} rel={rel} porCodigo={porCodigo} externos={dados.externos} onSelecionar={setSel} onFechar={limpar} />
+        </aside>
+      )}
     </div>
   );
 }
 
-/** Camada SVG decorativa: curvas com seta (antes em tinta, depois em verde), "ou" tracejado com selo. */
-function Linhas({ rel, caixas, saindo }: { rel: Relacionadas; caixas: Map<string, Caixa>; saindo: boolean }) {
+type RotaDesenho = { r: ReturnType<typeof rotear>[number]; a: Relacionadas["arestas"][number]; direta: boolean };
+
+/**
+ * Camada SVG decorativa (só no quadro): rotas ortogonais com cantos arredondados, seta no alvo.
+ * Antes em tinta, depois em verde; "ou" tracejado com selo; indiretas mais finas e claras, diretas por cima.
+ * Cada linha leva um halo da cor do fundo por baixo: onde cruza outra linha ou um texto, abre uma folga.
+ */
+function Linhas({ rotas, saindo }: { rotas: RotaDesenho[]; saindo: boolean }) {
   const sai = saindo ? "" : undefined;
   return (
-    <svg aria-hidden className="pointer-events-none absolute inset-0 z-20 size-full overflow-visible" fill="none">
+    <>
+    <svg aria-hidden className="pointer-events-none absolute inset-0 z-10 hidden size-full overflow-visible @min-[52rem]:block" fill="none">
       <defs>
-        {rel.arestas.map((a, i) => {
-          const [de, para] = [caixas.get(a.de), caixas.get(a.para)];
-          if (a.tipo !== "ou" || !de || !para) return null;
-          return (
-            <mask key={i} id={`arv-m-${i}`} maskUnits="userSpaceOnUse" x="-1000" y="-1000" width="20000" height="20000">
-              <path d={caminho(de, para).d} stroke="white" strokeWidth="4" pathLength={1} className="arv-linha" data-saindo={sai} style={{ ["--ordem" as string]: a.ordem }} />
-            </mask>
-          );
-        })}
+        {rotas.map(({ r, a }, i) => a.tipo === "ou" && (
+          <mask key={r.id} id={`arv-m-${i}`} maskUnits="userSpaceOnUse" x="-1000" y="-1000" width="20000" height="20000">
+            <path d={caminhoArredondado(r.pontos)} stroke="white" strokeWidth="6" pathLength={1} className="arv-linha" data-saindo={sai} style={{ ["--ordem" as string]: a.ordem }} />
+          </mask>
+        ))}
       </defs>
-      {rel.arestas.map((a, i) => {
-        const [de, para] = [caixas.get(a.de), caixas.get(a.para)];
-        if (!de || !para) return null;
-        const c = caminho(de, para);
+      {rotas.map(({ r, a, direta }, i) => {
+        const d = caminhoArredondado(r.pontos);
+        const fim = r.pontos.at(-1)!;
         const [traco, ponta] = a.lado === "antes" ? ["stroke-foreground/70", "fill-foreground/70"] : ["stroke-primary", "fill-primary"];
         const ordem = { ["--ordem" as string]: a.ordem };
-        const marca = (a.tipo === "ou" ? "ou" : "") + (a.parcial ? "*" : "");
+        const w = direta ? 2.25 : 1.25;
         return (
-          <g key={`${a.de}>${a.para}`}>
+          <g key={r.id} opacity={direta ? 1 : 0.6}>
             {a.tipo === "ou" ? (
-              <g mask={`url(#arv-m-${i})`}><path d={c.d} strokeWidth="2" strokeDasharray="6 5" className={traco} /></g>
-            ) : (
-              <path d={c.d} strokeWidth="2" pathLength={1} className={cn("arv-linha", traco)} data-saindo={sai} style={ordem} />
-            )}
-            <path d={`M${c.x2} ${c.y2} l-8 -4.5 v9 z`} className={cn("arv-extra", ponta)} data-saindo={sai} style={ordem} />
-            {marca && (
-              <g className="arv-extra" data-saindo={sai} style={ordem}>
-                <rect x={c.mx - 11} y={c.my - 8} width="22" height="16" rx="8" className="fill-card stroke-border" strokeWidth="1" />
-                <text x={c.mx} y={c.my + 3.5} textAnchor="middle" className="fill-foreground font-sans text-[10px] font-semibold">{marca}</text>
+              <g mask={`url(#arv-m-${i})`}>
+                <path d={d} strokeWidth={w + 3} className="stroke-background" />
+                <path d={d} strokeWidth={w} strokeDasharray="6 4" className={traco} />
               </g>
+            ) : (
+              <>
+                <path d={d} strokeWidth={w + 3} pathLength={1} className="arv-linha stroke-background" data-saindo={sai} style={ordem} />
+                <path d={d} strokeWidth={w} pathLength={1} className={cn("arv-linha", traco)} data-saindo={sai} style={ordem} />
+              </>
             )}
+            <path d={`M${fim.x} ${fim.y} l-7 -4 v8 z`} className={cn("arv-extra", ponta)} data-saindo={sai} style={ordem} />
           </g>
         );
       })}
     </svg>
+    {/* selos numa camada acima dos cartões: numa calha estreita não podem ficar cortados */}
+    <svg aria-hidden className="pointer-events-none absolute inset-0 z-30 hidden size-full overflow-visible @min-[52rem]:block" fill="none">
+      {rotas.map(({ r, a }) => {
+        const marca = (a.tipo === "ou" ? "ou" : "") + (a.parcial ? "*" : "");
+        if (!marca) return null;
+        const selo = pontoDoSelo(r.pontos);
+        const ordem = { ["--ordem" as string]: a.ordem };
+        return (
+          <g key={r.id} className="arv-extra" data-saindo={sai} style={ordem}>
+            <rect x={selo.x - 9} y={selo.y - 6} width="18" height="12" rx="6" className="fill-card stroke-border" strokeWidth="1" />
+            <text x={selo.x} y={selo.y + 3} textAnchor="middle" className="fill-foreground font-sans text-[9px] font-semibold">{marca}</text>
+          </g>
+        );
+      })}
+    </svg>
+    </>
   );
 }
 
@@ -279,8 +325,11 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
         </div>
         <Button variant="ghost" size="icon-sm" onClick={onFechar}><X aria-hidden /><span className="sr-only">Limpar destaque e fechar detalhe</span></Button>
       </div>
-      <div className="space-y-5 px-4 pb-6 text-sm">
-        <Relacoes d={d} g={g} rel={rel} porCodigo={porCodigo} externos={externos} onSelecionar={onSelecionar} />
+      <div className="grid gap-x-8 gap-y-5 px-4 pb-6 text-sm lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Relacoes d={d} g={g} rel={rel} porCodigo={porCodigo} externos={externos} onSelecionar={onSelecionar} />
+        </div>
+        <div className="space-y-5">
         <section aria-labelledby="h-estado" className="space-y-2">
           <h4 id="h-estado" className="text-sm font-semibold">Marcar no seu histórico</h4>
           <div role="group" aria-label="Estado da disciplina" className="flex flex-wrap gap-2">
@@ -348,6 +397,7 @@ function DetalheDisciplina({ d, g, rel, porCodigo, externos, onSelecionar, onFec
         <Button variant="outline" render={<Link href={`/disciplina/${d.codigo}`} />} nativeButton={false}>
           Ver página da disciplina <ExternalLink aria-hidden />
         </Button>
+        </div>
       </div>
     </>
   );
@@ -411,6 +461,7 @@ function Relacoes({ d, g, rel, porCodigo, externos, onSelecionar }: Pick<PropsDe
         </p>
       )}
       {d.estado !== "travada" && !d.prereqDesconhecido && antes.length > 0 && (d.estado === "faltando" || d.estado === "planejada") && <p className="text-muted-foreground">Pré-requisitos cumpridos ou em andamento: você já pode cursar.</p>}
+      <div className="grid gap-x-8 gap-y-3 md:grid-cols-2">
       {antes.length > 0 && (
         <div className="space-y-1.5">
           <p className="font-medium">Para cursar {d.codigo} você precisa de:</p>
@@ -422,9 +473,10 @@ function Relacoes({ d, g, rel, porCodigo, externos, onSelecionar }: Pick<PropsDe
         <div className="space-y-1.5">
           <p className="font-medium">{d.codigo} libera:</p>
           <ul className="space-y-1.5">{depois.map(([c, p]) => item(c, p))}</ul>
-          <p className="text-xs text-muted-foreground">Só disciplinas do seu currículo; a seção Destrava no catálogo todo, abaixo, inclui outros cursos.</p>
+          <p className="text-xs text-muted-foreground">Só disciplinas do seu currículo; a seção Destrava no catálogo todo inclui outros cursos.</p>
         </div>
       )}
+      </div>
     </section>
   );
 }

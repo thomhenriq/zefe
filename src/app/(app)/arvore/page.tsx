@@ -35,6 +35,7 @@ export default async function PaginaArvore() {
   const totalCreditos = c.obrigatorias.total + c.eletivas.total;
 
   return (
+    <>
     <Pagina>
       <header className="space-y-2">
         <h1 className="text-4xl">Árvore de integralização</h1>
@@ -80,10 +81,12 @@ export default async function PaginaArvore() {
         )}
       </section>
 
-      <section aria-labelledby="h-arvore" className="space-y-3">
+    </Pagina>
+      {/* O quadro usa toda a largura do conteúdo (a `Pagina` limita a 64rem): 8 semestres lado a lado, sem rolagem lateral */}
+      <section aria-labelledby="h-arvore" className="mx-auto w-full max-w-[90rem] space-y-3 px-4 pb-12 lg:px-6">
         <h2 id="h-arvore" className="text-xl">Disciplinas por semestre da proposta</h2>
         <Arvore disciplinas={integ.disciplinas} grafo={integ.grafo} />
       </section>
-    </Pagina>
+    </>
   );
 }
