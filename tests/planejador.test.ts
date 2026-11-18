@@ -44,6 +44,17 @@ describe('encaixarTurmas', () => {
   });
 });
 
+describe('avisos por turma', () => {
+  test('reserva de outro curso aparece só na turma reservada; previsão e pré-requisito ficam de fora', () => {
+    const d = { ...disc([{ ...turma('A', h('seg', '14:00', '16:00')), reservas: ['36 - Sistemas /2026'] }, turma('B', h('seg', '16:00', '18:00'))]), tipo: 'previsao' as const };
+    const r = encaixarTurmas(d, [], [], { curso: 94, faltamPrereq: () => ['SI100'] });
+    expect(r[0]!.cabe).toBe(true);
+    expect(r[0]!.avisos).toHaveLength(1);
+    expect(r[0]!.avisos[0]).toContain('reservada para outro curso');
+    expect(r[1]!.avisos).toEqual([]);
+  });
+});
+
 describe('agruparCandidatos', () => {
   const c = (codigo: string, estado: Cartao['estado'], semestre: number | null, extra: Partial<Cartao> = {}): Cartao =>
     ({ codigo, nome: codigo, creditos: 4, semestre, estado, faltamPrereq: [], prereqDesconhecido: false, oferta: disc([turma('A', h('seg', '08:00', '10:00'))]), ...extra });

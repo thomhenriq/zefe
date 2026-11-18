@@ -114,7 +114,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
               </details>
             </div>
             <Montagem gradeId={grade.id} ano={ano} periodo={periodo} rotuloSem={rotuloSemestre(ano, periodo)} itens={grade.itens} bloqueios={grade.bloqueios}
-              semanais={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} grupos={agruparCandidatos(cartoes)} semArvore={!arvore} />
+              semanais={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} grupos={agruparCandidatos(cartoes)} semArvore={!arvore} publicado={publicado} {...(u.perfil.curso != null ? { curso: u.perfil.curso } : {})} />
           </section>
 
           <section className={SECAO} aria-labelledby="h-resumo">

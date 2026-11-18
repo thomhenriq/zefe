@@ -1,5 +1,5 @@
 import type { Campus, Horario } from '@/dac/tipos';
-import { checarGrade, type Bloqueio, type ItemGrade } from './grade';
+import { checarGrade, type Bloqueio, type ItemGrade, type OpcoesChecagem } from './grade';
 
 /** Turma como o planejador a enxerga: sem vagas nem matriculados (previsão nunca mostra, oficial não é preciso aqui). */
 export interface TurmaOferta { turma: string; horarios: Horario[]; docentes: string[]; reservas: string[]; horarioIncompleto?: boolean }
@@ -11,14 +11,14 @@ export interface Encaixe { turma: string; cabe: boolean; semHorario: boolean; co
  * página usa depois de gravar; aqui só se olha o que envolve a disciplina (conflitos antigos da grade não contam).
  * A mesma disciplina já na grade sai da conta: adicionar de novo troca a turma.
  */
-export function encaixarTurmas(d: DisciplinaOferta, itens: ItemGrade[], bloqueios: Bloqueio[]): Encaixe[] {
+export function encaixarTurmas(d: DisciplinaOferta, itens: ItemGrade[], bloqueios: Bloqueio[], opts: OpcoesChecagem = {}): Encaixe[] {
   const base = itens.filter((i) => i.codigo !== d.codigo);
   return d.turmas.map((t) => {
     const cand: ItemGrade = { codigo: d.codigo, nome: d.nome, turma: t.turma, creditos: d.creditos, campus: d.campus, horarios: t.horarios, tipo: d.tipo, reservas: t.reservas, ...(t.horarioIncompleto ? { horarioIncompleto: true } : {}) };
-    const meus = checarGrade([...base, cand], bloqueios).achados.filter((a) => a.codigos.includes(d.codigo));
+    const meus = checarGrade([...base, cand], bloqueios, { ...(opts.curso !== undefined ? { curso: opts.curso } : {}) }).achados.filter((a) => a.codigos.includes(d.codigo));
     const conflitos = meus.filter((a) => a.nivel === 'conflito').map((a) => a.motivo);
-    // avisos com dia = margem entre campi; os demais (previsão, reserva, pré-requisito) a página já mostra
-    const avisos = meus.filter((a) => a.nivel === 'aviso' && a.dia).map((a) => a.motivo);
+    // avisos específicos da turma (margem entre campi, reserva, créditos, horário incompleto); previsão e pré-requisito valem para a disciplina e a página já mostra
+    const avisos = meus.filter((a) => a.nivel === 'aviso' && !/horário previsto|pré-requisito/.test(a.motivo)).map((a) => a.motivo);
     return { turma: t.turma, cabe: conflitos.length === 0, semHorario: t.horarios.length === 0, conflitos, avisos };
   });
 }

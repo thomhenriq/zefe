@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirUsuario } from "@/sessao";
-import { buscar } from "@/dados/busca";
+import { buscarDisciplinas } from "@/dados/busca";
 import { ofertaPlanejador } from "@/dados/planejador";
 import { alterarGrade, criarBloqueio, criarGrade, definirPrincipal, excluirBloqueio, excluirGrade } from "@/dados/grades";
 
@@ -57,12 +57,12 @@ export async function buscarAcao(entrada: unknown): Promise<ResultadoBusca> {
   await exigirUsuario();
   const p = consulta({ q: z.string().trim().min(1, "digite um código ou nome").max(80) }).safeParse(entrada);
   if (!p.success) return { erro: p.error.issues[0]?.message ?? "busca inválida" };
-  try { return { disciplinas: (await buscar(p.data.q, 12)).disciplinas }; } catch { return { erro: "não foi possível buscar agora" }; }
+  try { return { disciplinas: await buscarDisciplinas(p.data.q, 12) }; } catch { return { erro: "não foi possível buscar agora" }; }
 }
 
 export async function ofertaAcao(entrada: unknown): Promise<ResultadoOferta> {
   await exigirUsuario();
-  const p = consulta({ codigo: z.string().trim().min(1).max(20), ...sem }).safeParse(entrada);
+  const p = consulta({ codigo: z.string().trim().min(1).max(20), ano: z.coerce.number().int().min(1990).max(2100), periodo: sem.periodo }).safeParse(entrada);
   if (!p.success) return { erro: "disciplina ou semestre inválido" };
   try { return await ofertaPlanejador(p.data.codigo, p.data.ano, p.data.periodo as 1 | 2); } catch { return { erro: "não foi possível carregar as turmas agora" }; }
 }

@@ -15,7 +15,10 @@ const contem = (col: unknown, tokens: string[]): SQL =>
     return v ? sql`${semAcento(col)} ~* ${`\\y(${v.join('|')})\\y`}` : sql`${semAcento(col)} ILIKE unaccent(${'%' + esc(t) + '%'})`;
   }))!;
 
-export async function buscar(q: string, limite = 20) {
+/** Só disciplinas (catálogo + caderno): não roda as consultas de professor e sala. */
+export const buscarDisciplinas = async (q: string, limite = 20) => (await buscar(q, limite, true)).disciplinas;
+
+export async function buscar(q: string, limite = 20, soDisciplinas = false) {
   const tokens = q.trim().split(/\s+/).filter(Boolean);
   if (!tokens.length) return { disciplinas: [], professores: [], salas: [] };
   await garantirExtensoes();
@@ -32,8 +35,8 @@ export async function buscar(q: string, limite = 20) {
       .from(oferecimento)
       .where(sql`${contem(oferecimento.nome, tokens)} OR ${oferecimento.codigo} ILIKE ${colado + '%'}`)
       .orderBy(asc(oferecimento.codigo), sql`${oferecimento.ano} DESC, ${oferecimento.periodo} DESC`),
-    db.select({ slug: professor.slug, nome: professor.nome }).from(professor).where(contem(professor.nome, tokens)).orderBy(asc(professor.nome)).limit(limite),
-    db.selectDistinct({ sala: horario.sala }).from(horario).where(sql`${horario.sala} ILIKE ${'%' + colado + '%'}`).orderBy(asc(horario.sala)).limit(limite),
+    soDisciplinas ? [] : db.select({ slug: professor.slug, nome: professor.nome }).from(professor).where(contem(professor.nome, tokens)).orderBy(asc(professor.nome)).limit(limite),
+    soDisciplinas ? [] : db.selectDistinct({ sala: horario.sala }).from(horario).where(sql`${horario.sala} ILIKE ${'%' + colado + '%'}`).orderBy(asc(horario.sala)).limit(limite),
   ]);
 
   const porCodigo = new Map(doCatalogo.map((d) => [d.codigo, d]));

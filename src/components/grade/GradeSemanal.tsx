@@ -61,8 +61,10 @@ export function GradeSemanal({ itens, className, bloco }: { itens: ItemGrade[]; 
             ))}
           </div>
           {DIAS.map(({ dia, nome }) => {
-            const doDia = itens.filter((i) => i.dia === dia);
-            const pos = lado(doDia);
+            // fantasmas ficam numa camada à parte: o layout dos blocos reais não muda enquanto se arrasta
+            const reais = itens.filter((i) => i.dia === dia && !i.fantasma), fantasmas = itens.filter((i) => i.dia === dia && i.fantasma);
+            const doDia = [...reais, ...fantasmas];
+            const pos = [...lado(reais), ...lado(fantasmas)];
             return (
               <div key={dia} className={cn("relative border-l", oculta(dia))} style={{ backgroundImage: "linear-gradient(to bottom, var(--border) 1px, transparent 1px)", backgroundSize: `100% ${PX_H}px` }}>
                 {doDia.map((it, i) => {

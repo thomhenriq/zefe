@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { and, eq, like } from 'drizzle-orm';
 import { catalogoDisciplina, db, horario, oferecimento, professor, semestre, turma } from '@/db';
-import { buscar } from '@/dados/busca';
+import { buscar, buscarDisciplinas } from '@/dados/busca';
 
 // sentinelas: ano 1992, catálogo 1992, códigos ZY…, slug zy-… (um job real grava no mesmo banco)
 const limpar = async () => {
@@ -52,4 +52,10 @@ test('número e romano se equivalem (1 e I, 2 e II) sem casar letra solta', asyn
   expect((await buscar('termodinamica sentinela ii')).disciplinas.map((d) => d.codigo)).toContain('ZY904');
   expect((await buscar('termodinamica sentinela 1')).disciplinas.map((d) => d.codigo)).not.toContain('ZY904');
   expect((await buscar('termodinamica sentinela i')).disciplinas.map((d) => d.codigo)).not.toContain('ZY904');
+});
+
+test('buscarDisciplinas devolve só disciplinas, mesmo critério de buscar', async () => {
+  expect((await buscarDisciplinas('calculo sentinela')).map((d) => d.codigo)).toContain('ZY901');
+  expect(await buscarDisciplinas('   ')).toEqual([]);
+  expect(await buscarDisciplinas('zysala')).toEqual([]); // sala não vira disciplina
 });
