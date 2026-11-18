@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { Accessibility, AutoScroller, defaultPreset } from "@dnd-kit/dom";
@@ -63,8 +63,17 @@ export function Montagem(p: MontagemProps) {
   const [pendente, comecar] = useTransition();
   const gatilho = useRef<HTMLElement | null>(null);
   const devolver = useRef(false);
-  // o foco volta ao botão de origem depois que a lista reaparece (enquanto a escolha está aberta ela fica oculta em telas largas)
-  useEffect(() => { if (!escolha && devolver.current) { devolver.current = false; if (gatilho.current?.isConnected) gatilho.current.focus(); } }, [escolha]);
+  // Enquanto a escolha está aberta a lista fica display:none em telas largas e o navegador zera a rolagem dela: guarda ao abrir e devolve antes de pintar.
+  const lista = useRef<HTMLDivElement>(null);
+  const rolagem0 = useRef(0);
+  // posição da lista e da página ao pegar um cartão: a grade fica acima, o arrasto rola até ela, e ao soltar volta-se para onde o aluno estava
+  const inicio = useRef({ win: 0, lista: 0 });
+  // o foco volta ao botão de origem (sem rolar) depois que a lista reaparece
+  useLayoutEffect(() => {
+    if (escolha) return;
+    if (lista.current) lista.current.scrollTop = rolagem0.current;
+    if (devolver.current) { devolver.current = false; if (gatilho.current?.isConnected) gatilho.current.focus({ preventScroll: true }); }
+  }, [escolha]);
 
   const porCodigo = useMemo(() => new Map(p.grupos.flatMap((g) => g.cartoes).map((c) => [c.codigo, c] as const)), [p.grupos]);
   const foco = escolha ?? (arrastando?.tipo === "cartao" ? arrastando.disc : null);
@@ -97,9 +106,9 @@ export function Montagem(p: MontagemProps) {
       if (r?.erro) setErro(r.erro); else setAviso(ok);
     });
   }
-  const adicionar = (codigo: string, turma: string) => { devolver.current = true; setEscolha(null); setPrevia(null); if (!escolha) gatilho.current?.focus(); aplicar(adicionarAcao, { codigo, turma }, `${codigo} turma ${turma} na grade.`); };
+  const adicionar = (codigo: string, turma: string) => { devolver.current = true; setEscolha(null); setPrevia(null); if (!escolha) gatilho.current?.focus({ preventScroll: true }); aplicar(adicionarAcao, { codigo, turma }, `${codigo} turma ${turma} na grade.`); };
   const remover = (codigo: string) => aplicar(removerAcao, { codigo }, `${codigo} removida da grade.`);
-  const abrir = (disc: DisciplinaOferta, de?: HTMLElement | null) => { gatilho.current = de ?? (document.activeElement as HTMLElement | null); setErro(null); setEscolha(disc); setPrevia(null); };
+  const abrir = (disc: DisciplinaOferta, de?: HTMLElement | null) => { if (!escolha && lista.current) rolagem0.current = lista.current.scrollTop; gatilho.current = de ?? gatilho.current; setErro(null); setEscolha(disc); setPrevia(null); };
   const fechar = () => { devolver.current = true; setEscolha(null); setPrevia(null); };
 
   const bloco = (it: ItemSemanal, base: BaseBloco): ReactNode => {
@@ -114,35 +123,46 @@ export function Montagem(p: MontagemProps) {
   // bloqueios e itens sem `id` continuam como a GradeSemanal já os desenhava; só os com código viram arrastáveis
   const comId = useMemo(() => semanais.map((i, n) => (i.fantasma || !i.codigo ? i : { ...i, id: `item:${i.codigo}:${n}` })), [semanais]);
 
+  function aoSoltar(e: Ev) {
+    const antes = arrastando;
+    setArrastando(null);
+    if (e.canceled) return;
+    const src = e.operation.source?.data, alvo = e.operation.target;
+    if (!src) return;
+    // bloco da grade solto em qualquer lugar que não seja a própria grade (ou na faixa) sai da grade
+    if (src.tipo === "item") { if (!alvo || alvo.id === "remover") remover(src.codigo as string); return; }
+    if (!alvo || src.tipo !== "cartao" || antes?.tipo !== "cartao" || !antes.disc) return;
+    if (alvo.data?.tipo === "fantasma" && (alvo.data.turmas as string[]).length === 1) return adicionar(antes.disc.codigo, (alvo.data.turmas as string[])[0]!);
+    if (alvo.data?.tipo === "fantasma") return abrir(antes.disc, null);
+    if (alvo.id === "grade") {
+      const unica = encaixarTurmas(antes.disc, p.itens, p.bloqueios, p.curso !== undefined ? { curso: p.curso } : {});
+      if (unica.length === 1 && unica[0]!.cabe) return adicionar(antes.disc.codigo, unica[0]!.turma);
+      abrir(antes.disc, null);
+    }
+  }
+
   return (
     <DragDropProvider
       plugins={plugins}
       onDragStart={(e) => {
         const d = e.operation.source?.data;
+        inicio.current = { win: window.scrollY, lista: escolha ? rolagem0.current : lista.current?.scrollTop ?? 0 };
+        gatilho.current = (e.operation.source as { handle?: HTMLElement | null } | null)?.handle ?? null;
         if (d?.tipo === "cartao") setArrastando({ disc: porCodigo.get(d.codigo)?.oferta ?? null, tipo: "cartao" });
         else if (d?.tipo === "item") setArrastando({ disc: null, tipo: "item" });
         setEscolha(null);
       }}
       onDragEnd={(e) => {
-        const antes = arrastando;
-        setArrastando(null);
-        if (e.canceled) return;
-        const src = e.operation.source?.data, alvo = e.operation.target;
-        if (!src) return;
-        // bloco da grade solto em qualquer lugar que não seja a própria grade (ou na faixa) sai da grade
-        if (src.tipo === "item") { if (!alvo || alvo.id === "remover") remover(src.codigo as string); return; }
-        if (!alvo || src.tipo !== "cartao" || antes?.tipo !== "cartao" || !antes.disc) return;
-        if (alvo.data?.tipo === "fantasma" && (alvo.data.turmas as string[]).length === 1) return adicionar(antes.disc.codigo, (alvo.data.turmas as string[])[0]!);
-        if (alvo.data?.tipo === "fantasma") return abrir(antes.disc, null);
-        if (alvo.id === "grade") {
-          const unica = encaixarTurmas(antes.disc, p.itens, p.bloqueios, p.curso !== undefined ? { curso: p.curso } : {});
-          if (unica.length === 1 && unica[0]!.cabe) return adicionar(antes.disc.codigo, unica[0]!.turma);
-          abrir(antes.disc, null);
-        }
+        aoSoltar(e);
+        if (e.operation.source?.data?.tipo !== "cartao") return;
+        rolagem0.current = inicio.current.lista;
+        // com ponteiro a biblioteca tira o cartão do lugar durante a animação da soltura e o foco cai no body; no teclado ela mesma devolve
+        setTimeout(() => { if (document.activeElement === document.body && gatilho.current?.isConnected) gatilho.current.focus({ preventScroll: true }); }, 400);
+        requestAnimationFrame(() => { window.scrollTo({ top: inicio.current.win, behavior: "instant" }); if (lista.current && lista.current.offsetParent) lista.current.scrollTop = inicio.current.lista; });
       }}
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:items-start">
-        <div className="space-y-3 max-lg:order-2 lg:sticky lg:top-[calc(var(--spacing-barra,3.5rem)+0.75rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:pr-1">
+        <div ref={lista} className="space-y-3 max-lg:order-2 lg:sticky lg:top-[calc(var(--spacing-barra,3.5rem)+0.75rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:pr-1">
           {escolha && <Escolha disc={escolha} encaixes={encaixes} naGrade={p.itens.find((i) => i.codigo === escolha.codigo)?.turma} rotuloSem={p.rotuloSem} previa={previa} setPrevia={setPrevia} onAdicionar={(t) => adicionar(escolha.codigo, t)} onFechar={fechar} />}
           <div className={cn(escolha && "lg:hidden", "space-y-3")}>
             {p.semArvore
@@ -274,7 +294,7 @@ function CartaoLivre({ c, naGrade, onAdicionar }: { c: CartaoComSituacao; naGrad
 
 function Escolha({ disc, encaixes, naGrade, rotuloSem, previa, setPrevia, onAdicionar, onFechar }: { disc: DisciplinaOferta; encaixes: Encaixe[]; naGrade?: string; rotuloSem: string; previa: string | null; setPrevia: (t: string | null) => void; onAdicionar: (t: string) => void; onFechar: () => void }) {
   const titulo = useRef<HTMLHeadingElement>(null);
-  useEffect(() => titulo.current?.focus(), [disc.codigo]);
+  useEffect(() => titulo.current?.focus({ preventScroll: true }), [disc.codigo]);
   return (
     <section aria-labelledby="h-escolha" onKeyDown={(e) => e.key === "Escape" && onFechar()}
       className="space-y-2 rounded-xl border bg-card p-3 text-sm max-lg:fixed max-lg:inset-x-2 max-lg:bottom-[4.5rem] max-lg:z-40 max-lg:max-h-[55dvh] max-lg:overflow-y-auto max-lg:shadow-elevada">
