@@ -24,7 +24,7 @@ async function garantirUsuario() {
   await db.insert(historico).values([...SEMENTE.cursada.map((codigo) => ({ codigo, estado: 'cursada' })), ...SEMENTE.cursando.map((codigo) => ({ codigo, estado: 'cursando' }))].map((h) => ({ user_id: USER, origem: 'aluno', ...h })));
   const [g] = await db.insert(grade).values({ user_id: USER, ano: 2027, periodo: 1, nome: 'Minha grade', principal: true }).returning();
   await db.insert(gradeItem).values(SEMENTE.grade.map(([codigo, turma]) => ({ grade_id: g!.id, codigo, turma })));
-  await db.insert(bloqueio).values({ user_id: USER, ...SEMENTE.bloqueio });
+  await db.insert(bloqueio).values({ user_id: USER, grade_id: g!.id, ...SEMENTE.bloqueio });
 }
 const arg = (n: string) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? process.argv[i + 1] : undefined; };
 
@@ -58,7 +58,7 @@ async function restaurar(f: Foto) {
 async function semear(c: Cenario, f: Foto) {
   const g = f.grades.find((x) => x.principal && x.ano === 2027 && x.periodo === 1) ?? f.grades[0];
   for (const [codigo, turma] of c.semente?.grade ?? []) await db.insert(gradeItem).values({ grade_id: g!.id, codigo, turma }).onConflictDoUpdate({ target: [gradeItem.grade_id, gradeItem.codigo], set: { turma } });
-  for (const b of c.semente?.bloqueios ?? []) await db.insert(bloqueio).values({ user_id: USER, ...b });
+  for (const b of c.semente?.bloqueios ?? []) await db.insert(bloqueio).values({ user_id: USER, grade_id: g!.id, ...b });
 }
 
 // ---- critérios ----

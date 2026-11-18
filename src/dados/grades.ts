@@ -27,12 +27,23 @@ export async function listarGrades(userId: string, ano: number, periodo: Per) {
   return rows.map((g) => ({ id: String(g.id), nome: g.nome, principal: g.principal }));
 }
 
-export async function criarGrade(userId: string, ano: number, periodo: Per, nome: string): Promise<string> {
+export async function listarTodasGrades(userId: string) {
+  const rows = await db.select().from(tGrade).where(eq(tGrade.user_id, userId)).orderBy(asc(tGrade.ano), asc(tGrade.periodo), asc(tGrade.id));
+  return rows.map((g) => ({ id: String(g.id), nome: g.nome, ano: g.ano, periodo: g.periodo as Per }));
+}
+
+export async function criarGrade(userId: string, ano: number, periodo: Per, nome: string, copiarBloqueiosDe?: string): Promise<string> {
   const n = nome.trim();
   if (!n) throw new Error('a grade precisa de um nome');
   return db.transaction(async (tx) => {
     const outras = await tx.select({ id: tGrade.id }).from(tGrade).where(and(eq(tGrade.user_id, userId), eq(tGrade.ano, ano), eq(tGrade.periodo, periodo)));
     const [g] = await tx.insert(tGrade).values({ user_id: userId, ano, periodo, nome: n, principal: outras.length === 0 }).returning({ id: tGrade.id });
+    if (copiarBloqueiosDe) {
+      const o = await minhaGrade(userId, copiarBloqueiosDe);
+      if (!o) throw naoEncontrada();
+      const bs = await tx.select().from(tBloqueio).where(eq(tBloqueio.grade_id, o.id));
+      if (bs.length) await tx.insert(tBloqueio).values(bs.map((b) => ({ user_id: userId, grade_id: g!.id, nome: b.nome, dia: b.dia, inicio: b.inicio, fim: b.fim })));
+    }
     return String(g!.id);
   });
 }
@@ -70,8 +81,8 @@ async function prereqs(userId: string, codigos: string[]) {
   return { perfil, faltam, naoVerificado };
 }
 
-async function listarBloqueios(userId: string): Promise<Bloqueio[]> {
-  const rows = await db.select().from(tBloqueio).where(eq(tBloqueio.user_id, userId)).orderBy(asc(tBloqueio.dia), asc(tBloqueio.inicio), asc(tBloqueio.id));
+async function listarBloqueios(gradeId: number): Promise<Bloqueio[]> {
+  const rows = await db.select().from(tBloqueio).where(eq(tBloqueio.grade_id, gradeId)).orderBy(asc(tBloqueio.dia), asc(tBloqueio.inicio), asc(tBloqueio.id));
   return rows.map((b) => ({ id: String(b.id), nome: b.nome, dia: b.dia as Dia, inicio: b.inicio, fim: b.fim }));
 }
 
@@ -84,7 +95,7 @@ async function resolver(userId: string, g: typeof tGrade.$inferSelect): Promise<
     if (!x) return { codigo: r.codigo, nome: r.codigo, turma: r.turma, creditos: null, campus: 'desconhecido' as const, horarios: [], tipo: 'oficial' as const, reservas: [] };
     return { codigo: r.codigo, nome: x.d.nome, turma: x.t.turma, creditos: x.d.creditos, campus: x.d.campus, horarios: x.t.horarios, tipo: x.tipo, reservas: x.t.reservas, ...(x.t.horarioIncompleto ? { horarioIncompleto: true } : {}) };
   }));
-  const bloqueios = await listarBloqueios(userId);
+  const bloqueios = await listarBloqueios(g.id);
   const p = await prereqs(userId, itens.map((i) => i.codigo));
   const checagem = checarGrade(itens, bloqueios, {
     ...(p.perfil?.curso != null ? { curso: p.perfil.curso } : {}),
@@ -137,13 +148,15 @@ export async function excluirGrade(userId: string, gradeId: string): Promise<voi
   });
 }
 
-export async function criarBloqueio(userId: string, b: Omit<Bloqueio, 'id'>): Promise<Bloqueio> {
+export async function criarBloqueio(userId: string, gradeId: string, b: Omit<Bloqueio, 'id'>): Promise<Bloqueio> {
+  const g = await minhaGrade(userId, gradeId);
+  if (!g) throw naoEncontrada();
   const nome = b.nome.trim();
   if (!nome) throw new Error('o bloqueio precisa de um nome');
   if (!DIAS.includes(b.dia)) throw new Error(`dia inválido: ${b.dia}`);
   if (!HORA.test(b.inicio) || !HORA.test(b.fim)) throw new Error('horário inválido; use HH:MM');
   if (b.inicio >= b.fim) throw new Error('o bloqueio precisa terminar depois de começar');
-  const [r] = await db.insert(tBloqueio).values({ user_id: userId, nome, dia: b.dia, inicio: b.inicio, fim: b.fim }).returning();
+  const [r] = await db.insert(tBloqueio).values({ user_id: userId, grade_id: g.id, nome, dia: b.dia, inicio: b.inicio, fim: b.fim }).returning();
   return { id: String(r!.id), nome, dia: b.dia, inicio: b.inicio, fim: b.fim };
 }
 

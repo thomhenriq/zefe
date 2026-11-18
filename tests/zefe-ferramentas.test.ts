@@ -218,10 +218,25 @@ describe('ferramentas do Zefe', () => {
   });
 
   test('remover_bloqueio de bloqueio de outro usuário → { erro } e o bloqueio continua', async () => {
-    const b = await criarBloqueio(V, { nome: 'Do V', dia: 'qui', inicio: '08:00', fim: '09:00' });
+    const gv = await criarGrade(V, 1995, 1, 'Do V bloqueio');
+    const b = await criarBloqueio(V, gv, { nome: 'Do V', dia: 'qui', inicio: '08:00', fim: '09:00' });
     const r = await chamar(f, 'remover_bloqueio', { id: b.id });
     expect(r.erro).toContain('bloqueio não encontrado');
     expect(await db.select().from(bloqueio).where(eq(bloqueio.user_id, V))).toHaveLength(1);
+  });
+
+  test('bloqueio do Zefe só na grade em contexto; sem grade → { erro }; remover de outra grade do mesmo usuário → erro', async () => {
+    const sem = criarFerramentas({ userId: U, conversaId: conv, gradeId: null });
+    const e = await chamar(sem, 'criar_bloqueio', { nome: 'Y', dia: 'sex', inicio: '08:00', fim: '09:00' });
+    expect(e.erro).toContain('grade');
+    const outra = await criarGrade(U, 1995, 2, 'Outra do U');
+    const r = await chamar(f, 'criar_bloqueio', { nome: 'Z', dia: 'sex', inicio: '08:00', fim: '09:00' });
+    expect((await getGrade(U, gradeId))!.bloqueios.map((b) => b.nome)).toEqual(['Z']);
+    expect((await getGrade(U, outra))!.bloqueios).toEqual([]);
+    const fo = criarFerramentas({ userId: U, conversaId: conv, gradeId: outra });
+    expect((await chamar(fo, 'remover_bloqueio', { id: r.bloqueio.id })).erro).toContain('bloqueio não encontrado');
+    expect((await getGrade(U, gradeId))!.bloqueios).toHaveLength(1);
+    await db.delete(bloqueio).where(eq(bloqueio.user_id, U));
   });
 
   test('entrada: ano/periodo em texto são aceitos pelo schema; periodo 3 não', () => {

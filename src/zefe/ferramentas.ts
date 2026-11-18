@@ -216,10 +216,11 @@ export function criarFerramentas(ctx: Contexto) {
     }),
 
     criar_bloqueio: tool({
-      description: 'Cria um horário bloqueado (estágio, trabalho, compromisso) que o aluno não pode ter aula. Vale para todas as grades dele. Dia: seg, ter, qua, qui, sex ou sab; inicio e fim em HH:MM. Devolve o bloqueio (com id), acaoId e descricao; o aluno pode desfazer.',
+      description: 'Cria um horário bloqueado (estágio, trabalho, compromisso) que o aluno não pode ter aula. Vale só para a grade aberta (não para as outras grades do aluno). Dia: seg, ter, qua, qui, sex ou sab; inicio e fim em HH:MM. Devolve o bloqueio (com id), acaoId e descricao; o aluno pode desfazer.',
       inputSchema: z.object({ nome: z.string().describe('Nome do compromisso, ex.: "Estágio".'), dia: diaSchema, inicio: horaSchema, fim: horaSchema }),
       execute: seguro(async (b: { nome: string; dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string }) => {
-        const criado = await criarBloqueio(userId, b);
+        if (!ctx.gradeId) throw new Error('não há grade aberta: pergunte ao aluno em qual grade (semestre e nome) o bloqueio vale');
+        const criado = await criarBloqueio(userId, ctx.gradeId, b);
         const descricao = `Bloqueio "${criado.nome}": ${criado.dia} ${criado.inicio}–${criado.fim}`;
         try {
           const r = await comAcao('criar_bloqueio', descricao, { tipo: 'criar_bloqueio', bloqueioId: criado.id }, async () => undefined);
@@ -233,11 +234,12 @@ export function criarFerramentas(ctx: Contexto) {
       inputSchema: z.object({ id: z.coerce.string().describe('Id do bloqueio.') }),
       execute: seguro(async ({ id }: { id: string }) => {
         const b = await lerBloqueio(userId, id);
-        if (!b) throw new Error('bloqueio não encontrado');
+        if (!b || String(b.grade_id) !== String(ctx.gradeId)) throw new Error('bloqueio não encontrado');
         const descricao = `Removi o bloqueio "${b.nome}": ${b.dia} ${b.inicio}–${b.fim}`;
-        const r = await comAcao('remover_bloqueio', descricao, { tipo: 'remover_bloqueio', bloqueio: { nome: b.nome, dia: b.dia as 'seg', inicio: b.inicio, fim: b.fim } }, () => excluirBloqueio(userId, id));
+        const r = await comAcao('remover_bloqueio', descricao, { tipo: 'remover_bloqueio', gradeId: String(b.grade_id), bloqueio: { nome: b.nome, dia: b.dia as 'seg', inicio: b.inicio, fim: b.fim } }, () => excluirBloqueio(userId, id));
         return { acaoId: r.acaoId, descricao };
       }),
     }),
   };
+        if (!ctx.gradeId) throw new Error('não há grade aberta: pergunte ao aluno de qual grade (semestre e nome) é o bloqueio');
 }

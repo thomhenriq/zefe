@@ -170,18 +170,37 @@ describe('dados da grade', () => {
     expect(await listarGrades(U, 1992, 1)).toEqual([]);
   });
 
-  test('bloqueios por usuário entram em toda grade e geram conflito; excluir de outro usuário lança', async () => {
+  test('bloqueio é da grade: conflito só nela, outra grade (mesmo ou outro semestre) não vê; outro usuário não cria nem exclui', async () => {
     const id = await criarGrade(U, 1991, 1, 'Plano C');
-    const bl = await criarBloqueio(U, { nome: 'Estágio', dia: 'seg', inicio: '07:00', fim: '12:00' });
-    await expect(criarBloqueio(U, { nome: 'x', dia: 'seg', inicio: '12:00', fim: '07:00' })).rejects.toThrow();
+    const mesma = await criarGrade(U, 1991, 1, 'Plano C2');
+    const outra = await criarGrade(U, 1991, 2, 'Plano C3');
+    const bl = await criarBloqueio(U, id, { nome: 'Estágio', dia: 'seg', inicio: '07:00', fim: '12:00' });
+    await expect(criarBloqueio(U, id, { nome: 'x', dia: 'seg', inicio: '12:00', fim: '07:00' })).rejects.toThrow();
+    await expect(criarBloqueio(V, id, { nome: 'x', dia: 'seg', inicio: '07:00', fim: '08:00' })).rejects.toThrow();
     const g = await alterarGrade(U, id, { adicionar: [{ codigo: 'ZZ101', turma: 'A' }] });
     expect(g.bloqueios.map((b) => b.nome)).toEqual(['Estágio']);
     expect(g.checagem.ok).toBe(false);
     expect(g.checagem.achados.find((a) => a.nivel === 'conflito')!.motivo).toContain('Estágio');
+    const m = await alterarGrade(U, mesma, { adicionar: [{ codigo: 'ZZ101', turma: 'A' }] });
+    expect(m.bloqueios).toEqual([]);
+    expect(m.checagem.achados.some((a) => a.nivel === 'conflito')).toBe(false);
+    expect((await getGrade(U, outra))!.bloqueios).toEqual([]);
     await expect(excluirBloqueio(V, bl.id)).rejects.toThrow('bloqueio não encontrado');
     expect((await getGrade(U, id))!.bloqueios).toHaveLength(1);
     await excluirBloqueio(U, bl.id);
     expect((await getGrade(U, id))!.bloqueios).toEqual([]);
+  });
+
+  test('excluir a grade apaga seus bloqueios; criar grade pode copiar os de outra', async () => {
+    const a = await criarGrade(U, 1990, 1, 'A');
+    await criarBloqueio(U, a, { nome: 'Trabalho', dia: 'qua', inicio: '08:00', fim: '10:00' });
+    const b = await criarGrade(U, 1990, 2, 'B', a);
+    expect((await getGrade(U, b))!.bloqueios.map((x) => x.nome)).toEqual(['Trabalho']);
+    await expect(criarGrade(V, 1990, 1, 'C', a)).rejects.toThrow();
+    await excluirGrade(U, a);
+    expect(await db.select().from(bloqueio).where(eq(bloqueio.user_id, U))).toHaveLength(1);
+    await excluirGrade(U, b);
+    expect(await db.select().from(bloqueio).where(eq(bloqueio.user_id, U))).toHaveLength(0);
   });
 
   test('pré-requisito, reserva, sem horário e horário incompleto vindos do banco', async () => {

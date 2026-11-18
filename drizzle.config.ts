@@ -7,5 +7,6 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./src/db/schema.ts",
   out: "./drizzle",
+  tablesFilter: ["!bloqueio_backup_*"], // backups manuais de migração não são do schema
   dbCredentials: { url },
 });

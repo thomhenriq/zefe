@@ -296,6 +296,7 @@ export const gradeItem = pgTable(
 export const bloqueio = pgTable("bloqueio", {
   id: serial("id").primaryKey(),
   user_id: text("user_id").notNull(),
+  grade_id: integer("grade_id").notNull().references(() => grade.id, { onDelete: "cascade" }),
   nome: text("nome").notNull(),
   dia: text("dia").notNull(),
   inicio: text("inicio").notNull(),

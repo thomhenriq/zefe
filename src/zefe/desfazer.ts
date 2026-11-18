@@ -8,13 +8,13 @@ import { alterarGrade, criarBloqueio, excluirBloqueio } from '@/dados/grades';
  *  alterar_grade:    { gradeId, remover: string[] (códigos que não estavam), adicionar: {codigo,turma}[] (itens/turmas que estavam e foram removidos ou trocados) }  (se a ferramenta criou a grade, o desfazer só tira os itens: a grade vazia fica)
  *  marcar_historico: { codigo, anterior: 'cursada'|'cursando'|null }
  *  criar_bloqueio:   { bloqueioId }
- *  remover_bloqueio: { bloqueio: { nome, dia, inicio, fim } }   (recriado com id novo)
+ *  remover_bloqueio: { gradeId, bloqueio: { nome, dia, inicio, fim } }   (recriado com id novo na mesma grade; registros antigos sem gradeId não desfazem)
  */
 export type Desfazer =
   | { tipo: 'alterar_grade'; gradeId: string; remover: string[]; adicionar: { codigo: string; turma: string }[] }
   | { tipo: 'marcar_historico'; codigo: string; anterior: Estado | null }
   | { tipo: 'criar_bloqueio'; bloqueioId: string }
-  | { tipo: 'remover_bloqueio'; bloqueio: { nome: string; dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string } };
+  | { tipo: 'remover_bloqueio'; gradeId: string; bloqueio: { nome: string; dia: 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab'; inicio: string; fim: string } };
 
 export const ACAO_NAO_ENCONTRADA = 'ação não encontrada';
 
@@ -23,7 +23,7 @@ async function aplicar(userId: string, d: Desfazer): Promise<void> {
     case 'alterar_grade': await alterarGrade(userId, d.gradeId, { remover: d.remover, adicionar: d.adicionar }); return;
     case 'marcar_historico': await marcarHistorico(userId, d.codigo, d.anterior); return;
     case 'criar_bloqueio': await excluirBloqueio(userId, d.bloqueioId); return;
-    case 'remover_bloqueio': await criarBloqueio(userId, d.bloqueio); return;
+    case 'remover_bloqueio': if (!d.gradeId) throw new Error('esse bloqueio não tem grade registrada; crie de novo'); await criarBloqueio(userId, d.gradeId, d.bloqueio); return;
   }
 }
 

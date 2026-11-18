@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Star, Trash2 } from "lucide-react";
 import { exigirUsuario } from "@/sessao";
-import { listarGrades, getGrade } from "@/dados/grades";
+import { listarGrades, listarTodasGrades, getGrade } from "@/dados/grades";
 import { getOferta } from "@/dados/disciplinas";
 import { getIntegralizacao, SemCurriculo } from "@/dados/aluno";
 import { listarSemestres, ofertaPlanejador } from "@/dados/planejador";
@@ -37,7 +37,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   const ano = Number.isInteger(anoQ) && anoQ >= 1990 && anoQ <= 2100 ? anoQ : prox.ano;
   const periodo = (Number(um(sp.periodo)) === 2 ? 2 : Number(um(sp.periodo)) === 1 ? 1 : ano === prox.ano ? prox.periodo : 1) as 1 | 2;
   const sem = { ano, periodo };
-  const [semestres, grades] = await Promise.all([listarSemestres(), listarGrades(u.id, ano, periodo)]);
+  const [semestres, grades, allGrades] = await Promise.all([listarSemestres(), listarGrades(u.id, ano, periodo), listarTodasGrades(u.id)]);
   const opcoes = opcoesSemestre(semestres, prox, sem);
   const publicado = semestres.some((s) => s.ano === ano && s.periodo === periodo && s.publicado);
   const escolhida = grades.find((g) => g.id === um(sp.grade)) ?? grades.find((g) => g.principal) ?? grades[0];
@@ -84,6 +84,15 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
             <input type="hidden" name="ano" value={ano} /><input type="hidden" name="periodo" value={periodo} />
             <label className="sr-only" htmlFor="nova-grade">Nome da nova opção</label>
             <input id="nova-grade" name="nome" required maxLength={60} placeholder={grades.length ? "Nova opção" : "Nome da grade"} defaultValue={grades.length ? "" : "Minha grade"} className={cn(CAMPO, "w-36")} />
+            {allGrades.length > 0 && (
+              <>
+                <label className="sr-only" htmlFor="copiar-bloqueios">Copiar bloqueios de outra grade</label>
+                <select id="copiar-bloqueios" name="copiar" defaultValue="" className={cn(CAMPO, "w-44")}>
+                  <option value="">Sem copiar bloqueios</option>
+                  {allGrades.map((g) => <option key={g.id} value={g.id}>Copiar bloqueios de {g.nome} ({rotuloSemestre(g.ano, g.periodo)})</option>)}
+                </select>
+              </>
+            )}
             <Button type="submit" variant="outline">Criar</Button>
           </FormAcao>
         </nav>
@@ -180,8 +189,8 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
           </section>
 
           <section className={SECAO} aria-labelledby="h-bloq">
-            <h2 id="h-bloq" className={H2}>Horários bloqueados</h2>
-            <p className="max-w-[68ch] text-sm text-muted-foreground">Estágio, trabalho: janelas fixas que valem em todas as suas grades e contam como conflito.</p>
+            <h2 id="h-bloq" className={H2}>Bloqueios desta grade</h2>
+            <p className="max-w-[68ch] text-sm text-muted-foreground">Estágio, trabalho: janelas fixas que contam como conflito. Vale só para esta grade ({grade.nome}, {rotuloSemestre(ano, periodo)}).</p>
             {grade.bloqueios.length > 0 && (
               <ul className="divide-y text-sm">
                 {grade.bloqueios.map((b) => (
@@ -193,6 +202,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
               </ul>
             )}
             <FormAcao acao={criarBloqueioAcao} className="flex flex-wrap items-end gap-2 text-sm">
+              <input type="hidden" name="grade" value={grade.id} />
               <label className="space-y-1"><span className="block font-medium">Nome</span><input name="nome" required maxLength={60} placeholder="Estágio" className={cn(CAMPO, "w-36")} /></label>
               <label className="space-y-1"><span className="block font-medium">Dia</span><select name="dia" className={CAMPO}>{DIAS.map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select></label>
               <label className="space-y-1"><span className="block font-medium">Início</span><input name="inicio" type="time" required defaultValue="13:30" className={cn(CAMPO, "tabular")} /></label>

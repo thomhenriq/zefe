@@ -27,7 +27,7 @@ async function rodar<T extends z.ZodRawShape>(fd: FormData, forma: T, fn: (u: st
 }
 
 export const criarGradeAcao = async (_: Estado, fd: FormData) =>
-  rodar(fd, { ...sem, nome: z.string().trim().min(1, "dê um nome à grade").max(60) }, async (u, d) => url(d.ano, d.periodo, await criarGrade(u, d.ano, d.periodo as 1 | 2, d.nome)));
+  rodar(fd, { ...sem, nome: z.string().trim().min(1, "dê um nome à grade").max(60), copiar: id.optional().or(z.literal("").transform(() => undefined)) }, async (u, d) => url(d.ano, d.periodo, await criarGrade(u, d.ano, d.periodo as 1 | 2, d.nome, d.copiar)));
 
 export const principalAcao = async (_: Estado, fd: FormData) =>
   rodar(fd, { grade: id }, (u, d) => definirPrincipal(u, d.grade));
@@ -43,7 +43,7 @@ export const removerAcao = async (_: Estado, fd: FormData) =>
   rodar(fd, { grade: id, codigo: z.string().trim().min(1).max(20) }, async (u, d) => { await alterarGrade(u, d.grade, { remover: [d.codigo] }); });
 
 export const criarBloqueioAcao = async (_: Estado, fd: FormData) =>
-  rodar(fd, { nome: z.string().trim().min(1, "dê um nome ao bloqueio").max(60), dia: z.enum(["seg", "ter", "qua", "qui", "sex", "sab"]), inicio: hora, fim: hora }, async (u, d) => { await criarBloqueio(u, d); });
+  rodar(fd, { grade: id, nome: z.string().trim().min(1, "dê um nome ao bloqueio").max(60), dia: z.enum(["seg", "ter", "qua", "qui", "sex", "sab"]), inicio: hora, fim: hora }, async (u, d) => { await criarBloqueio(u, d.grade, d); });
 
 export const excluirBloqueioAcao = async (_: Estado, fd: FormData) =>
   rodar(fd, { id }, async (u, d) => { await excluirBloqueio(u, d.id); });
