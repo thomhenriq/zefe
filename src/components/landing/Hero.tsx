@@ -60,7 +60,6 @@ export function PedidoForm() {
       <label className="sr-only" htmlFor="pedido">Peça ao Zefe</label>
       <input
         id="pedido"
-        name="pedido"
         value={e.texto}
         onChange={(ev) => digitar(ev.target.value)}
         placeholder="Peça ao Zefe…"
