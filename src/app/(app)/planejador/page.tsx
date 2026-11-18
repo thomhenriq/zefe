@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { Star, Trash2, Search } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { exigirUsuario } from "@/sessao";
 import { listarGrades, getGrade } from "@/dados/grades";
 import { getOferta } from "@/dados/disciplinas";
-import { buscar } from "@/dados/busca";
-import { listarSemestres } from "@/dados/planejador";
+import { getIntegralizacao, SemCurriculo } from "@/dados/aluno";
+import { listarSemestres, ofertaPlanejador } from "@/dados/planejador";
 import { proximoSemestre } from "@/dominio/oferta";
 import { rotuloSemestre } from "@/dominio/semestre";
 import { foraDoCalendario } from "@/dominio/ics";
-import { GradeSemanal } from "@/components/grade/GradeSemanal";
+import { Montagem } from "@/components/planejador/Montagem";
+import { agruparCandidatos, type Cartao } from "@/dominio/planejador";
 import { ExportarIcs } from "@/components/grade/ExportarIcs";
 import { FormAcao } from "@/components/grade/FormAcao";
 import { agruparAchados, itensSemanais, opcoesSemestre, resumoHorarios, semHorario } from "@/components/grade/visao";
@@ -41,25 +42,26 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
   const publicado = semestres.some((s) => s.ano === ano && s.periodo === periodo && s.publicado);
   const escolhida = grades.find((g) => g.id === um(sp.grade)) ?? grades.find((g) => g.principal) ?? grades[0];
   const grade = escolhida ? await getGrade(u.id, escolhida.id) : null;
-  const href = (o: { ano?: number; periodo?: number; grade?: string; q?: string; d?: string }) => {
+  const href = (o: { ano?: number; periodo?: number; grade?: string }) => {
     const p = new URLSearchParams({ ano: String(o.ano ?? ano), periodo: String(o.periodo ?? periodo) });
     if (o.grade) p.set("grade", o.grade);
-    if (o.q) p.set("q", o.q);
-    if (o.d) p.set("d", o.d);
     return `/planejador?${p}`;
   };
 
   // Oferta de cada disciplina da grade: turmas para trocar e evidências da previsão.
   const ofertas: Map<string, Awaited<ReturnType<typeof getOferta>>> = grade ? new Map(await Promise.all(grade.itens.map(async (i) => [i.codigo, await getOferta(i.codigo, ano, periodo)] as const))) : new Map();
   const evidencias = [...new Set(grade?.itens.flatMap((i) => { const o = ofertas.get(i.codigo); return o?.encontrada && o.tipo === "previsao" ? o.evidencias.map((e) => rotuloSemestre(e.ano, e.periodo)) : []; }) ?? [])];
-  const q = um(sp.q), d = um(sp.d);
-  const achadosBusca = q ? (await buscar(q, 12)).disciplinas : [];
-  const ofertaD = grade && d ? await getOferta(d, ano, periodo) : null;
+  // Cartões da árvore do aluno: o que ainda pode/deve cursar, com a oferta do semestre escolhido (travadas não precisam de oferta).
+  const arvore = grade ? await getIntegralizacao(u.id).catch((e) => { if (e instanceof SemCurriculo) return null; throw e; }) : null;
+  const cartoes: Cartao[] = arvore ? await Promise.all(arvore.disciplinas.filter((x) => x.estado === "faltando" || x.estado === "planejada" || x.estado === "travada").map(async (x) => {
+    const o = x.estado === "travada" ? null : await ofertaPlanejador(x.codigo, ano, periodo);
+    return { codigo: x.codigo, nome: x.nome, creditos: x.creditos, semestre: x.semestreSugerido, estado: x.estado, faltamPrereq: x.faltamPrereq, prereqDesconhecido: x.prereqDesconhecido, oferta: o?.oferta ?? null, ...(o?.oferta === null ? { semOfertaMotivo: o.motivo } : {}) };
+  })) : [];
   const achados = grade ? agruparAchados(grade.checagem.achados) : null;
   const sem_h = grade ? semHorario(grade.itens) : [];
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 lg:px-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 lg:px-6">
       <header className="space-y-3">
         <h1 className="text-4xl">Planejador</h1>
         <nav aria-label="Semestre" className="flex flex-wrap gap-1.5">
@@ -111,7 +113,8 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
                 </FormAcao>
               </details>
             </div>
-            <GradeSemanal itens={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} />
+            <Montagem gradeId={grade.id} ano={ano} periodo={periodo} rotuloSem={rotuloSemestre(ano, periodo)} itens={grade.itens} bloqueios={grade.bloqueios}
+              semanais={itensSemanais(grade.itens, grade.bloqueios, grade.checagem.achados)} grupos={agruparCandidatos(cartoes)} semArvore={!arvore} />
           </section>
 
           <section className={SECAO} aria-labelledby="h-resumo">
@@ -129,7 +132,7 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
 
           <section className={SECAO} aria-labelledby="h-turmas">
             <h2 id="h-turmas" className={H2}>Turmas escolhidas</h2>
-            {grade.itens.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma disciplina ainda. Use a busca abaixo.</p> : (
+            {grade.itens.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma disciplina ainda. Arraste um cartão para a grade.</p> : (
               <ul className="divide-y">
                 {grade.itens.map((i) => {
                   const o = ofertas.get(i.codigo);
@@ -172,48 +175,6 @@ export default async function Planejador({ searchParams }: { searchParams: Promi
                 <p className="text-sm text-muted-foreground">Não aparecem na grade semanal, mas contam nos créditos: {sem_h.map((i) => `${i.codigo} ${i.turma}${i.horarioIncompleto ? " (horário incompleto)" : ""}`).join(", ")}.</p>
               </div>
             )}
-          </section>
-
-          <section className={SECAO} aria-labelledby="h-busca">
-            <h2 id="h-busca" className={H2}>Adicionar disciplina</h2>
-            <form action="/planejador" role="search" className="flex gap-2">
-              <input type="hidden" name="ano" value={ano} /><input type="hidden" name="periodo" value={periodo} /><input type="hidden" name="grade" value={grade.id} />
-              <label className="flex-1"><span className="sr-only">Código ou nome da disciplina</span>
-                <input name="q" type="search" defaultValue={q} placeholder="Código ou nome (SI702, cálculo)" autoComplete="off" className={cn(CAMPO, "h-9 w-full")} /></label>
-              <Button type="submit" size="lg"><Search aria-hidden />Buscar</Button>
-            </form>
-            {q && achadosBusca.length === 0 && <p role="status" className="text-sm text-muted-foreground">Nada encontrado para “{q}”.</p>}
-            {achadosBusca.length > 0 && (
-              <ul className="flex flex-wrap gap-1.5">
-                {achadosBusca.map((x) => <li key={x.codigo}><Link href={href({ grade: grade.id, q, d: x.codigo })} aria-current={x.codigo === d ? "true" : undefined}
-                  className={cn("inline-flex gap-2 rounded-lg border px-2.5 py-1 text-sm hover:bg-muted", x.codigo === d && "border-foreground/40 bg-accent")}><span className="font-mono font-semibold">{x.codigo}</span>{x.nome}</Link></li>)}
-              </ul>
-            )}
-            {ofertaD && !ofertaD.encontrada && (
-              <p className="flex flex-wrap items-center gap-2 text-sm" role="status">
-                {ofertaD.tipo === "previsao" && <AvisoBadge nivel="previsao" rotulo="sem histórico" />}
-                <span><span className="font-mono font-semibold">{d}</span>: {ofertaD.motivo}.</span>
-              </p>
-            )}
-            {ofertaD?.encontrada && (() => {
-              const disc = ofertaD.tipo === "oficial" ? ofertaD.disciplina : ofertaD.base;
-              const naGrade = grade.itens.find((i) => i.codigo === disc.codigo);
-              return (
-                <div className="space-y-2">
-                  <p className="flex flex-wrap items-center gap-2 text-sm"><span className="font-mono font-semibold">{disc.codigo}</span>{disc.nome}<span className="text-muted-foreground">{disc.creditos ?? "?"} cr.</span>
-                    {ofertaD.tipo === "previsao" && <><AvisoBadge nivel="previsao" /><span className="text-muted-foreground">baseada em {rotulosEvidencias(ofertaD.evidencias)}</span></>}</p>
-                  <ul className="space-y-1">
-                    {disc.turmas.map((t) => (
-                      <li key={t.turma}><FormAcao acao={adicionarAcao} className="flex flex-wrap items-center gap-2 text-sm">
-                        <input type="hidden" name="grade" value={grade.id} /><input type="hidden" name="codigo" value={disc.codigo} /><input type="hidden" name="turma" value={t.turma} />
-                        <Button type="submit" size="sm" variant="outline" disabled={naGrade?.turma === t.turma}>{naGrade?.turma === t.turma ? `Turma ${t.turma} na grade` : naGrade ? `Trocar para ${t.turma}` : `Adicionar ${t.turma}`}</Button>
-                        <span className="tabular text-muted-foreground">{resumoHorarios(t.horarios)}{t.horarioIncompleto ? " · incompleto" : ""}</span>
-                      </FormAcao></li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })()}
           </section>
 
           <section className={SECAO} aria-labelledby="h-bloq">

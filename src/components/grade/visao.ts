@@ -19,7 +19,7 @@ export function itensSemanais(itens: ItemGrade[], bloqueios: Bloqueio[], achados
     it.horarios.map((h): ItemSemanal => ({
       rotulo: `${it.codigo} ${it.turma}`, dia: h.dia, inicio: h.inicio, fim: h.fim,
       tom: emConflito.has(`${h.dia}|${it.codigo}`) ? "conflito" : it.tipo === "previsao" ? "previsao" : "planejada",
-      href: `/disciplina/${it.codigo}`,
+      href: `/disciplina/${it.codigo}`, codigo: it.codigo,
     })),
   );
   const blocos = bloqueios.map((b): ItemSemanal => ({ rotulo: b.nome, dia: b.dia, inicio: b.inicio, fim: b.fim, tom: bloqueiosEmConflito.has(b.id) ? "conflito" : "travada" }));

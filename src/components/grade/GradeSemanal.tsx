@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import type { Dia } from "@/dac/tipos";
 import { cn } from "@/lib/utils";
 import { corDe } from "@/components/ui/estado";
 import { lado, minutos } from "./layout";
 
-export type ItemGrade = { rotulo: string; dia: Dia; inicio: string; fim: string; tom: string; href?: string };
+/** `id` marca blocos que o chamador renderiza por conta própria (fantasmas e blocos arrastáveis do planejador, via `bloco`). */
+export type ItemGrade = { rotulo: string; dia: Dia; inicio: string; fim: string; tom: string; href?: string; codigo?: string; id?: string; fantasma?: boolean };
+export type BaseBloco = { cls: string; estilo: CSSProperties; aria: string; conteudo: ReactNode; colunas: number };
 
 const DIAS: { dia: Dia; nome: string; curto: string }[] = [
   { dia: "seg", nome: "segunda", curto: "Seg" }, { dia: "ter", nome: "terça", curto: "Ter" },
@@ -25,8 +27,13 @@ const cor = (tom: string) => corDe(tom as never) ?? NEUTRO;
  * a semana inteira (rola na horizontal abaixo de 36rem). Cada bloco tem aria-label com dia e horário;
  * `tom` é um estado/aviso do DESIGN.md (cursada, conflito, previsao...).
  */
-export function GradeSemanal({ itens, className }: { itens: ItemGrade[]; className?: string }) {
+export function GradeSemanal({ itens, className, bloco }: { itens: ItemGrade[]; className?: string; bloco?: (it: ItemGrade, base: BaseBloco) => ReactNode }) {
   const [sel, setSel] = useState<Dia>(() => DIAS.find((d) => itens.some((i) => i.dia === d.dia))?.dia ?? "seg");
+  // fantasmas novos num dia que não está à vista (celular): vai para o primeiro dia que tem fantasma
+  const fant = itens.filter((i) => i.fantasma);
+  const chaveFant = fant.map((i) => i.id).join();
+  const [vista, setVista] = useState(chaveFant);
+  if (chaveFant !== vista) { setVista(chaveFant); if (fant.length && !fant.some((i) => i.dia === sel)) setSel(fant[0]!.dia); }
   const colunas = "grid-cols-[2.75rem_minmax(0,1fr)] sm:grid-cols-[2.75rem_repeat(6,minmax(0,1fr))]";
   const oculta = (d: Dia) => (d === sel ? "" : "max-sm:hidden");
   return (
@@ -66,6 +73,7 @@ export function GradeSemanal({ itens, className }: { itens: ItemGrade[]; classNa
                   const estilo = { top: topo + 1, height: alto, left: `calc(${(col / cols) * 100}% + 1px)`, width: `calc(${100 / cols}% - 2px)` };
                   const rotuloAria = `${it.rotulo}, ${nome}, ${it.inicio} às ${it.fim}`;
                   const conteudo = (<><span className={cn("block font-mono font-semibold", cols === 1 && "max-sm:break-words sm:truncate")}>{it.rotulo}</span><span className={cn("tabular block opacity-90", cols === 1 && "sm:truncate")}>{it.inicio}–{it.fim}</span></>);
+                  if (bloco && it.id) return <span key={it.id + i} className="contents">{bloco(it, { cls, estilo, aria: rotuloAria, conteudo, colunas: cols })}</span>;
                   return it.href
                     ? <Link key={i} href={it.href} aria-label={rotuloAria} title={rotuloAria} className={cls} style={estilo}>{conteudo}</Link>
                     : <div key={i} role="group" aria-label={rotuloAria} title={rotuloAria} className={cls} style={estilo}>{conteudo}</div>;

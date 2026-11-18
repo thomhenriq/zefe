@@ -4,6 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirUsuario } from "@/sessao";
+import { buscar } from "@/dados/busca";
+import { ofertaPlanejador } from "@/dados/planejador";
 import { alterarGrade, criarBloqueio, criarGrade, definirPrincipal, excluirBloqueio, excluirGrade } from "@/dados/grades";
 
 export type Estado = { erro: string } | null;
@@ -45,3 +47,22 @@ export const criarBloqueioAcao = async (_: Estado, fd: FormData) =>
 
 export const excluirBloqueioAcao = async (_: Estado, fd: FormData) =>
   rodar(fd, { id }, async (u, d) => { await excluirBloqueio(u, d.id); });
+
+// Consultas do planejador (busca e turmas de uma disciplina): só leem, e só para quem está logado.
+const consulta = z.object;
+export type ResultadoBusca = { erro: string } | { disciplinas: { codigo: string; nome: string; creditos: number | null }[] };
+export type ResultadoOferta = { erro: string } | Awaited<ReturnType<typeof ofertaPlanejador>>;
+
+export async function buscarAcao(entrada: unknown): Promise<ResultadoBusca> {
+  await exigirUsuario();
+  const p = consulta({ q: z.string().trim().min(1, "digite um código ou nome").max(80) }).safeParse(entrada);
+  if (!p.success) return { erro: p.error.issues[0]?.message ?? "busca inválida" };
+  try { return { disciplinas: (await buscar(p.data.q, 12)).disciplinas }; } catch { return { erro: "não foi possível buscar agora" }; }
+}
+
+export async function ofertaAcao(entrada: unknown): Promise<ResultadoOferta> {
+  await exigirUsuario();
+  const p = consulta({ codigo: z.string().trim().min(1).max(20), ...sem }).safeParse(entrada);
+  if (!p.success) return { erro: "disciplina ou semestre inválido" };
+  try { return await ofertaPlanejador(p.data.codigo, p.data.ano, p.data.periodo as 1 | 2); } catch { return { erro: "não foi possível carregar as turmas agora" }; }
+}
